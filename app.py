@@ -131,6 +131,30 @@ DEMO_DMA = pd.DataFrame([
     {"Market": "Miami, FL", "lat": 25.76, "lng": -80.19, "Rinvoq": 61, "Skyrizi": 74, "Trend": "↓"},
 ])
 
+# Demo state-level data
+DEMO_STATES = pd.DataFrame([
+    {"State": "New York", "Rinvoq": 89, "Skyrizi": 82},
+    {"State": "Pennsylvania", "Rinvoq": 80, "Skyrizi": 75},
+    {"State": "Massachusetts", "Rinvoq": 78, "Skyrizi": 70},
+    {"State": "Illinois", "Rinvoq": 82, "Skyrizi": 76},
+    {"State": "Minnesota", "Rinvoq": 75, "Skyrizi": 68},
+    {"State": "California", "Rinvoq": 72, "Skyrizi": 80},
+    {"State": "Texas", "Rinvoq": 68, "Skyrizi": 76},
+    {"State": "Florida", "Rinvoq": 65, "Skyrizi": 74},
+    {"State": "Georgia", "Rinvoq": 63, "Skyrizi": 72},
+    {"State": "Washington", "Rinvoq": 62, "Skyrizi": 69},
+    {"State": "Ohio", "Rinvoq": 70, "Skyrizi": 65},
+    {"State": "Michigan", "Rinvoq": 68, "Skyrizi": 62},
+    {"State": "North Carolina", "Rinvoq": 66, "Skyrizi": 70},
+    {"State": "Virginia", "Rinvoq": 64, "Skyrizi": 68},
+    {"State": "Colorado", "Rinvoq": 61, "Skyrizi": 67},
+    {"State": "Arizona", "Rinvoq": 58, "Skyrizi": 65},
+    {"State": "Tennessee", "Rinvoq": 60, "Skyrizi": 68},
+    {"State": "Maryland", "Rinvoq": 72, "Skyrizi": 69},
+    {"State": "Missouri", "Rinvoq": 62, "Skyrizi": 60},
+    {"State": "New Jersey", "Rinvoq": 78, "Skyrizi": 74},
+])
+
 DEMO_QUERIES = pd.DataFrame([
     {"Query": "rheumatoid arthritis treatment", "Brand": "Rinvoq", "Index": 94, "Growth": 12, "Type": "condition"},
     {"Query": "psoriasis treatment", "Brand": "Skyrizi", "Index": 91, "Growth": 15, "Type": "condition"},
@@ -149,6 +173,7 @@ DEMO_QUERIES = pd.DataFrame([
     {"Query": "Skyrizi cost", "Brand": "Skyrizi", "Index": 70, "Growth": 30, "Type": "branded"},
     {"Query": "Rinvoq dosing", "Brand": "Rinvoq", "Index": 55, "Growth": 15, "Type": "branded"},
 ])
+
 
 SEASON_DATA = pd.DataFrame({
     "Month": ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
@@ -402,13 +427,71 @@ with tabs[1]:
     
     import folium
     from streamlit_folium import st_folium
+    import requests
     
+    # Use demo state data or live state data
+    display_states = DEMO_STATES.copy() if state_df is None or state_df.empty else state_df
+    
+    # Create map
     m = folium.Map(location=[39.5, -98.5], zoom_start=4, tiles="CartoDB positron")
     
-    # Add state choropleth if we have live state data
-    if state_df is not None and not state_df.empty:
-        pass  # State choropleth would go here with GeoJSON
+    # Add state choropleth with search interest shading
+    try:
+        # Load US state boundaries GeoJSON
+        us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
+        geo_data = requests.get(us_state_geo).json()
+        
+        # Prepare state data for choropleth (use average of Rinvoq and Skyrizi)
+        state_values = display_states.copy()
+        state_values["avg_interest"] = ((state_values["Rinvoq"] + state_values["Skyrizi"]) / 2).round().astype(int)
+        
+        # Create a dictionary mapping state names to avg values
+        state_dict = dict(zip(state_values["State"], state_values["avg_interest"]))
+        
+        # Add choropleth layer
+        folium.Choropleth(
+            geo_data=geo_data,
+            name="Search Interest",
+            data=state_values,
+            columns=["State", "avg_interest"],
+            key_on="feature.properties.name",
+            fill_color="YlOrRd",
+            fill_opacity=0.7,
+            line_opacity=0.5,
+            line_color="white",
+            line_weight=1,
+            legend_name="Search Interest Index",
+            nan_fill_color="lightgray",
+        ).add_to(m)
+        
+        # Add custom tooltips for states with hover info
+        for feature in geo_data["features"]:
+            state_name = feature["properties"]["name"]
+            state_data = state_values[state_values["State"] == state_name]
+            
+            if not state_data.empty:
+                rinvoq_val = int(state_data["Rinvoq"].values[0])
+                skyrizi_val = int(state_data["Skyrizi"].values[0])
+                avg_val = int(state_data["avg_interest"].values[0])
+                
+                tooltip_text = f"<b>{state_name}</b><br>Rinvoq: {rinvoq_val}<br>Skyrizi: {skyrizi_val}<br>Avg: {avg_val}"
+            else:
+                tooltip_text = f"<b>{state_name}</b><br>No data available"
+            
+            # Add GeoJson layer with tooltips
+            folium.GeoJson(
+                feature,
+                style_function=lambda x: {
+                    "fillOpacity": 0,
+                    "color": "transparent",
+                },
+                tooltip=folium.Tooltip(tooltip_text, sticky=False),
+            ).add_to(m)
     
+    except Exception as e:
+        st.warning(f"Could not load state boundaries: {e}")
+    
+    # Add DMA circle markers on top
     for _, row in DEMO_DMA.iterrows():
         r_val, s_val = row["Rinvoq"], row["Skyrizi"]
         avg = (r_val + s_val) / 2
