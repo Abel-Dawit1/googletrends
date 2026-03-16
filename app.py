@@ -1011,8 +1011,21 @@ with tabs[1]:
         plot_bgcolor='rgba(0,0,0,0)'
     )
     
-    # Display the map
-    st.plotly_chart(fig, use_container_width=True, config={'staticPlot': True})
+    # Display the map with hover enabled but no zoom/pan/drag controls
+    st.plotly_chart(
+        fig, 
+        use_container_width=True, 
+        config={
+            'displayModeBar': False,
+            'displaylogo': False,
+            'responsive': True,
+            'scrollZoom': False,
+            'doubleClick': 'reset',
+            'showLink': False,
+            'dragmode': False,
+            'toImageButtonOptions': {'format': 'png'}
+        }
+    )
 
     # Top Markets Table - Apply brand filter
     st.subheader("Top Markets")
