@@ -890,6 +890,21 @@ with tabs[1]:
     # Use demo state data or live state data
     display_states = DEMO_STATES.copy() if state_df is None or state_df.empty else state_df
 
+    # State bounds for zooming (center lat/lng and zoom level for each state)
+    STATE_BOUNDS = {
+        "All": {"center": [39.8283, -98.5795], "zoom": 3.5},
+        "New York": {"center": [42.9682, -75.9272], "zoom": 6},
+        "Pennsylvania": {"center": [40.5908, -77.2098], "zoom": 6},
+        "Massachusetts": {"center": [42.2302, -71.5301], "zoom": 7},
+        "Illinois": {"center": [40.3297, -88.9860], "zoom": 6},
+        "Minnesota": {"center": [45.6945, -93.9196], "zoom": 6},
+        "California": {"center": [36.1162, -119.6816], "zoom": 5.5},
+        "Texas": {"center": [31.9686, -99.9018], "zoom": 5},
+        "Florida": {"center": [27.9947, -81.7603], "zoom": 6},
+        "Georgia": {"center": [33.0406, -83.6431], "zoom": 6},
+        "Washington": {"center": [47.7511, -120.7401], "zoom": 6},
+    }
+
     # Filter DMA and queries dataframes by brand filter
     dma_data = DEMO_DMA.copy()
     queries_data = DEMO_QUERIES.copy()
@@ -905,7 +920,7 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create static US map using Plotly (no zoom capability)
+    # Create state-level map using Plotly with interactive zoom
     # Get state data for choropleth
     state_values = display_states.copy()
     if brand_filter == "Both":
@@ -924,7 +939,40 @@ with tabs[1]:
         color_col = "interest"
         color_scale = "Blues"
 
-    # Create Plotly map for US only - completely static, no zoom
+    # Get mapping of state names to abbreviations for filtering
+    STATE_NAME_TO_ABBR = {
+        "New York": "NY", "Pennsylvania": "PA", "Massachusetts": "MA", "Illinois": "IL",
+        "Minnesota": "MN", "California": "CA", "Texas": "TX", "Florida": "FL",
+        "Georgia": "GA", "Washington": "WA"
+    }
+
+    # Extract state abbreviations from DMA data for filtering
+    dma_states = {}
+    for _, row in dma_data.iterrows():
+        market = row["Market"]
+        if "," in market:
+            state_abbr = market.split(",")[1].strip()
+            dma_states[market] = state_abbr
+
+    # Determine which DMAs to show based on state filter
+    dma_display = dma_data.copy()
+    currently_zoomed_state = None
+
+    # Initialize session state for map zoom
+    if "map_zoom_state" not in st.session_state:
+        st.session_state.map_zoom_state = "All"
+
+    # Get current map zoom level
+    current_zoom_state = st.session_state.map_zoom_state
+
+    # Filter DMAs if zoomed into a specific state
+    if current_zoom_state != "All":
+        state_abbr = STATE_NAME_TO_ABBR.get(current_zoom_state)
+        if state_abbr:
+            dma_display = dma_display[dma_display["Market"].str.contains(f", {state_abbr}")]
+            currently_zoomed_state = current_zoom_state
+
+    # Create Plotly map with potential zoom capability
     fig = go.Figure()
     
     try:
@@ -945,26 +993,27 @@ with tabs[1]:
             else:
                 z_values.append(0)
         
-        # Add choropleth for states with proper hover display
+        # Add choropleth for states with proper hover display and click target
         fig.add_trace(go.Choropleth(
             locations=state_names,
             z=z_values,
             text=state_names,  # Add state names for hover
+            customdata=state_names,  # Add state names for click handling
             geojson=geo_data,
             featureidkey="properties.name",
             colorscale=color_scale,
             marker_line_width=1,
             marker_line_color='white',
             colorbar=dict(title=legend, len=0),
-            hovertemplate="<b>%{text}</b><br>Search Interest: %{z}<extra></extra>",
+            hovertemplate="<b>%{text}</b><br>Search Interest: %{z}<br><i>Click to zoom</i><extra></extra>",
             showscale=False,
             name=""
         ))
     except:
         pass
     
-    # Add DMA circle markers
-    for _, row in dma_data.iterrows():
+    # Add DMA circle markers - only show those in current view
+    for _, row in dma_display.iterrows():
         if brand_filter == "Both":
             r_val, s_val = row["Rinvoq"], row["Skyrizi"]
             avg = (r_val + s_val) / 2
@@ -999,12 +1048,17 @@ with tabs[1]:
             name='Markets'
         ))
     
-    # Configure map layout with simple geo settings
+    # Get zoom bounds
+    zoom_bounds = STATE_BOUNDS.get(current_zoom_state, STATE_BOUNDS["All"])
+    center_lat, center_lng = zoom_bounds["center"]
+    
+    # Configure map layout with zoom capability
     fig.update_layout(
         height=500,
         margin=dict(l=0, r=0, t=0, b=0),
         geo=dict(
             projection=dict(type='albers usa'),
+            center=dict(lat=center_lat, lon=center_lng),
             showland=True,
             landcolor='white',
             showocean=True,
@@ -1021,7 +1075,7 @@ with tabs[1]:
         plot_bgcolor='white'
     )
     
-    # Display the map with hover enabled but no zoom/pan/drag controls
+    # Display the map with state-click info in hover
     st.plotly_chart(
         fig, 
         use_container_width=True, 
@@ -1036,6 +1090,13 @@ with tabs[1]:
             'toImageButtonOptions': {'format': 'png'}
         }
     )
+    
+    # Add zoom controls below map
+    if currently_zoomed_state:
+        st.info(f"📍 Zoomed into {currently_zoomed_state}. Click button below to return to USA view.")
+        if st.button("← Back to USA", key="back_to_usa"):
+            st.session_state.map_zoom_state = "All"
+            st.rerun()
 
     # Top Markets Table - Apply brand filter
     st.subheader("Top Markets")
@@ -1146,6 +1207,17 @@ with tabs[1]:
         if selected_state != st.session_state.selected_state:
             st.session_state.selected_state = selected_state
             st.session_state.selected_dma = "All"
+        
+        # Check if state is clickable (zoomable to full state) and update map zoom
+        # Map zoom available for states with DMA data
+        zoomable_states_abbr = list(set(dma_states.values()))
+        zoomable_states = [s for s in STATE_NAME_TO_ABBR.keys() if STATE_NAME_TO_ABBR[s] in zoomable_states_abbr]
+        
+        if selected_state in zoomable_states and selected_state != "All":
+            # Update the map zoom state
+            if selected_state != st.session_state.get("map_zoom_state", "All"):
+                st.session_state.map_zoom_state = selected_state
+                st.rerun()
     
     # Get DMAs for selected region and state
     # First, determine which states should be available based on region
