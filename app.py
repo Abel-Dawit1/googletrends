@@ -905,7 +905,7 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create completely static US-only map
+    # Create completely static US-only map - NO zoom, NO interaction
     m = folium.Map(
         location=[39.5, -98.5], 
         zoom_start=4, 
@@ -913,11 +913,23 @@ with tabs[1]:
         scroll_zoom=False, 
         zoom_control=False,
         dragging=False,
-        keyboard=False  # Disable keyboard navigation
+        keyboard=False,
+        min_zoom=4,
+        max_zoom=4,  # Lock zoom level to 4
+        max_bounds=True  # Enforce bounds restriction
     )
     
-    # Disable double-click zoom and all other interactions
+    # Disable ALL zoom and interaction features
     m.options['doubleClickZoom'] = False
+    m.options['touchZoom'] = False
+    m.options['boxZoom'] = False
+    m.options['tap'] = False
+    m.options['zoomSnap'] = 0
+    m.options['zoomDelta'] = 0
+    
+    # Lock bounds so map cannot be panned
+    bounds = [[25, -125], [50, -66]]
+    m.fit_bounds(bounds)
     
     # Load US state boundaries as the base layer
     try:
@@ -1069,9 +1081,6 @@ with tabs[1]:
             color="white", weight=2, fill=True, fill_color=color, fill_opacity=0.85,
             tooltip=tooltip
         ).add_to(m)
-
-    # Fit map to US bounds
-    m.fit_bounds([[25, -125], [50, -66]])
     
     st_folium(m, height=500, use_container_width=True)
 
