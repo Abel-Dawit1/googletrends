@@ -945,18 +945,19 @@ with tabs[1]:
             else:
                 z_values.append(0)
         
-        # Add choropleth for states
+        # Add choropleth for states with proper hover display
         fig.add_trace(go.Choropleth(
             locations=state_names,
             z=z_values,
+            text=state_names,  # Add state names for hover
             geojson=geo_data,
             featureidkey="properties.name",
             colorscale=color_scale,
             marker_line_width=1,
             marker_line_color='white',
-            colorbar=dict(title=legend, len=0),  # Hide colorbar
-            hovertemplate="<b>%{locations}</b><br>Search Interest: %{z}<extra></extra>",
-            showscale=False,  # Hide colorbar scale
+            colorbar=dict(title=legend, len=0),
+            hovertemplate="<b>%{text}</b><br>Search Interest: %{z}<extra></extra>",
+            showscale=False,
             name=""
         ))
     except:
