@@ -932,12 +932,25 @@ with tabs[1]:
         us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
         geo_data = requests.get(us_state_geo).json()
         
+        # Add choropleth for states using proper state name mapping
+        state_names = [d["properties"]["name"] for d in geo_data["features"]]
+        
+        # Create z-values matching state order in GeoJSON
+        z_values = []
+        for feature in geo_data["features"]:
+            state_name = feature["properties"]["name"]
+            state_row = state_values[state_values["State"] == state_name]
+            if not state_row.empty:
+                z_values.append(int(state_row['interest'].values[0]))
+            else:
+                z_values.append(0)
+        
         # Add choropleth for states
         fig.add_trace(go.Choropleth(
-            locations=[d["properties"]["name"] for d in geo_data["features"]],
-            locationmode="geojson-id",
-            z=state_values['interest'].values,
+            locations=state_names,
+            z=z_values,
             geojson=geo_data,
+            featureidkey="properties.name",
             colorscale=color_scale,
             marker_line_width=1,
             marker_line_color='white',
@@ -985,17 +998,14 @@ with tabs[1]:
     # Configure map - US only geo scope, completely static
     fig.update_geos(
         scope='usa',
-        projection_type='albers usa',
+        projection=dict(type='albers usa'),
         showland=True,
         landcolor='rgb(243, 243, 243)',
         showlakes=True,
         lakecolor='rgb(255, 255, 255)',
         showcountries=False,
         showcoastline=False,
-        bgcolor='rgba(255, 255, 255, 0)',
-        coastlinewidth=1,
-        countrywidth=1,
-        subunitwidth=1
+        bgcolor='rgba(255, 255, 255, 0)'
     )
     
     # Completely disable interaction and zooming
@@ -1004,7 +1014,6 @@ with tabs[1]:
         height=500,
         margin=dict(l=0, r=0, t=0, b=0),
         geo=dict(
-            projection_type='albers usa',
             showframe=False,
             showcoastline=False,
             projection=dict(type='albers usa'),
