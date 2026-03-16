@@ -463,7 +463,7 @@ with tabs[1]:
     display_states = DEMO_STATES.copy() if state_df is None or state_df.empty else state_df
     
     # Create map
-    m = folium.Map(location=[39.5, -98.5], zoom_start=4, tiles="CartoDB positron")
+    m = folium.Map(location=[39.5, -98.5], zoom_start=4, tiles="CartoDB positron", scroll_zoom=False)
     
     # Add state choropleth with search interest shading
     try:
