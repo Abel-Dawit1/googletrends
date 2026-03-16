@@ -1125,7 +1125,7 @@ with tabs[1]:
     if st.session_state.selected_state == "All":
         available_dmas = [m for m in dma_states.keys()]
     else:
-        available_dmas = [m for m, st in dma_states.items() if st == st.session_state.selected_state]
+        available_dmas = [m for m, state_abbr in dma_states.items() if state_abbr == st.session_state.selected_state]
     
     with fcol3:
         dma_options = ["All"] + available_dmas
