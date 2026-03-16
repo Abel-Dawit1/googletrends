@@ -995,28 +995,21 @@ with tabs[1]:
             showlegend=False
         ))
     
-    # Configure map - US only geo scope, completely static
-    fig.update_geos(
-        scope='usa',
-        projection=dict(type='albers usa'),
-        showland=True,
-        landcolor='rgb(243, 243, 243)',
-        showlakes=True,
-        lakecolor='rgb(255, 255, 255)',
-        showcountries=False,
-        showcoastline=False,
-        bgcolor='rgba(255, 255, 255, 0)'
-    )
-    
-    # Completely disable interaction and zooming
+    # Configure map layout with geo settings
     fig.update_layout(
         title=None,
         height=500,
         margin=dict(l=0, r=0, t=0, b=0),
         geo=dict(
-            showframe=False,
-            showcoastline=False,
+            scope='usa',
             projection=dict(type='albers usa'),
+            showland=True,
+            landcolor='rgb(243, 243, 243)',
+            showlakes=True,
+            lakecolor='rgb(255, 255, 255)',
+            showcountries=False,
+            showcoastline=False,
+            showframe=False,
             bgcolor='rgba(255,255,255,0)'
         ),
         hovermode='closest',
