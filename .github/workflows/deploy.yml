@@ -76,18 +76,6 @@ jobs:
           echo "❌ requirements.txt missing"
           exit 1
         fi
-        
-        if [ -f "packages.txt" ]; then
-          echo "✅ packages.txt found"
-        else
-          echo "⚠️ packages.txt not found (optional)"
-        fi
-        
-        if [ -d ".streamlit" ]; then
-          echo "✅ .streamlit directory found"
-        else
-          echo "⚠️ .streamlit directory not found (optional)"
-        fi
 
     - name: Deployment notification
       run: |
@@ -107,8 +95,7 @@ jobs:
         echo ""
         echo "📝 Configuration Files Included:"
         echo "  ✅ config.toml - Streamlit theme and server settings"
-        echo "  ✅ requirements.txt - Python dependencies"
-        echo "  ✅ packages.txt - System dependencies"
+        echo "  ✅ requirements.txt - Python dependencies (pinned versions)"
         echo "  ✅ .streamlit/ - Configuration directory"
         echo ""
         echo "🔧 To ensure auto-deployment works:"
