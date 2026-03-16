@@ -454,12 +454,12 @@ MOMENTS_DATA = [
 ]
 
 DEMO_AI_INSIGHTS = [
-    "**Geographic Opportunity: Northeast Dominance**\nNew York, Boston, and Philadelphia show 15-25 points higher search interest than national average. Recommend increasing digital spend in Top-10 Northeast DMAs by 40% for immediate ROI. Capture market share while Humira market erodes.",
-    "**Skyrizi Momentum: GI Expansion Breakout**\nCrohn's disease searches up 42% YoY—highest growth among all indications. Launch specialist IBD campaigns to capture high-intent patient searches. Timing: Align with GI conference season for maximum HCP engagement.",
-    "**Competitive Window: Humira Switching Signals**\n'Rinvoq vs Humira' searches grew 120% YoY. High-intent patients actively evaluating switch. Activate 'Switching from TNF inhibitors' content immediately—data shows +23% conversion lift Jan-Mar period.",
-    "**HCP Intent: ACR Is Critical Event**\nGeneric 'upadacitinib' searches (88 index) signal pure HCP traffic. ACR historically drives +35% Rinvoq lift over 10 days. Launch CME-certified clinical content 6 weeks pre-conference. Allocate speaker budget to high-volume states.",
-    "**Safety Concerns: Proactive Messaging ROI**\nJAK safety searches growing (+82 index)—patients researching side effects. Develop evidence-based safety education content. Early messaging reduces objection handling time by ~30% in downstream sales conversations.",
-    "**Emerging Markets: Untapped Potential**\nSouth/Southwest states (48-58 range) show 35-40 point gap vs. Northeast. These markets lack competitive saturation. Cost-effective patient acquisition available—estimate $2M+ revenue upside with targeted digital campaigns."
+    "**Geographic Opportunity: Northeast Dominance**\n\n📊 New York, Boston, Philadelphia: 15-25 pts above national avg\n→ Increase digital spend in Top-10 Northeast DMAs by 40%\n💰 Capture market share as Humira erodes",
+    "**Skyrizi Momentum: GI Expansion Breakout**\n\n📊 Crohn's disease searches: +42% YoY (highest growth)\n→ Launch IBD specialist campaigns aligned with GI conference\n💰 Premium positioning for high-intent patient segment",
+    "**Competitive Window: Humira Switching Signals**\n\n📊 'Rinvoq vs Humira' searches: +120% YoY\n→ Activate 'Switching from TNF inhibitors' content now\n💰 +23% conversion lift during Jan-Mar switching period",
+    "**HCP Intent: ACR Is Critical Event**\n\n📊 Generic 'upadacitinib' searches (88 index) = pure HCP traffic\n→ Launch CME content 6 weeks pre-ACR\n💰 Historically drives +35% Rinvoq lift over 10-day halo",
+    "**Safety Concerns: Proactive Messaging ROI**\n\n📊 JAK safety searches growing (+82 index)\n→ Develop evidence-based safety education content\n💰 Reduces objection handling time by ~30% in sales",
+    "**Emerging Markets: Untapped Potential**\n\n📊 South/Southwest states (48-58 range): 35-40 pt gap vs Northeast\n→ Launch targeted digital campaigns in low-saturation markets\n💰 $2M+ revenue upside from cost-effective acquisition"
 ]
 
 
@@ -698,12 +698,16 @@ with tabs[0]:
             # Generate insights (demo data used if no Claude client)
             ai_insights = generate_ai_insights(trend_df, DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client)
             
+            # Convert markdown bold **text** to HTML <strong>text</strong>
+            import re
+            insight_html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', ai_insights)
+            
             insight_source = "Claude AI" if client else "Demo Data"
             st.markdown(f"""
             <div style='background:linear-gradient(135deg,{NAVY} 0%,#1a4094 100%);border-radius:10px;padding:16px 20px;color:white'>
                 <div style='font-weight:700;font-size:14px;margin-bottom:12px'>✦ Key Insight ({insight_source})</div>
-                <div style='font-size:13px;line-height:1.8;opacity:0.95;white-space:pre-wrap'>
-                    {ai_insights}
+                <div style='font-size:13px;line-height:1.8;opacity:0.95'>
+                    {insight_html.replace(chr(10), '<br>')}
                 </div>
             </div>
             """, unsafe_allow_html=True)
