@@ -865,7 +865,7 @@ with tabs[2]:
     
     fig_rank = px.bar(brand_df, x="Index", y="Brand", orientation="h", title="Competitive Index Ranking",
                       color="Brand", color_discrete_map={b["Brand"]: b["Color"] for b in all_brands})
-    fig_rank.update_layout(height=380, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=40))
+    fig_rank.update_layout(height=380, showlegend=False, margin=dict(t=40))
     st.plotly_chart(fig_rank, use_container_width=True)
     
     c3, c4 = st.columns(2)
