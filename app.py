@@ -268,7 +268,7 @@ def format_data_context(trend_df, dma_df, state_df, queries_df):
     
     return context
 
-def generate_ai_insights(trend_df, dma_df, state_df, queries_df, client):
+def generate_ai_insights(trend_df, dma_df, state_df, queries_df, client, brand_filter="Both"):
     """Generate strategic insights using Claude based on current data, or return random demo insight if client unavailable."""
     # Return random demo insight if no client available
     if client is None:
@@ -278,12 +278,16 @@ def generate_ai_insights(trend_df, dma_df, state_df, queries_df, client):
     try:
         context = format_data_context(trend_df, dma_df, state_df, queries_df)
         
+        brand_note = ""
+        if brand_filter != "Both":
+            brand_note = f"\n\nBrand Filter Active: The user is currently viewing data filtered for {brand_filter}. Focus your insight on this brand's market dynamics and competitive opportunities."
+        
         prompt = f"""You are a strategic business analyst for AbbVie's Immunology division. 
         
 Analyze the following Google Trends data and provide 1 clear, actionable business insight that would help inform marketing and commercial strategy decisions.
 
 DATA CONTEXT:
-{json.dumps(context, indent=2)}
+{json.dumps(context, indent=2)}{brand_note}
 
 Provide an insight that is:
 - Data-driven and specific (reference actual numbers where relevant)
@@ -865,8 +869,20 @@ with tabs[0]:
     
     with col_insight:
         with st.spinner("✦ Generating AI-powered insights..."):
+            # Filter DMA and queries by brand for AI context
+            dma_filtered = DEMO_DMA.copy()
+            queries_filtered = DEMO_QUERIES.copy()
+            if brand_filter == "Rinvoq":
+                if "Skyrizi" in dma_filtered.columns:
+                    dma_filtered = dma_filtered.drop(columns=["Skyrizi"])
+                queries_filtered = queries_filtered[queries_filtered["Brand"].isin(["Rinvoq", "Both"])]
+            elif brand_filter == "Skyrizi":
+                if "Rinvoq" in dma_filtered.columns:
+                    dma_filtered = dma_filtered.drop(columns=["Rinvoq"])
+                queries_filtered = queries_filtered[queries_filtered["Brand"].isin(["Skyrizi", "Both"])]
+            
             # Generate insights (demo data used if no Claude client)
-            ai_insights = generate_ai_insights(trend_df, DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client)
+            ai_insights = generate_ai_insights(trend_df, dma_filtered, DEMO_STATES, queries_filtered, client, brand_filter)
             
             # Convert markdown bold **text** to HTML <strong>text</strong>
             import re
