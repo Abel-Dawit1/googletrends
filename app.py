@@ -1007,7 +1007,11 @@ with tabs[1]:
             projection=dict(type='albers usa'),
             showland=False,
             showframe=False,
-            coastlinewidth=0
+            coastlinewidth=0,
+            showcoastlines=False,
+            showcountries=False,
+            showlakes=False,
+            showocean=False
         ),
         hovermode='closest',
         paper_bgcolor='white',
