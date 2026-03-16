@@ -39,7 +39,7 @@ st.set_page_config(
 # BRAND COLORS
 # ═══════════════════════════════════════════════════════════════════════════
 NAVY = "#071d49"
-RINVOQ = "#ff9500"
+RINVOQ = "#FFB84D"
 SKYRIZI = "#4db8ff"
 GOLD = "#b8860b"
 SUCCESS = "#1a7f4f"
