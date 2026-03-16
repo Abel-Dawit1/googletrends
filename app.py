@@ -265,7 +265,11 @@ def format_data_context(trend_df, dma_df, state_df, queries_df):
     return context
 
 def generate_ai_insights(trend_df, dma_df, state_df, queries_df, client):
-    """Generate strategic insights using Claude based on current data."""
+    """Generate strategic insights using Claude based on current data, or return demo insights if client unavailable."""
+    # Return demo insights if no client available
+    if client is None:
+        return DEMO_AI_INSIGHTS
+    
     try:
         context = format_data_context(trend_df, dma_df, state_df, queries_df)
         
@@ -447,6 +451,31 @@ MOMENTS_DATA = [
     {"Event": "Mother's Day", "Category": "Cultural", "Date": "May 11, 2025", "Rinvoq Lift": "+10%", "Skyrizi Lift": "+14%", "Peak": 68, "Halo": "4d", "Breakout": "caregiver support", "Insight": "Caregiver campaigns drove 14% Skyrizi lift on quality-of-life messaging."},
     {"Event": "Winter Olympics", "Category": "Sports", "Date": "Feb 2026", "Rinvoq Lift": "+12%", "Skyrizi Lift": "+10%", "Peak": 72, "Halo": "14d", "Breakout": "athlete sponsorship", "Insight": "Extended 14-day halo. Joint RA/PsA messaging resonated with active lifestyle narrative."},
 ]
+
+DEMO_AI_INSIGHTS = """**Executive Summary**
+Current market dynamics show Rinvoq maintaining strong momentum in established markets (Northeast: 78-89 index), while Skyrizi demonstrating superior growth trajectory particularly in underexplored geographies. Northeast & Mid-Atlantic DMAs represent immediate optimization opportunity; South/Southwest markets show price sensitivity signals requiring adjusted positioning. YoY growth accelerating across both franchises (+38% Rinvoq, +45% Skyrizi Q4'24), indicating broadening indication adoption.
+
+**Key Insights & Recommendations:**
+
+1. **Geographic Arbitrage: Northeast Premium Strategy**
+   Data: New York (89 Rinvoq/82 Skyrizi), Boston (75/68), Philadelphia (82/71) vs. South Dakota (52/50), Wyoming (48/46)—41-point differential represents 85% upside potential. Northeast demonstrates consistent high engagement across both branded and condition searches.
+   
+   Action: Increase TV/digital spend 40% in Top-10 DMAs (ROI: 3.2x based on search intensity correlation). Redirect underutilized South/Southwest budgets to HCP education in emerging markets—capture market share before Humira erosion plateaus.
+
+2. **Skyrizi Momentum: Accelerated Indication Expansion**
+   Data: Skyrizi YoY growth (45% vs. Rinvoq 38%), Crohn's disease searches up 42% YoY—highest among all tracked indications. Patient intent shows 52% growth in dermatology "atopic dermatitis biologic" queries. Skyrizi cost-related searches (index 70) suggest pricing questions resolving positively.
+   
+   Action: Launch Crohn's/IBD specialist campaigns Q1—timing aligns with GI conference season. Allocate 25% budget increase to atopic dermatitis digital (lowest CAC, highest conversion). Proactive pricing messaging reduces acquisition friction by 18% based Q4 data correlation.
+
+3. **Competitive Displacement: Humira Vulnerability Window (60-90 Days)**
+   Data: "Rinvoq vs Humira" search intensity 65 (growth 120% YoY)—signals active decision-stage patients. Skyrizi competitive queries (62 index) show sustained interest. January-March historically see highest switching behavior (prior year data: +23% conversion lift).
+   
+   Action: Activate "Switching from TNF Inhibitors" content stream immediately—patient education reduces switching friction. Target high-intent competitive keywords (bid +15%) in Northeast/Chicago/Atlanta where search volume peaks and brand affinity lowest. Estimate $2.1M incremental revenue opportunity.
+
+4. **HCP Intent: ACR Meeting Peak Opportunity**
+   Data: "upadacitinib" generic searches hit 88 (growth 28% YoY)—pure HCP traffic. Fall/winter typically drives conference-related spikes—ACR (Nov) historically peaks at +35% Rinvoq lift (10-day halo). Rising queries in JAK safety searches (82 index) indicate active clinical discussions.
+   
+   Action: Launch CME-certified clinical comparison content 6 weeks pre-ACR. Allocate speaker budget to regional meetings in high-volume states (NY, PA, IL, CA). Prepare patient case studies addressing safety concerns—converts 12% of interest-stage HCP searches to advocacy adoption."""
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -676,33 +705,23 @@ with tabs[0]:
     # AI Insight
     st.markdown("---")
     
-    # AI-Powered Insights using Claude
+    # AI-Powered Insights (Claude or Demo)
     with st.spinner("✦ Generating AI-powered insights..."):
-        if client:
-            try:
-                ai_insights = generate_ai_insights(trend_df, DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client)
-                st.markdown(f"""
-                <div style='background:linear-gradient(135deg,{NAVY} 0%,#1a4094 100%);border-radius:10px;padding:16px 20px;color:white'>
-                    <div style='font-weight:700;font-size:14px;margin-bottom:12px'>✦ AI-Powered Strategic Insights (Claude)</div>
-                    <div style='font-size:13px;line-height:1.8;opacity:0.95;white-space:pre-wrap'>
-                        {ai_insights}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"⚠️ Could not generate insights: {str(e)}", icon="🔑")
-                st.info("**Setup Instructions:**\n"
-                       "1. Get your API key from [console.anthropic.com](https://console.anthropic.com/keys)\n"
-                       "2. Add to Streamlit secrets: `~/.streamlit/secrets.toml`\n"
-                       "```\nANTHROPIC_API_KEY = \"your-api-key-here\"\n```\n"
-                       "3. Restart the app or click 'Refresh Data' in sidebar")
-        else:
-            st.warning("🔑 Claude API key not configured", icon="⚠️")
-            st.info("**To enable AI insights and chat:**\n"
-                   "1. Get your API key from [console.anthropic.com](https://console.anthropic.com/keys)\n"
-                   "2. Add to Streamlit secrets: `~/.streamlit/secrets.toml`\n"
-                   "```\nANTHROPIC_API_KEY = \"your-api-key-here\"\n```\n"
-                   "3. Restart the app or click 'Refresh Data' in sidebar")
+        # Generate insights (demo data used if no Claude client)
+        ai_insights = generate_ai_insights(trend_df, DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client)
+        
+        insight_source = "Claude AI" if client else "Demo Data"
+        st.markdown(f"""
+        <div style='background:linear-gradient(135deg,{NAVY} 0%,#1a4094 100%);border-radius:10px;padding:16px 20px;color:white'>
+            <div style='font-weight:700;font-size:14px;margin-bottom:12px'>✦ AI-Powered Strategic Insights ({insight_source})</div>
+            <div style='font-size:13px;line-height:1.8;opacity:0.95;white-space:pre-wrap'>
+                {ai_insights}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if not client:
+            st.info("💡 **Demo Mode**: These insights are generated from demo data. [Set up Claude API](https://console.anthropic.com/keys) for live AI analysis.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
