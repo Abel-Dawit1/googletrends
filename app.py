@@ -948,24 +948,21 @@ with tabs[1]:
             colormap = folium.LinearColormap(
                 colors=['#fff5f0', '#fee5d9', '#fcbba1', '#fc9272', '#fb6a4a', '#ef3b2c', '#cb181d', '#99000d'],
                 vmin=state_values["interest"].min(),
-                vmax=state_values["interest"].max(),
-                name=legend
+                vmax=state_values["interest"].max()
             )
         elif brand_filter == "Skyrizi":
             # Create custom colormap for Skyrizi (light blue to darker blue)
             colormap = folium.LinearColormap(
                 colors=['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5', '#08519c'],
                 vmin=state_values["interest"].min(),
-                vmax=state_values["interest"].max(),
-                name=legend
+                vmax=state_values["interest"].max()
             )
         else:
             # Default blue for Both
             colormap = folium.LinearColormap(
                 colors=['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5', '#08519c'],
                 vmin=state_values["interest"].min(),
-                vmax=state_values["interest"].max(),
-                name=legend
+                vmax=state_values["interest"].max()
             )
         
         folium.Choropleth(
