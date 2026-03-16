@@ -905,62 +905,37 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create map - US only view
+    # Create US-only map with proper bounds
+    # Set bounds to show only continental US and Alaska/Hawaii
+    bounds = [[25, -125], [50, -66]]
+    
     m = folium.Map(
         location=[39.5, -98.5], 
         zoom_start=4, 
         tiles="CartoDB positron", 
         scroll_zoom=False, 
         zoom_control=False,
-        min_zoom=3,
-        max_zoom=8,
-        max_bounds=False
+        dragging=False
     )
     
-    # Add white rectangles to hide non-US areas
-    # Top rectangle (covers everything north of US)
-    folium.Rectangle(
-        bounds=[[50, -180], [90, 180]],
-        color='white',
-        fill=True,
-        fillColor='white',
-        fillOpacity=1,
-        weight=0,
-        zIndex=100
-    ).add_to(m)
-    
-    # Bottom rectangle (covers everything south of US)
-    folium.Rectangle(
-        bounds=[[-90, -180], [25, 180]],
-        color='white',
-        fill=True,
-        fillColor='white',
-        fillOpacity=1,
-        weight=0,
-        zIndex=100
-    ).add_to(m)
-    
-    # Left rectangle (covers areas west of US)
-    folium.Rectangle(
-        bounds=[[25, -180], [50, -130]],
-        color='white',
-        fill=True,
-        fillColor='white',
-        fillOpacity=1,
-        weight=0,
-        zIndex=100
-    ).add_to(m)
-    
-    # Right rectangle (covers areas east of US)
-    folium.Rectangle(
-        bounds=[[25, -65], [50, 180]],
-        color='white',
-        fill=True,
-        fillColor='white',
-        fillOpacity=1,
-        weight=0,
-        zIndex=100
-    ).add_to(m)
+    # Fit bounds to US after adding other layers
+    # Load and add US country boundary
+    try:
+        us_boundary = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
+        us_feature = next((f for f in us_boundary["features"] if f["properties"]["ADMIN"] == "United States of America"), None)
+        
+        if us_feature:
+            folium.GeoJson(
+                us_feature,
+                style_function=lambda x: {
+                    "fillColor": "#f0f0f0",
+                    "color": "#333",
+                    "weight": 2,
+                    "fillOpacity": 0.2
+                }
+            ).add_to(m)
+    except:
+        pass
 
     # Add state choropleth with search interest shading
     try:
@@ -1063,6 +1038,9 @@ with tabs[1]:
             tooltip=tooltip
         ).add_to(m)
 
+    # Fit map to US bounds
+    m.fit_bounds([[25, -125], [50, -66]])
+    
     st_folium(m, height=500, use_container_width=True)
 
     # Top Markets Table - Apply brand filter
