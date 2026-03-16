@@ -1121,10 +1121,19 @@ with tabs[1]:
             st.session_state.selected_state = selected_state
             st.session_state.selected_dma = "All"
     
-    # Get DMAs for selected state
-    if st.session_state.selected_state == "All":
-        available_dmas = [m for m in dma_states.keys()]
+    # Get DMAs for selected region and state
+    # First, determine which states should be available based on region
+    if st.session_state.selected_region == "All":
+        region_states = sorted(list(set(dma_states.values())))
     else:
+        region_states = regions[st.session_state.selected_region]
+    
+    # Then filter DMAs based on region and state
+    if st.session_state.selected_state == "All":
+        # Show all DMAs in the selected region
+        available_dmas = [m for m, state_abbr in dma_states.items() if state_abbr in region_states]
+    else:
+        # Show only DMAs in the selected state (which is guaranteed to be in the selected region)
         available_dmas = [m for m, state_abbr in dma_states.items() if state_abbr == st.session_state.selected_state]
     
     with fcol3:
