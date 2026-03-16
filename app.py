@@ -499,18 +499,7 @@ def load_data(timeframe_key, brand_filter):
 with st.sidebar:
     st.markdown(f"""
     <div style='text-align:center;padding:12px 0'>
-        <svg width="42" height="42" viewBox="0 0 42 42" style='display:inline-block;margin-bottom:8px'>
-            <!-- AbbVie Logo: Stylized A -->
-            <defs>
-                <linearGradient id="abbvieGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:{NAVY};stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#0d2a5c;stop-opacity:1" />
-                </linearGradient>
-            </defs>
-            <rect width="42" height="42" rx="6" fill="url(#abbvieGradient)"/>
-            <polygon points="21,6 12,28 15,28 17,22 25,22 27,28 30,28 21,6" fill="white" opacity="0.95"/>
-            <rect x="18" y="18" width="6" height="4" fill="white" opacity="0.95"/>
-        </svg>
+        <div style='background:{NAVY};color:white;width:42px;height:42px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;margin-bottom:8px'>A</div>
         <h3 style='margin:0;color:{NAVY}'>AbbVie Immunology</h3>
         <p style='margin:0;font-size:12px;color:#8a9ab5'>Search Intelligence Dashboard</p>
     </div>
