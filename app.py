@@ -583,31 +583,75 @@ with tabs[0]:
     r_peak, s_peak = int(max(r_vals)), int(max(s_vals))
     r_avg, s_avg = int(np.mean(r_vals)), int(np.mean(s_vals))
     
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric(
-        "Rinvoq Peak Index", 
-        r_peak, 
-        f"Avg: {r_avg}",
-        help="Highest search interest value for Rinvoq during the selected period (0-100 scale). Higher values indicate greater patient and HCP search activity."
-    )
-    k2.metric(
-        "Skyrizi Peak Index", 
-        s_peak, 
-        f"Avg: {s_avg}",
-        help="Highest search interest value for Skyrizi during the selected period (0-100 scale). Trending upward particularly in dermatology and gastroenterology indications."
-    )
-    k3.metric(
-        "Top DMA", 
-        DEMO_DMA.iloc[0]["Market"].split(",")[0], 
-        f"Index {DEMO_DMA.iloc[0]['Rinvoq']}",
-        help="Designated Market Area with highest combined search interest. Indicates geographic concentration of treatment awareness and patient consideration."
-    )
-    k4.metric(
-        "Breakout Terms", 
-        str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), 
-        "Explosive growth",
-        help="Search queries with 500%+ YoY growth—early signals of emerging patient interests and new indication expansion opportunities."
-    )
+    # KPIs - Show only selected brand(s)
+    if brand_filter == "Both":
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric(
+            "Rinvoq Peak Index", 
+            r_peak, 
+            f"Avg: {r_avg}",
+            help="Highest search interest value for Rinvoq during the selected period (0-100 scale). Higher values indicate greater patient and HCP search activity."
+        )
+        k2.metric(
+            "Skyrizi Peak Index", 
+            s_peak, 
+            f"Avg: {s_avg}",
+            help="Highest search interest value for Skyrizi during the selected period (0-100 scale). Trending upward particularly in dermatology and gastroenterology indications."
+        )
+        k3.metric(
+            "Top DMA", 
+            DEMO_DMA.iloc[0]["Market"].split(",")[0], 
+            f"Index {DEMO_DMA.iloc[0]['Rinvoq']}",
+            help="Designated Market Area with highest combined search interest. Indicates geographic concentration of treatment awareness and patient consideration."
+        )
+        k4.metric(
+            "Breakout Terms", 
+            str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), 
+            "Explosive growth",
+            help="Search queries with 500%+ YoY growth—early signals of emerging patient interests and new indication expansion opportunities."
+        )
+    elif brand_filter == "Rinvoq":
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric(
+            "Rinvoq Peak Index", 
+            r_peak, 
+            f"Avg: {r_avg}",
+            help="Highest search interest value for Rinvoq during the selected period (0-100 scale). Higher values indicate greater patient and HCP search activity."
+        )
+        k2.metric("Rinvoq Avg Index", r_avg, help="Average search interest for Rinvoq across the selected period.")
+        k3.metric(
+            "Top DMA", 
+            DEMO_DMA.iloc[0]["Market"].split(",")[0], 
+            f"Rinvoq: {DEMO_DMA.iloc[0]['Rinvoq']}",
+            help="Designated Market Area with highest Rinvoq search interest."
+        )
+        k4.metric(
+            "Rinvoq Queries", 
+            len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]), 
+            "Brand mentions",
+            help="Total search queries mentioning Rinvoq or both brands."
+        )
+    elif brand_filter == "Skyrizi":
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric(
+            "Skyrizi Peak Index", 
+            s_peak, 
+            f"Avg: {s_avg}",
+            help="Highest search interest value for Skyrizi during the selected period (0-100 scale). Trending upward particularly in dermatology and gastroenterology indications."
+        )
+        k2.metric("Skyrizi Avg Index", s_avg, help="Average search interest for Skyrizi across the selected period.")
+        k3.metric(
+            "Top DMA", 
+            DEMO_DMA.iloc[0]["Market"].split(",")[0], 
+            f"Skyrizi: {DEMO_DMA.iloc[0]['Skyrizi']}",
+            help="Designated Market Area with highest Skyrizi search interest."
+        )
+        k4.metric(
+            "Skyrizi Queries", 
+            len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]), 
+            "Brand mentions",
+            help="Total search queries mentioning Skyrizi or both brands."
+        )
     
     st.markdown("---")
     
@@ -649,9 +693,26 @@ with tabs[0]:
         fig_yoy.update_layout(title="Year-over-Year Growth (%)", height=300, barmode="group", template="plotly_white", margin=dict(t=40, b=20))
         st.plotly_chart(fig_yoy, use_container_width=True)
     
-    # Indication Pies
-    p1, p2 = st.columns(2)
-    with p1:
+    # Indication Pies - Show only selected brand(s)
+    if brand_filter == "Both":
+        p1, p2 = st.columns(2)
+        with p1:
+            rinvoq_ind = pd.DataFrame({"Indication": ["RA","PsA","AS","AD","UC","GCA"], "Share": [38,25,13,10,6,8]})
+            # Use Rinvoq brand color variations (orange tones)
+            rinvoq_colors = ["#FFB84D", "#FFC977", "#FFD4A1", "#FFE0C2", "#FFECD4", "#FFF5E6"]
+            fig_rp = px.pie(rinvoq_ind, names="Indication", values="Share", title="Rinvoq — Indication Split",
+                            color_discrete_sequence=rinvoq_colors, hole=0.5)
+            fig_rp.update_layout(height=300, margin=dict(t=40, b=20))
+            st.plotly_chart(fig_rp, use_container_width=True)
+        with p2:
+            skyrizi_ind = pd.DataFrame({"Indication": ["Psoriasis","PsA","Crohn's","UC"], "Share": [45,22,20,13]})
+            # Use Skyrizi brand color variations (blue tones)
+            skyrizi_colors = ["#4db8ff", "#77c9ff", "#a1daff", "#cbebff"]
+            fig_sp = px.pie(skyrizi_ind, names="Indication", values="Share", title="Skyrizi — Indication Split",
+                            color_discrete_sequence=skyrizi_colors, hole=0.5)
+            fig_sp.update_layout(height=300, margin=dict(t=40, b=20))
+            st.plotly_chart(fig_sp, use_container_width=True)
+    elif brand_filter == "Rinvoq":
         rinvoq_ind = pd.DataFrame({"Indication": ["RA","PsA","AS","AD","UC","GCA"], "Share": [38,25,13,10,6,8]})
         # Use Rinvoq brand color variations (orange tones)
         rinvoq_colors = ["#FFB84D", "#FFC977", "#FFD4A1", "#FFE0C2", "#FFECD4", "#FFF5E6"]
@@ -659,7 +720,7 @@ with tabs[0]:
                         color_discrete_sequence=rinvoq_colors, hole=0.5)
         fig_rp.update_layout(height=300, margin=dict(t=40, b=20))
         st.plotly_chart(fig_rp, use_container_width=True)
-    with p2:
+    elif brand_filter == "Skyrizi":
         skyrizi_ind = pd.DataFrame({"Indication": ["Psoriasis","PsA","Crohn's","UC"], "Share": [45,22,20,13]})
         # Use Skyrizi brand color variations (blue tones)
         skyrizi_colors = ["#4db8ff", "#77c9ff", "#a1daff", "#cbebff"]
@@ -668,25 +729,51 @@ with tabs[0]:
         fig_sp.update_layout(height=300, margin=dict(t=40, b=20))
         st.plotly_chart(fig_sp, use_container_width=True)
     
-    # Top Markets
+    # Top Markets - Show only selected brand(s)
     st.subheader("Top Markets")
     dma_display = DEMO_DMA.copy()
-    dma_display["Avg"] = ((dma_display["Rinvoq"] + dma_display["Skyrizi"]) / 2).round().astype(int)
-    dma_display["Lead"] = dma_display.apply(lambda r: "Rinvoq" if r["Rinvoq"] > r["Skyrizi"] else "Skyrizi", axis=1)
-    st.dataframe(
-        dma_display[["Market", "Rinvoq", "Skyrizi", "Avg", "Lead", "Trend"]].sort_values("Avg", ascending=False),
-        use_container_width=True, hide_index=True,
-        column_config={
+
+    if brand_filter == "Both":
+        dma_display["Avg"] = ((dma_display["Rinvoq"] + dma_display["Skyrizi"]) / 2).round().astype(int)
+        dma_display["Lead"] = dma_display.apply(lambda r: "Rinvoq" if r["Rinvoq"] > r["Skyrizi"] else "Skyrizi", axis=1)
+        columns_to_show = ["Market", "Rinvoq", "Skyrizi", "Avg", "Lead", "Trend"]
+        column_config = {
             "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
             "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
         }
+        sort_column = "Avg"
+    elif brand_filter == "Rinvoq":
+        columns_to_show = ["Market", "Rinvoq", "Trend"]
+        column_config = {
+            "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
+        }
+        sort_column = "Rinvoq"
+    elif brand_filter == "Skyrizi":
+        columns_to_show = ["Market", "Skyrizi", "Trend"]
+        column_config = {
+            "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
+        }
+        sort_column = "Skyrizi"
+
+    st.dataframe(
+        dma_display[columns_to_show].sort_values(sort_column, ascending=False),
+        use_container_width=True, hide_index=True,
+        column_config=column_config
     )
     
-    # Queries
+    # Queries - Filter by brand
     q1, q2 = st.columns(2)
+    
+    if brand_filter == "Both":
+        queries_df = DEMO_QUERIES
+    elif brand_filter == "Rinvoq":
+        queries_df = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]
+    else:  # Skyrizi
+        queries_df = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
+    
     with q1:
         st.subheader("Top Search Queries")
-        top_q = DEMO_QUERIES.sort_values("Index", ascending=False).head(8)
+        top_q = queries_df.sort_values("Index", ascending=False).head(8)
         for _, row in top_q.iterrows():
             color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
             st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
@@ -694,7 +781,7 @@ with tabs[0]:
                         f"<span style='font-weight:700;color:{color}'>{row['Index']}</span></div>", unsafe_allow_html=True)
     with q2:
         st.subheader("Rising Queries")
-        rising_q = DEMO_QUERIES.sort_values("Growth", ascending=False).head(8)
+        rising_q = queries_df.sort_values("Growth", ascending=False).head(8)
         for _, row in rising_q.iterrows():
             badge_color = "#c0392b" if row["Growth"] >= 500 else SUCCESS
             badge_bg = "#fdecea" if row["Growth"] >= 500 else "#eaf7f1"
@@ -905,18 +992,26 @@ with tabs[2]:
 with tabs[3]:
     st.subheader("Patient Intent Analysis")
     
+    # Filter queries by brand
+    if brand_filter == "Both":
+        intent_queries = DEMO_QUERIES
+    elif brand_filter == "Rinvoq":
+        intent_queries = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]
+    else:  # Skyrizi
+        intent_queries = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
+    
     ik1, ik2, ik3, ik4 = st.columns(4)
-    ik1.metric("Awareness Queries", len(DEMO_QUERIES[DEMO_QUERIES["Type"] == "condition"]), "Condition-level")
-    ik2.metric("HCP Intent", len(DEMO_QUERIES[DEMO_QUERIES["Type"].isin(["generic", "safety"])]), "Clinical terms")
-    ik3.metric("Branded Queries", len(DEMO_QUERIES[DEMO_QUERIES["Type"].isin(["branded", "competitive"])]), "Brand-specific")
-    ik4.metric("Breakout Terms", len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500]), "Explosive growth")
+    ik1.metric("Awareness Queries", len(intent_queries[intent_queries["Type"] == "condition"]), "Condition-level")
+    ik2.metric("HCP Intent", len(intent_queries[intent_queries["Type"].isin(["generic", "safety"])]), "Clinical terms")
+    ik3.metric("Branded Queries", len(intent_queries[intent_queries["Type"].isin(["branded", "competitive"])]), "Brand-specific")
+    ik4.metric("Breakout Terms", len(intent_queries[intent_queries["Growth"] >= 500]), "Explosive growth")
     
     # Use live related queries if available
     q1, q2 = st.columns(2)
     with q1:
         st.markdown("**All Condition Terms**")
-        display_q = DEMO_QUERIES.sort_values("Index", ascending=False)
-        if related_rinvoq.get("top") is not None:
+        display_q = intent_queries.sort_values("Index", ascending=False)
+        if related_rinvoq.get("top") is not None and brand_filter in ["Both", "Rinvoq"]:
             live_top = related_rinvoq["top"].head(10)
             live_top.columns = ["Query", "Index"]
             live_top["Brand"] = "Rinvoq"
@@ -933,8 +1028,8 @@ with tabs[3]:
     
     with q2:
         st.markdown("**Rising & Breakout Queries**")
-        rising = DEMO_QUERIES.sort_values("Growth", ascending=False)
-        if related_rinvoq.get("rising") is not None:
+        rising = intent_queries.sort_values("Growth", ascending=False)
+        if related_rinvoq.get("rising") is not None and brand_filter in ["Both", "Rinvoq"]:
             live_rising = related_rinvoq["rising"].head(5)
             live_rising.columns = ["Query", "Growth"]
             live_rising["Brand"] = "Rinvoq"
@@ -975,30 +1070,49 @@ with tabs[4]:
     pk1, pk2, pk3, pk4 = st.columns(4)
     pk1.metric(
         "Active Campaigns", 
-        "3", 
-        "Across 2 brands",
+        "3" if brand_filter == "Both" else "1", 
+        "Across 2 brands" if brand_filter == "Both" else f"{brand_filter} only",
         help="Number of concurrent marketing campaigns currently running. Tracks multi-brand, multi-channel marketing initiatives."
     )
-    pk2.metric(
-        "Rinvoq Peak In", 
-        f"{(2 - now.month + 12) % 12 or 12}mo", 
-        "Peak RA: February",
-        help="Months until Rinvoq search interest reaches annual peak. Prime timing window for awareness-stage campaign concentration."
-    )
-    pk3.metric(
-        "Skyrizi Peak In", 
-        f"{(8 - now.month + 12) % 12 or 12}mo", 
-        "Peak Psoriasis: August",
-        help="Months until Skyrizi search interest reaches annual peak. Strategic window for dermatology indication expansion and patient engagement."
-    )
-    pk4.metric(
-        "Search Alignment", 
-        "Good", 
-        "4/5 peaks covered",
-        help="Alignment score between planned campaign timing and natural search seasonality peaks. Higher alignment maximizes earned media lift."
-    )
     
-    # Calendar
+    if brand_filter in ["Both", "Rinvoq"]:
+        pk2.metric(
+            "Rinvoq Peak In", 
+            f"{(2 - now.month + 12) % 12 or 12}mo", 
+            "Peak RA: February",
+            help="Months until Rinvoq search interest reaches annual peak. Prime timing window for awareness-stage campaign concentration."
+        )
+    
+    if brand_filter in ["Both", "Skyrizi"]:
+        if brand_filter == "Both":
+            pk3.metric(
+                "Skyrizi Peak In", 
+                f"{(8 - now.month + 12) % 12 or 12}mo", 
+                "Peak Psoriasis: August",
+                help="Months until Skyrizi search interest reaches annual peak. Strategic window for dermatology indication expansion and patient engagement."
+            )
+            pk4.metric(
+                "Search Alignment", 
+                "Good", 
+                "4/5 peaks covered",
+                help="Alignment score between planned campaign timing and natural search seasonality peaks. Higher alignment maximizes earned media lift."
+            )
+        else:
+            pk2.metric(
+                "Skyrizi Peak In", 
+                f"{(8 - now.month + 12) % 12 or 12}mo", 
+                "Peak Psoriasis: August",
+                help="Months until Skyrizi search interest reaches annual peak. Strategic window for dermatology indication expansion and patient engagement."
+            )
+            pk3.metric(
+                "Search Alignment", 
+                "Good", 
+                "4/5 peaks covered",
+                help="Alignment score between planned campaign timing and natural search seasonality peaks. Higher alignment maximizes earned media lift."
+            )
+            pk4.metric("Filtered", brand_filter, f"1 brand selected")
+    
+    # Calendar - Filter by brand
     st.markdown("**Annual Campaign Calendar**")
     cal_events = [
         {"Month": m, "Brand": b, "Indication": ind, "Activity": act}
@@ -1016,6 +1130,7 @@ with tabs[4]:
             ("Nov", "Rinvoq", "RA", "ACR Annual Meeting"),
             ("Dec", "Rinvoq", "RA/GCA", "Year-end + Q1 planning"),
         ]
+        if brand_filter == "Both" or b == brand_filter or b == "Both"
     ]
     st.dataframe(pd.DataFrame(cal_events), use_container_width=True, hide_index=True)
     
@@ -1023,13 +1138,21 @@ with tabs[4]:
     with c1:
         fig_ch = go.Figure()
         channels = ["Paid Search", "Social", "Display", "TV/CTV", "HCP Digital", "Email"]
-        fig_ch.add_trace(go.Bar(y=channels, x=[35,20,15,18,28,12], name="Rinvoq", marker_color=RINVOQ, orientation="h"))
-        fig_ch.add_trace(go.Bar(y=channels, x=[30,28,20,22,15,10], name="Skyrizi", marker_color=SKYRIZI, orientation="h"))
+        if brand_filter in ["Both", "Rinvoq"]:
+            fig_ch.add_trace(go.Bar(y=channels, x=[35,20,15,18,28,12], name="Rinvoq", marker_color=RINVOQ, orientation="h"))
+        if brand_filter in ["Both", "Skyrizi"]:
+            fig_ch.add_trace(go.Bar(y=channels, x=[30,28,20,22,15,10], name="Skyrizi", marker_color=SKYRIZI, orientation="h"))
         fig_ch.update_layout(title="Channel Budget Allocation (%)", height=350, barmode="group", template="plotly_white")
         st.plotly_chart(fig_ch, use_container_width=True)
     with c2:
         # Alignment chart
-        search_peaks = [(SEASON_DATA["Rinvoq"].iloc[i] + SEASON_DATA["Skyrizi"].iloc[i]) / 2 for i in range(12)]
+        if brand_filter == "Both":
+            search_peaks = [(SEASON_DATA["Rinvoq"].iloc[i] + SEASON_DATA["Skyrizi"].iloc[i]) / 2 for i in range(12)]
+        elif brand_filter == "Rinvoq":
+            search_peaks = list(SEASON_DATA["Rinvoq"])
+        else:  # Skyrizi
+            search_peaks = list(SEASON_DATA["Skyrizi"])
+        
         campaign_spend = [20,35,25,20,30,40,35,25,20,15,30,25]
         fig_align = go.Figure()
         fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=search_peaks, name="Search Interest", fill="tozeroy", line=dict(color=NAVY)))
@@ -1037,7 +1160,12 @@ with tabs[4]:
         fig_align.update_layout(title="Search vs Campaign Alignment", height=350, template="plotly_white")
         st.plotly_chart(fig_align, use_container_width=True)
     
-    st.info("📅 **Campaign Insight:** Focus Skyrizi on psoriasis in Sun Belt DMAs starting May. Pair with Rinvoq defensive RA campaign in the Northeast. Key actions: (1) Increase paid search 30% for psoriasis terms, (2) Launch Rinvoq GCA content in HCP channels, (3) Monitor Humira biosimilar displacement weekly.")
+    if brand_filter == "Both":
+        st.info("📅 **Campaign Insight:** Focus Skyrizi on psoriasis in Sun Belt DMAs starting May. Pair with Rinvoq defensive RA campaign in the Northeast. Key actions: (1) Increase paid search 30% for psoriasis terms, (2) Launch Rinvoq GCA content in HCP channels, (3) Monitor Humira biosimilar displacement weekly.")
+    elif brand_filter == "Rinvoq":
+        st.info("📅 **Campaign Insight:** Focus Rinvoq defensive RA campaign in the Northeast through Q2. Peak opportunity in February. Key actions: (1) Increase paid search 25% for RA terms, (2) Launch Rinvoq GCA content in HCP channels, (3) Monitor competitive displacement in winter months.")
+    else:  # Skyrizi
+        st.info("📅 **Campaign Insight:** Focus Skyrizi on psoriasis in Sun Belt DMAs starting May through August. Peak season for dermatology. Key actions: (1) Increase paid search 30% for psoriasis terms, (2) Expand AD/Crohn's content in Q3, (3) Monitor regional derm HCP influence.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1050,32 +1178,74 @@ with tabs[5]:
     selected_event = st.selectbox("Select Event", moments_df["Event"].tolist())
     event = moments_df[moments_df["Event"] == selected_event].iloc[0]
     
-    mk1, mk2, mk3, mk4 = st.columns(4)
-    mk1.metric(
-        "Rinvoq Lift", 
-        event["Rinvoq Lift"], 
-        "vs baseline",
-        help="Percent increase in Rinvoq search interest during the event period. Measures brand awareness lift driven by cultural moment exposure."
-    )
-    mk2.metric(
-        "Skyrizi Lift", 
-        event["Skyrizi Lift"], 
-        "vs baseline",
-        help="Percent increase in Skyrizi search interest during the event period. Indicates effectiveness of event sponsorship or partnerships."
-    )
-    mk3.metric(
-        "Peak Day Index", 
-        event["Peak"],
-        help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
-    )
-    mk4.metric(
-        "Halo Duration", 
-        event["Halo"], 
-        "post-event",
-        help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
-    )
+    # Filter metrics by brand
+    if brand_filter == "Both":
+        mk1, mk2, mk3, mk4 = st.columns(4)
+        mk1.metric(
+            "Rinvoq Lift", 
+            event["Rinvoq Lift"], 
+            "vs baseline",
+            help="Percent increase in Rinvoq search interest during the event period. Measures brand awareness lift driven by cultural moment exposure."
+        )
+        mk2.metric(
+            "Skyrizi Lift", 
+            event["Skyrizi Lift"], 
+            "vs baseline",
+            help="Percent increase in Skyrizi search interest during the event period. Indicates effectiveness of event sponsorship or partnerships."
+        )
+        mk3.metric(
+            "Peak Day Index", 
+            event["Peak"],
+            help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
+        )
+        mk4.metric(
+            "Halo Duration", 
+            event["Halo"], 
+            "post-event",
+            help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
+        )
+    elif brand_filter == "Rinvoq":
+        mk1, mk2, mk3, mk4 = st.columns(4)
+        mk1.metric(
+            "Rinvoq Lift", 
+            event["Rinvoq Lift"], 
+            "vs baseline",
+            help="Percent increase in Rinvoq search interest during the event period. Measures brand awareness lift driven by cultural moment exposure."
+        )
+        mk2.metric(
+            "Peak Day Index", 
+            event["Peak"],
+            help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
+        )
+        mk3.metric(
+            "Halo Duration", 
+            event["Halo"], 
+            "post-event",
+            help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
+        )
+        mk4.metric("Brand Filter", "Rinvoq", "Only selected brand")
+    else:  # Skyrizi
+        mk1, mk2, mk3, mk4 = st.columns(4)
+        mk1.metric(
+            "Skyrizi Lift", 
+            event["Skyrizi Lift"], 
+            "vs baseline",
+            help="Percent increase in Skyrizi search interest during the event period. Indicates effectiveness of event sponsorship or partnerships."
+        )
+        mk2.metric(
+            "Peak Day Index", 
+            event["Peak"],
+            help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
+        )
+        mk3.metric(
+            "Halo Duration", 
+            event["Halo"], 
+            "post-event",
+            help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
+        )
+        mk4.metric("Brand Filter", "Skyrizi", "Only selected brand")
     
-    # Event trend chart
+    # Event trend chart - Filter by brand
     r_lift = int(event["Rinvoq Lift"].replace("+", "").replace("%", ""))
     s_lift = int(event["Skyrizi Lift"].replace("+", "").replace("%", ""))
     days = 42
@@ -1087,20 +1257,31 @@ with tabs[5]:
     s_trend = [baseline + (max(0, (event["Peak"] - baseline) * np.exp(-(max(0, i - event_day)) / int(event["Halo"].replace("d", "")))) * s_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
     
     fig_moment = go.Figure()
-    fig_moment.add_trace(go.Scatter(x=x_days, y=r_trend, name="Rinvoq", line=dict(color=RINVOQ, width=2)))
-    fig_moment.add_trace(go.Scatter(x=x_days, y=s_trend, name="Skyrizi", line=dict(color=SKYRIZI, width=2)))
+    if brand_filter in ["Both", "Rinvoq"]:
+        fig_moment.add_trace(go.Scatter(x=x_days, y=r_trend, name="Rinvoq", line=dict(color=RINVOQ, width=2)))
+    if brand_filter in ["Both", "Skyrizi"]:
+        fig_moment.add_trace(go.Scatter(x=x_days, y=s_trend, name="Skyrizi", line=dict(color=SKYRIZI, width=2)))
     fig_moment.add_vline(x=0, line_dash="dash", line_color="gray", annotation_text="Event Day")
     fig_moment.update_layout(title=f"Search Trend — {selected_event}", height=350, template="plotly_white", xaxis_title="Days from Event")
-    st.plotly_chart(fig_moment, use_container_width=True)
+    st.plotly_chart(fig_moment, use_container_width=True, key=f"moment_chart_{selected_event}_{brand_filter}")
     
     st.markdown(f"**Event Intelligence:** {event['Insight']}")
     
-    # Summary table
+    # Summary table - Filter columns by brand
     st.markdown("---")
     st.subheader("Annual Moments Summary")
-    summary = moments_df[["Event", "Category", "Date", "Rinvoq Lift", "Skyrizi Lift", "Peak", "Halo", "Breakout"]].copy()
-    summary["Combined Lift"] = summary.apply(lambda r: int(r["Rinvoq Lift"].replace("+","").replace("%","")) + int(r["Skyrizi Lift"].replace("+","").replace("%","")), axis=1)
-    summary = summary.sort_values("Combined Lift", ascending=False)
+    
+    if brand_filter == "Both":
+        summary = moments_df[["Event", "Category", "Date", "Rinvoq Lift", "Skyrizi Lift", "Peak", "Halo", "Breakout"]].copy()
+        summary["Combined Lift"] = summary.apply(lambda r: int(r["Rinvoq Lift"].replace("+","").replace("%","")) + int(r["Skyrizi Lift"].replace("+","").replace("%","")), axis=1)
+        summary = summary.sort_values("Combined Lift", ascending=False)
+    elif brand_filter == "Rinvoq":
+        summary = moments_df[["Event", "Category", "Date", "Rinvoq Lift", "Peak", "Halo", "Breakout"]].copy()
+        summary = summary.sort_values("Rinvoq Lift", key=lambda x: x.str.replace("+","").str.replace("%","").astype(int), ascending=False)
+    else:  # Skyrizi
+        summary = moments_df[["Event", "Category", "Date", "Skyrizi Lift", "Peak", "Halo", "Breakout"]].copy()
+        summary = summary.sort_values("Skyrizi Lift", key=lambda x: x.str.replace("+","").str.replace("%","").astype(int), ascending=False)
+    
     st.dataframe(summary, use_container_width=True, hide_index=True)
 
 
