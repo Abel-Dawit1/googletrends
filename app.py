@@ -653,14 +653,18 @@ with tabs[0]:
     p1, p2 = st.columns(2)
     with p1:
         rinvoq_ind = pd.DataFrame({"Indication": ["RA","PsA","AS","AD","UC","GCA"], "Share": [38,25,13,10,6,8]})
+        # Use Rinvoq brand color variations (orange tones)
+        rinvoq_colors = ["#FFB84D", "#FFC977", "#FFD4A1", "#FFE0C2", "#FFECD4", "#FFF5E6"]
         fig_rp = px.pie(rinvoq_ind, names="Indication", values="Share", title="Rinvoq — Indication Split",
-                        color_discrete_sequence=["#0099a8","#33b0bc","#66c7cf","#99dee3","#cceef1","#b2e8ec"], hole=0.5)
+                        color_discrete_sequence=rinvoq_colors, hole=0.5)
         fig_rp.update_layout(height=300, margin=dict(t=40, b=20))
         st.plotly_chart(fig_rp, use_container_width=True)
     with p2:
         skyrizi_ind = pd.DataFrame({"Indication": ["Psoriasis","PsA","Crohn's","UC"], "Share": [45,22,20,13]})
+        # Use Skyrizi brand color variations (blue tones)
+        skyrizi_colors = ["#4db8ff", "#77c9ff", "#a1daff", "#cbebff"]
         fig_sp = px.pie(skyrizi_ind, names="Indication", values="Share", title="Skyrizi — Indication Split",
-                        color_discrete_sequence=["#d94f2b","#e27558","#ea9c85","#f3c3b2"], hole=0.5)
+                        color_discrete_sequence=skyrizi_colors, hole=0.5)
         fig_sp.update_layout(height=300, margin=dict(t=40, b=20))
         st.plotly_chart(fig_sp, use_container_width=True)
     
