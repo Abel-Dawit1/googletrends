@@ -642,7 +642,7 @@ except Exception as e:
     st.session_state["api_error"] = str(e)
     client = None
 
-tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "⚡ Key Moments", "💬 AI Chat", "⚙️ Configuration"])
+tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "💬 AI Chat", "⚙️ Configuration"])
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 1: OVERVIEW
@@ -1139,9 +1139,9 @@ with tabs[1]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# TAB 3: COMPETITIVE
+# TAB 4: COMPETITIVE
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[2]:
+with tabs[3]:
     st.subheader("Competitive Intelligence")
     
     # KPIs
@@ -1192,9 +1192,9 @@ with tabs[2]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# TAB 4: PATIENT INTENT
+# TAB 5: PATIENT INTENT
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[3]:
+with tabs[4]:
     st.subheader("Patient Intent Analysis")
     
     # Filter queries by brand
@@ -1266,9 +1266,9 @@ with tabs[3]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# TAB 5: CAMPAIGN PLANNING
+# TAB 6: CAMPAIGN PLANNING
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[4]:
+with tabs[5]:
     st.subheader("Campaign Planning")
     
     now = datetime.now()
@@ -1374,9 +1374,9 @@ with tabs[4]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# TAB 6: KEY MOMENTS
+# TAB 3: KEY MOMENTS
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[5]:
+with tabs[2]:
     st.subheader("Key Cultural Moments")
     
     moments_df = pd.DataFrame(MOMENTS_DATA)
