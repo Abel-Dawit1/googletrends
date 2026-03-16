@@ -99,6 +99,99 @@ def fetch_related_queries(keyword, timeframe="today 12-m", geo="US"):
     except Exception as e:
         return {"top": None, "rising": None}
 
+# ═══════════════════════════════════════════════════════════════════════════
+# GOOGLE TRENDS DATA TRANSFORMATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+def transform_regional_to_states(regional_df):
+    """Convert regional data to state format for choropleth."""
+    if regional_df is None or regional_df.empty:
+        return None
+    
+    # regional_df should have state names as index/rows
+    states_data = []
+    for state_name, row in regional_df.iterrows():
+        state_dict = {"State": state_name}
+        for col in regional_df.columns:
+            if col != "geoCode":
+                state_dict[col] = int(row[col])
+        states_data.append(state_dict)
+    
+    return pd.DataFrame(states_data) if states_data else None
+
+def generate_dma_from_states(states_df):
+    """Generate representative DMA data from state-level data."""
+    if states_df is None or states_df.empty:
+        return DEMO_DMA
+    
+    # Major city coordinates and their associated states
+    major_dmas = {
+        "New York, NY": (40.71, -74.01, "New York"),
+        "Los Angeles, CA": (34.05, -118.24, "California"),
+        "Chicago, IL": (41.88, -87.63, "Illinois"),
+        "Dallas, TX": (32.78, -96.80, "Texas"),
+        "Houston, TX": (29.76, -95.37, "Texas"),
+        "Philadelphia, PA": (39.95, -75.17, "Pennsylvania"),
+        "Phoenix, AZ": (33.45, -112.07, "Arizona"),
+        "San Antonio, TX": (29.42, -98.49, "Texas"),
+        "San Diego, CA": (32.72, -117.16, "California"),
+        "San Francisco, CA": (37.77, -122.41, "California"),
+        "Boston, MA": (42.36, -71.06, "Massachusetts"),
+        "Miami, FL": (25.76, -80.19, "Florida"),
+        "Atlanta, GA": (33.75, -84.39, "Georgia"),
+        "Seattle, WA": (47.61, -122.33, "Washington"),
+        "Denver, CO": (39.74, -104.99, "Colorado"),
+    }
+    
+    dma_data = []
+    for city, (lat, lng, state) in major_dmas.items():
+        state_row = states_df[states_df["State"] == state]
+        if not state_row.empty:
+            rinvoq_val = int(state_row.iloc[0].get("Rinvoq", 65))
+            skyrizi_val = int(state_row.iloc[0].get("Skyrizi", 70))
+        else:
+            rinvoq_val, skyrizi_val = 65, 70
+        
+        trend = "↑" if rinvoq_val > skyrizi_val else "↓" if rinvoq_val < skyrizi_val else "→"
+        dma_data.append({
+            "Market": city,
+            "lat": lat,
+            "lng": lng,
+            "Rinvoq": rinvoq_val,
+            "Skyrizi": skyrizi_val,
+            "Trend": trend
+        })
+    
+    return pd.DataFrame(dma_data)
+
+def transform_trends_to_queries(trend_df, related_rinvoq=None, related_skyrizi=None):
+    """Generate query data from trends and related queries."""
+    queries = []
+    
+    # Add related queries if available
+    if related_rinvoq and related_rinvoq.get("top") is not None:
+        for idx, row in related_rinvoq["top"].iterrows():
+            queries.append({
+                "Query": row.get("query", row.name if hasattr(row, "name") else ""),
+                "Brand": "Rinvoq",
+                "Index": int(row.get("value", 70)),
+                "Growth": 0,
+                "Type": "condition"
+            })
+    
+    if related_skyrizi and related_skyrizi.get("top") is not None:
+        for idx, row in related_skyrizi["top"].iterrows():
+            queries.append({
+                "Query": row.get("query", row.name if hasattr(row, "name") else ""),
+                "Brand": "Skyrizi",
+                "Index": int(row.get("value", 70)),
+                "Growth": 0,
+                "Type": "condition"
+            })
+    
+    # Fallback to demo data if no real queries
+    return pd.DataFrame(queries) if queries else DEMO_QUERIES
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # DEMO DATA FALLBACK
@@ -308,10 +401,23 @@ if st.session_state.get("data_source") == "live":
 related_rinvoq = fetch_related_queries("Rinvoq") if st.session_state.get("data_source") == "live" else {"top": None, "rising": None}
 related_skyrizi = fetch_related_queries("Skyrizi") if st.session_state.get("data_source") == "live" else {"top": None, "rising": None}
 
-# State-level data
+# State-level data - fetch and transform
 state_df = None
+raw_state_df = None
 if st.session_state.get("data_source") == "live":
-    state_df = fetch_regional_data(["Rinvoq", "Skyrizi"], timeframe="today 12-m", resolution="REGION")
+    raw_state_df = fetch_regional_data(["Rinvoq", "Skyrizi"], timeframe="today 12-m", resolution="REGION")
+    state_df = transform_regional_to_states(raw_state_df)
+
+# Use transformed state data for DMA generation, fallback to demo
+if state_df is not None and not state_df.empty:
+    DEMO_DMA = generate_dma_from_states(state_df)
+    DEMO_STATES = state_df
+elif state_df is None and st.session_state.get("data_source") == "live":
+    # If live but transformation failed, still use DEMO data
+    pass
+
+# Generate queries from related data or use demo
+DEMO_QUERIES = transform_trends_to_queries(trend_df, related_rinvoq, related_skyrizi)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
