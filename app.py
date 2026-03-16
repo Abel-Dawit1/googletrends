@@ -696,13 +696,15 @@ with tabs[0]:
         fig_trend.add_trace(go.Scatter(
             x=trend_df.index, y=trend_df[col], name=col, mode="lines",
             line=dict(color=color, width=2.5),
-            fill="tozeroy", fillcolor=f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)"
+            fill="tozeroy", fillcolor=f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)",
+            hovertemplate="<b>%{fullData.name}</b><br>Date: %{x|%b %d, %Y}<br>Index: <b>%{y}</b><extra></extra>"
         ))
     fig_trend.update_layout(
         title="Search Interest Over Time", height=350,
         yaxis=dict(range=[0, 100], title="Search Index"),
         xaxis=dict(title=""), legend=dict(orientation="h", y=-0.15),
         template="plotly_white", margin=dict(t=40, b=40),
+        hoverlabel=dict(bgcolor="white", font_size=13, font_family="sans-serif", namelength=-1)
     )
     st.plotly_chart(fig_trend, use_container_width=True)
     
@@ -712,19 +714,25 @@ with tabs[0]:
     with c1:
         fig_season = go.Figure()
         if brand_filter != "Skyrizi":
-            fig_season.add_trace(go.Bar(x=SEASON_DATA["Month"], y=SEASON_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ, opacity=0.8))
+            fig_season.add_trace(go.Bar(x=SEASON_DATA["Month"], y=SEASON_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ, opacity=0.8,
+                hovertemplate="<b>Rinvoq</b><br>Month: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
         if brand_filter != "Rinvoq":
-            fig_season.add_trace(go.Bar(x=SEASON_DATA["Month"], y=SEASON_DATA["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI, opacity=0.8))
-        fig_season.update_layout(title="Seasonality", height=300, barmode="group", yaxis=dict(range=[0, 100]), template="plotly_white", margin=dict(t=40, b=20))
+            fig_season.add_trace(go.Bar(x=SEASON_DATA["Month"], y=SEASON_DATA["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI, opacity=0.8,
+                hovertemplate="<b>Skyrizi</b><br>Month: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
+        fig_season.update_layout(title="Seasonality", height=300, barmode="group", yaxis=dict(range=[0, 100]), template="plotly_white", margin=dict(t=40, b=20),
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_season, use_container_width=True)
     
     with c2:
         fig_yoy = go.Figure()
         if brand_filter != "Skyrizi":
-            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Quarter"], y=YOY_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ))
+            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Quarter"], y=YOY_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ,
+                hovertemplate="<b>Rinvoq</b><br>Quarter: %{x}<br>Growth: <b>%{y}%</b><extra></extra>"))
         if brand_filter != "Rinvoq":
-            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Quarter"], y=YOY_DATA["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI))
-        fig_yoy.update_layout(title="Year-over-Year Growth (%)", height=300, barmode="group", template="plotly_white", margin=dict(t=40, b=20))
+            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Quarter"], y=YOY_DATA["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
+                hovertemplate="<b>Skyrizi</b><br>Quarter: %{x}<br>Growth: <b>%{y}%</b><extra></extra>"))
+        fig_yoy.update_layout(title="Year-over-Year Growth (%)", height=300, barmode="group", template="plotly_white", margin=dict(t=40, b=20),
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_yoy, use_container_width=True)
     
     # Indication Pies - Show only selected brand(s)
@@ -1083,13 +1091,18 @@ with tabs[1]:
         reg_df = pd.DataFrame(reg_data)
         fig_reg = go.Figure()
         if brand_filter == "Both":
-            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Rinvoq"], name="Rinvoq", marker_color=RINVOQ))
-            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI))
+            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Rinvoq"], name="Rinvoq", marker_color=RINVOQ,
+                hovertemplate="<b>Rinvoq</b><br>Region: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
+            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
+                hovertemplate="<b>Skyrizi</b><br>Region: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
         elif brand_filter == "Rinvoq":
-            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Rinvoq"], name="Rinvoq", marker_color=RINVOQ))
+            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Rinvoq"], name="Rinvoq", marker_color=RINVOQ,
+                hovertemplate="<b>Rinvoq</b><br>Region: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
         else:
-            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI))
-        fig_reg.update_layout(title="Regional Performance", barmode="group", height=350, template="plotly_white", yaxis=dict(range=[0, 100]))
+            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
+                hovertemplate="<b>Skyrizi</b><br>Region: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
+        fig_reg.update_layout(title="Regional Performance", barmode="group", height=350, template="plotly_white", yaxis=dict(range=[0, 100]),
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_reg, use_container_width=True)
 
     # Insight
@@ -1124,7 +1137,9 @@ with tabs[3]:
     
     fig_rank = px.bar(brand_df, x="Index", y="Brand", orientation="h", title="Competitive Index Ranking",
                       color="Brand", color_discrete_map={b["Brand"]: b["Color"] for b in all_brands})
-    fig_rank.update_layout(height=380, showlegend=False, margin=dict(t=40))
+    fig_rank.update_traces(hovertemplate="<b>%{y}</b><br>Index: <b>%{x}</b><extra></extra>")
+    fig_rank.update_layout(height=380, showlegend=False, margin=dict(t=40),
+                          hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
     st.plotly_chart(fig_rank, use_container_width=True)
     
     c3, c4 = st.columns(2)
@@ -1137,10 +1152,14 @@ with tabs[3]:
             "Skyrizi": [35 + i*3 + np.random.randint(-3, 3) for i in range(12)],
         })
         fig_hum = go.Figure()
-        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Humira"], name="Humira", line=dict(color="#e67e22", dash="dash")))
-        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Rinvoq"], name="Rinvoq", line=dict(color=RINVOQ)))
-        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Skyrizi"], name="Skyrizi", line=dict(color=SKYRIZI)))
-        fig_hum.update_layout(title="Humira Displacement Trend", height=350, template="plotly_white")
+        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Humira"], name="Humira", line=dict(color="#e67e22", dash="dash"),
+            hovertemplate="<b>Humira</b> (Incumbent)<br>Month: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
+        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Rinvoq"], name="Rinvoq", line=dict(color=RINVOQ),
+            hovertemplate="<b>Rinvoq</b><br>Month: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
+        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Skyrizi"], name="Skyrizi", line=dict(color=SKYRIZI),
+            hovertemplate="<b>Skyrizi</b><br>Month: %{x}<br>Index: <b>%{y}</b><extra></extra>"))
+        fig_hum.update_layout(title="Humira Displacement Trend", height=350, template="plotly_white",
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_hum, use_container_width=True)
     with c4:
         # Radar
@@ -1220,9 +1239,11 @@ with tabs[4]:
     for ind, color in intent_colors.items():
         fig_intent.add_trace(go.Scatter(
             x=SEASON_DATA["Month"], y=[40 + np.random.randint(0, 40) + int(np.sin(i/2) * 15) for i in range(12)],
-            name=ind, line=dict(color=color, width=2), mode="lines"
+            name=ind, line=dict(color=color, width=2), mode="lines",
+            hovertemplate="<b>%{fullData.name}</b><br>Month: %{x}<br>Interest: <b>%{y}</b><extra></extra>"
         ))
-    fig_intent.update_layout(title="Intent Trend by Indication (12 Months)", height=350, template="plotly_white")
+    fig_intent.update_layout(title="Intent Trend by Indication (12 Months)", height=350, template="plotly_white",
+        hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
     st.plotly_chart(fig_intent, use_container_width=True)
     
     st.info("🔬 **Patient Intent Insight:** Patient-oriented queries (conditions, symptoms) dominate search volume, indicating strong awareness-stage interest. HCP-oriented queries (generics, MOA, safety) lag behind — recommend shifting 15% of awareness budget toward HCP-targeted content to balance the funnel. Breakout terms in AS and GCA represent first-mover search equity.")
