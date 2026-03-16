@@ -24,6 +24,12 @@ from config import (
     IND_NAMES, FRANCHISE_MAP, TIMEFRAME_MAP,
     DEMO_AI_INSIGHTS
 )
+from config import (
+    NAVY, RINVOQ, SKYRIZI, GOLD, SUCCESS,
+    COMP_COLORS, COMPETITORS,
+    IND_NAMES, FRANCHISE_MAP, TIMEFRAME_MAP,
+    DEMO_AI_INSIGHTS
+)
 
 # Initialize Claude client
 @st.cache_resource
