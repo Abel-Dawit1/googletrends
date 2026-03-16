@@ -517,6 +517,53 @@ with st.sidebar:
 # LOAD DATA
 # ═══════════════════════════════════════════════════════════════════════════
 
+def load_data(timeframe, brand_filter):
+    """Load trend data based on timeframe and brand filter."""
+    # Determine which brands to fetch based on filter
+    if brand_filter == "Both":
+        keywords = ["Rinvoq", "Skyrizi"]
+    elif brand_filter == "Rinvoq":
+        keywords = ["Rinvoq"]
+    else:  # Skyrizi
+        keywords = ["Skyrizi"]
+    
+    # Try to fetch live data
+    if st.session_state.get("data_source") == "live":
+        trend_df = fetch_trends_data(keywords, timeframe=timeframe)
+        if trend_df is not None and not trend_df.empty:
+            st.session_state["data_source"] = "live"
+            return trend_df
+    
+    # Fallback to demo data
+    st.session_state["data_source"] = "demo"
+    
+    # Generate demo data based on brand filter
+    date_range = pd.date_range(end=datetime.now(), periods=90, freq='D')
+    
+    if brand_filter == "Both":
+        # Both brands
+        rinvoq_data = [50 + np.sin(i/10) * 20 + np.random.randn() * 5 for i in range(90)]
+        skyrizi_data = [45 + np.sin(i/10 + 1) * 18 + np.random.randn() * 5 for i in range(90)]
+        return pd.DataFrame({
+            "date": date_range,
+            "Rinvoq": rinvoq_data,
+            "Skyrizi": skyrizi_data
+        }).set_index("date")
+    elif brand_filter == "Rinvoq":
+        # Only Rinvoq
+        rinvoq_data = [50 + np.sin(i/10) * 20 + np.random.randn() * 5 for i in range(90)]
+        return pd.DataFrame({
+            "date": date_range,
+            "Rinvoq": rinvoq_data
+        }).set_index("date")
+    else:  # Skyrizi
+        # Only Skyrizi
+        skyrizi_data = [45 + np.sin(i/10 + 1) * 18 + np.random.randn() * 5 for i in range(90)]
+        return pd.DataFrame({
+            "date": date_range,
+            "Skyrizi": skyrizi_data
+        }).set_index("date")
+
 trend_df = load_data(timeframe, brand_filter)
 
 # Also try to load competitor data
