@@ -1114,23 +1114,21 @@ with tabs[1]:
     
     with col1:
         st.subheader("📊 Top Search Queries")
-        st.caption("Queries ranked by absolute search interest index (0-100 scale)")
-        top_queries_display = filtered_queries.sort_values("Index", ascending=False)[["Query", "Brand", "Index", "Growth", "Type"]].head(15).reset_index(drop=True)
-        top_queries_display.index = top_queries_display.index + 1
+        st.caption("Ranked by search interest index")
+        top_queries_display = filtered_queries.sort_values("Index", ascending=False)[["Query", "Brand", "Index"]].head(10).reset_index(drop=True)
         st.dataframe(
             top_queries_display,
             use_container_width=True,
+            hide_index=True,
             column_config={
                 "Index": st.column_config.NumberColumn("Index", format="%d"),
-                "Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%"),
             }
         )
     
     with col2:
         st.subheader("🚀 Rising Queries")
-        st.caption("Queries with highest growth rates. Queries with 500%+ growth marked as 🔥 Breakout")
-        rising_queries_display = filtered_queries[filtered_queries["Growth"] > 0].sort_values("Growth", ascending=False)[["Query", "Brand", "Growth", "Index", "Type"]].head(15).reset_index(drop=True)
-        rising_queries_display.index = rising_queries_display.index + 1
+        st.caption("Ranked by growth rate")
+        rising_queries_display = filtered_queries[filtered_queries["Growth"] > 0].sort_values("Growth", ascending=False)[["Query", "Brand", "Growth"]].head(10).reset_index(drop=True)
         
         # Add breakout indicator
         rising_queries_display["Status"] = rising_queries_display.apply(
@@ -1138,11 +1136,11 @@ with tabs[1]:
         )
         
         st.dataframe(
-            rising_queries_display[["Query", "Brand", "Status", "Growth", "Index", "Type"]],
+            rising_queries_display[["Query", "Brand", "Status", "Growth"]],
             use_container_width=True,
+            hide_index=True,
             column_config={
                 "Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%"),
-                "Index": st.column_config.NumberColumn("Index", format="%d"),
             }
         )
     
