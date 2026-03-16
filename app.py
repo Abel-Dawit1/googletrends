@@ -905,184 +905,118 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create completely static US-only map - NO zoom, NO interaction
-    m = folium.Map(
-        location=[39.5, -98.5], 
-        zoom_start=4, 
-        tiles=None,  # No basemap tiles
-        scroll_zoom=False, 
-        zoom_control=False,
-        dragging=False,
-        keyboard=False,
-        min_zoom=4,
-        max_zoom=4,  # Lock zoom level to 4
-        max_bounds=True  # Enforce bounds restriction
-    )
+    # Create static US map using Plotly (no zoom capability)
+    # Get state data for choropleth
+    state_values = display_states.copy()
+    if brand_filter == "Both":
+        state_values["interest"] = ((state_values["Rinvoq"] + state_values["Skyrizi"]) / 2).round().astype(int)
+        legend = "Avg Search Interest Index"
+        color_col = "interest"
+        color_scale = "Oranges"
+    elif brand_filter == "Rinvoq":
+        state_values["interest"] = state_values["Rinvoq"].round().astype(int)
+        legend = "Rinvoq Search Interest Index"
+        color_col = "interest"
+        color_scale = "Oranges"
+    else:
+        state_values["interest"] = state_values["Skyrizi"].round().astype(int)
+        legend = "Skyrizi Search Interest Index"
+        color_col = "interest"
+        color_scale = "Blues"
+
+    # Create Plotly map for US only - completely static, no zoom
+    fig = go.Figure()
     
-    # Disable ALL zoom and interaction features
-    m.options['doubleClickZoom'] = False
-    m.options['touchZoom'] = False
-    m.options['boxZoom'] = False
-    m.options['tap'] = False
-    m.options['zoomSnap'] = 0
-    m.options['zoomDelta'] = 0
-    
-    # Lock bounds so map cannot be panned
-    bounds = [[25, -125], [50, -66]]
-    m.fit_bounds(bounds)
-    
-    # Load US state boundaries as the base layer
     try:
+        # Load US state boundaries
         us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
         geo_data = requests.get(us_state_geo).json()
         
-        # Add state outlines as base map layer (light gray background)
-        folium.GeoJson(
-            geo_data,
-            style_function=lambda x: {
-                "fillColor": "#ffffcc",
-                "color": "#cccccc",
-                "weight": 1,
-                "fillOpacity": 0.1
-            },
-            tooltip=False
-        ).add_to(m)
-        
-        # Extract Alaska and Hawaii for inset maps
-        alaska_feature = next((f for f in geo_data["features"] if f["properties"]["name"] == "Alaska"), None)
-        hawaii_feature = next((f for f in geo_data["features"] if f["properties"]["name"] == "Hawaii"), None)
-        
-        # Add Alaska inset box in bottom left
-        if alaska_feature:
-            folium.GeoJson(
-                alaska_feature,
-                style_function=lambda x: {
-                    "fillColor": "#ffffcc",
-                    "color": "#333333",
-                    "weight": 2,
-                    "fillOpacity": 0.3
-                },
-                tooltip=False
-            ).add_to(m)
-        
-        # Add Hawaii inset box in bottom left (next to Alaska)
-        if hawaii_feature:
-            folium.GeoJson(
-                hawaii_feature,
-                style_function=lambda x: {
-                    "fillColor": "#ffffcc",
-                    "color": "#333333",
-                    "weight": 2,
-                    "fillOpacity": 0.3
-                },
-                tooltip=False
-            ).add_to(m)
-        
+        # Add choropleth for states
+        fig.add_trace(go.Choropleth(
+            locations=[d["properties"]["name"] for d in geo_data["features"]],
+            locationmode="geojson-id",
+            z=state_values['interest'].values,
+            geojson=geo_data,
+            colorscale=color_scale,
+            marker_line_width=1,
+            marker_line_color='white',
+            colorbar=dict(title=legend),
+            hovertemplate="<b>%{locations}</b><br>Interest: %{z}<extra></extra>",
+            showscale=True
+        ))
     except:
         pass
-
-    # Add state choropleth with search interest shading
-    try:
-        # Load US state boundaries GeoJSON
-        us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
-        geo_data = requests.get(us_state_geo).json()
-
-        # Prepare state data for choropleth based on brand filter
-        state_values = display_states.copy()
-        if brand_filter == "Both":
-            state_values["interest"] = ((state_values["Rinvoq"] + state_values["Skyrizi"]) / 2).round().astype(int)
-            legend = "Avg Search Interest Index"
-            columns = ["State", "interest"]
-        elif brand_filter == "Rinvoq":
-            state_values["interest"] = state_values["Rinvoq"].round().astype(int)
-            legend = "Rinvoq Search Interest Index"
-            columns = ["State", "interest"]
-        else:
-            state_values["interest"] = state_values["Skyrizi"].round().astype(int)
-            legend = "Skyrizi Search Interest Index"
-            columns = ["State", "interest"]
-
-        # Add choropleth layer with brand-specific color
-        if brand_filter == "Rinvoq":
-            color_scheme = "Oranges"
-        elif brand_filter == "Skyrizi":
-            color_scheme = "Blues"
-        else:
-            color_scheme = "Blues"
-        
-        folium.Choropleth(
-            geo_data=geo_data,
-            name="Search Interest",
-            data=state_values,
-            columns=columns,
-            key_on="feature.properties.name",
-            fill_color=color_scheme,
-            fill_opacity=0.7,
-            line_opacity=0.5,
-            line_color="white",
-            line_weight=1,
-            legend_name=legend,
-            nan_fill_color="lightgray",
-        ).add_to(m)
-
-        # Add custom tooltips for states with hover info
-        for feature in geo_data["features"]:
-            state_name = feature["properties"]["name"]
-            state_data = state_values[state_values["State"] == state_name]
-
-            if not state_data.empty:
-                if brand_filter == "Both":
-                    rinvoq_val = int(state_data["Rinvoq"].values[0])
-                    skyrizi_val = int(state_data["Skyrizi"].values[0])
-                    avg_val = int(state_data["interest"].values[0])
-                    tooltip_text = f"<b>{state_name}</b><br>Rinvoq: {rinvoq_val}<br>Skyrizi: {skyrizi_val}<br>Avg: {avg_val}"
-                elif brand_filter == "Rinvoq":
-                    rinvoq_val = int(state_data["Rinvoq"].values[0])
-                    tooltip_text = f"<b>{state_name}</b><br>Rinvoq: {rinvoq_val}"
-                else:
-                    skyrizi_val = int(state_data["Skyrizi"].values[0])
-                    tooltip_text = f"<b>{state_name}</b><br>Skyrizi: {skyrizi_val}"
-            else:
-                tooltip_text = f"<b>{state_name}</b><br>No data available"
-
-            # Add GeoJson layer with tooltips
-            folium.GeoJson(
-                feature,
-                style_function=lambda x: {
-                    "fillOpacity": 0,
-                    "color": "transparent",
-                },
-                tooltip=folium.Tooltip(tooltip_text, sticky=False),
-            ).add_to(m)
-
-    except Exception as e:
-        st.warning(f"Could not load state boundaries: {e}")
-
-    # Add DMA circle markers on top, filtered by brand
+    
+    # Add DMA circle markers
     for _, row in dma_data.iterrows():
         if brand_filter == "Both":
             r_val, s_val = row["Rinvoq"], row["Skyrizi"]
             avg = (r_val + s_val) / 2
             color = RINVOQ if r_val > s_val else SKYRIZI
-            tooltip = f"<b>{row['Market']}</b><br>Rinvoq: {r_val} · Skyrizi: {s_val} {row['Trend']}"
-            radius = 4 + avg / 10
+            text = f"{row['Market']}<br>Rinvoq: {r_val} · Skyrizi: {s_val} {row['Trend']}"
+            size = 8 + avg / 5
         elif brand_filter == "Rinvoq":
             r_val = row["Rinvoq"]
             color = RINVOQ
-            tooltip = f"<b>{row['Market']}</b><br>Rinvoq: {r_val}"
-            radius = 4 + r_val / 10
+            text = f"{row['Market']}<br>Rinvoq: {r_val}"
+            size = 8 + r_val / 5
         else:
             s_val = row["Skyrizi"]
             color = SKYRIZI
-            tooltip = f"<b>{row['Market']}</b><br>Skyrizi: {s_val}"
-            radius = 4 + s_val / 10
-        folium.CircleMarker(
-            [row["lat"], row["lng"]], radius=radius,
-            color="white", weight=2, fill=True, fill_color=color, fill_opacity=0.85,
-            tooltip=tooltip
-        ).add_to(m)
+            text = f"{row['Market']}<br>Skyrizi: {s_val}"
+            size = 8 + s_val / 5
+        
+        fig.add_trace(go.Scattergeo(
+            lon=[row["lng"]],
+            lat=[row["lat"]],
+            mode='markers',
+            marker=dict(
+                size=size,
+                color=color,
+                line=dict(width=2, color='white'),
+                opacity=0.85
+            ),
+            text=text,
+            hovertemplate="<b>%{text}</b><extra></extra>",
+            showlegend=False
+        ))
     
-    st_folium(m, height=500, use_container_width=True)
+    # Configure map - US only geo scope, completely static
+    fig.update_geos(
+        scope='usa',
+        projection_type='albers usa',
+        showland=True,
+        landcolor='rgb(243, 243, 243)',
+        showlakes=True,
+        lakecolor='rgb(255, 255, 255)',
+        showcountries=False,
+        showcoastline=False,
+        bgcolor='rgba(255, 255, 255, 0)',
+        coastlinewidth=1,
+        countrywidth=1,
+        subunitwidth=1
+    )
+    
+    # Completely disable interaction and zooming
+    fig.update_layout(
+        title=None,
+        height=500,
+        margin=dict(l=0, r=0, t=0, b=0),
+        geo=dict(
+            projection_type='albers usa',
+            showframe=False,
+            showcoastline=False,
+            projection=dict(type='albers usa'),
+            bgcolor='rgba(255,255,255,0)'
+        ),
+        hovermode='closest',
+        paper_bgcolor='white',
+        plot_bgcolor='white'
+    )
+    
+    # Display the map
+    st.plotly_chart(fig, use_container_width=True, config={'staticPlot': True})
 
     # Top Markets Table - Apply brand filter
     st.subheader("Top Markets")
