@@ -987,14 +987,16 @@ with tabs[1]:
             lat=[row["lat"]],
             mode='markers',
             marker=dict(
-                size=size,
+                size=12,
                 color=color,
                 line=dict(width=2, color='white'),
-                opacity=0.85
+                opacity=0.9,
+                symbol='circle'
             ),
             text=text,
-            hovertemplate="<b>%{text}</b><extra></extra>",
-            showlegend=False
+            hovertemplate="%{text}<extra></extra>",
+            showlegend=False,
+            name='Markets'
         ))
     
     # Configure map layout with simple geo settings
