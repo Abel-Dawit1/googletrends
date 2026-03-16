@@ -454,12 +454,12 @@ MOMENTS_DATA = [
 ]
 
 DEMO_AI_INSIGHTS = [
-    "**Northeast Markets Show Persistent Dominance**\n\n📈 New York, Boston, Philadelphia sustained at 15-25 pts above national average. Strong search engagement across both condition and branded queries indicates deep market penetration.",
-    "**Skyrizi Driving GI Indication Growth**\n\n📈 Crohn's disease searches jumped +42% YoY—highest growth of any tracked indication. First signs of successful indication expansion beyond psoriasis into gastroenterology.",
-    "**Humira Competitive Pressure Accelerating**\n\n📈 'Rinvoq vs Humira' search intensity surged +120% YoY. Reflects high-intent patient population actively evaluating switching options. Peak switching behavior historically Jan-Mar.",
-    "**HCP Engagement Concentrated Around ACR**\n\n📈 Generic 'upadacitinib' searches (88 index) indicate strong HCP research activity. ACR conference period historically shows +35% lift, indicating HCP seasonality effect.",
-    "**Safety Becomes Search Driver**\n\n📈 JAK safety-related searches growing faster than branded searches (+82 index). Patients moving from interest phase to evaluation phase, prioritizing risk assessment.",
-    "**Geographic Disparity Widening**\n\n📈 South/Southwest states (48-58 range) sustaining 35-40 pt gap behind Northeast. Regional market maturation differences suggest different adoption curves by geography."
+    "**Skyrizi Outpacing Rinvoq in Growth Rate**\n\n📈 Skyrizi YoY growth +45% vs Rinvoq +38%. Gap widening across all quarters in 2024. Suggests stronger momentum in dermatology indication expansion, particularly psoriasis and newer areas.",
+    "**Skyrizi Crohn's Breakout: +42% Spike**\n\n📈 Crohn's disease searches for Skyrizi jumped 42% YoY—highest growth among any tracked indication. Marks successful entry into GI market with legitimate clinical demand signal.",
+    "**Rinvoq Command in RA/Rheumatology Searches**\n\n📈 Rheumatoid arthritis searches favor Rinvoq (94 index) over Skyrizi (88 index). Upadacitinib JAK mechanism maintains strong HCP research activity, particularly around clinical data.",
+    "**Northeast Duopoly: Both Brands Dominate**\n\n📈 Rinvoq and Skyrizi both sustained 15-25 pts above national average in Northeast DMAs. NYC/Boston/Philadelphia show deepest market penetration for both products combined.",
+    "**Skyrizi Emerging in New Indications**\n\n📈 Atopic dermatitis searches up 52% YoY for Skyrizi. Signals successful label expansion beyond plaque psoriasis gaining traction with patients exploring treatment options.",
+    "**Safety Research: Patients Evaluating Both**\n\n📈 JAK inhibitor safety searches (+82 index) tracking Rinvoq research. Patients in evaluation phase want evidence-based safety profiles as part of treatment selection."
 ]
 
 
