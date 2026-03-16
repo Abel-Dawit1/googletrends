@@ -945,6 +945,9 @@ with tabs[1]:
         "Minnesota": "MN", "California": "CA", "Texas": "TX", "Florida": "FL",
         "Georgia": "GA", "Washington": "WA"
     }
+    
+    # Create reverse mapping: abbreviation to full state name
+    ABBR_TO_STATE_NAME = {v: k for k, v in STATE_NAME_TO_ABBR.items()}
 
     # Extract state abbreviations from DMA data for filtering
     dma_states = {}
@@ -993,7 +996,7 @@ with tabs[1]:
             else:
                 z_values.append(0)
         
-        # Add choropleth for states with proper hover display and click target
+        # Add choropleth for states with proper hover display
         fig.add_trace(go.Choropleth(
             locations=state_names,
             z=z_values,
@@ -1005,7 +1008,7 @@ with tabs[1]:
             marker_line_width=1,
             marker_line_color='white',
             colorbar=dict(title=legend, len=0),
-            hovertemplate="<b>%{text}</b><br>Search Interest: %{z}<br><i>Click to zoom</i><extra></extra>",
+            hovertemplate="<b>%{text}</b><br>Search Interest: %{z}<br><i>Select state to zoom</i><extra></extra>",
             showscale=False,
             name=""
         ))
@@ -1207,16 +1210,15 @@ with tabs[1]:
         if selected_state != st.session_state.selected_state:
             st.session_state.selected_state = selected_state
             st.session_state.selected_dma = "All"
-        
-        # Check if state is clickable (zoomable to full state) and update map zoom
-        # Map zoom available for states with DMA data
-        zoomable_states_abbr = list(set(dma_states.values()))
-        zoomable_states = [s for s in STATE_NAME_TO_ABBR.keys() if STATE_NAME_TO_ABBR[s] in zoomable_states_abbr]
-        
-        if selected_state in zoomable_states and selected_state != "All":
-            # Update the map zoom state
-            if selected_state != st.session_state.get("map_zoom_state", "All"):
-                st.session_state.map_zoom_state = selected_state
+            
+            # Trigger map zoom when a state is selected
+            if selected_state != "All" and selected_state in ABBR_TO_STATE_NAME:
+                # Convert abbreviation to full state name for map zoom
+                full_state_name = ABBR_TO_STATE_NAME[selected_state]
+                st.session_state.map_zoom_state = full_state_name
+                st.rerun()
+            elif selected_state == "All":
+                st.session_state.map_zoom_state = "All"
                 st.rerun()
     
     # Get DMAs for selected region and state
