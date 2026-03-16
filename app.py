@@ -26,6 +26,14 @@ except ImportError:
     HAS_ANTHROPIC = False
     Anthropic = None
 
+# Try to import pytrends, but make it optional
+try:
+    from pytrends.request import TrendReq
+    HAS_PYTRENDS = True
+except ImportError:
+    HAS_PYTRENDS = False
+    TrendReq = None
+
 from config import (
     NAVY, RINVOQ, SKYRIZI, GOLD, SUCCESS,
     COMP_COLORS, COMPETITORS,
@@ -77,9 +85,10 @@ st.set_page_config(
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_trends_data(keywords, timeframe="today 3-m", geo="US"):
     """Fetch interest over time from Google Trends via pytrends."""
+    if not HAS_PYTRENDS:
+        return None
     try:
         import time
-        from pytrends.request import TrendReq
         time.sleep(2)  # Rate limiting
         pytrends = TrendReq(hl="en-US", tz=360)
         pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
