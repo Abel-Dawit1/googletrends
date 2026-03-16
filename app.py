@@ -1108,20 +1108,6 @@ with tabs[1]:
     
     st.markdown("---")
     
-    # Display metrics
-    metric_cols = st.columns(4)
-    with metric_cols[0]:
-        st.metric("Total Queries", len(filtered_queries))
-    with metric_cols[1]:
-        rising = len(filtered_queries[filtered_queries["Growth"] >= 500])
-        st.metric("Breakout Queries", rising)
-    with metric_cols[2]:
-        st.metric("Brands Tracked", filtered_queries["Brand"].nunique())
-    with metric_cols[3]:
-        st.metric("Query Types", filtered_queries["Type"].nunique())
-    
-    st.markdown("---")
-    
     # Top Search Queries Table
     st.subheader("📊 Top Search Queries")
     st.caption("Queries ranked by absolute search interest index (0-100 scale)")
