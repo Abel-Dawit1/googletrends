@@ -954,9 +954,10 @@ with tabs[1]:
             colorscale=color_scale,
             marker_line_width=1,
             marker_line_color='white',
-            colorbar=dict(title=legend),
-            hovertemplate="<b>%{locations}</b><br>Interest: %{z}<extra></extra>",
-            showscale=True
+            colorbar=dict(title=legend, len=0),  # Hide colorbar
+            hovertemplate="<b>%{locations}</b><br>Search Interest: %{z}<extra></extra>",
+            showscale=False,  # Hide colorbar scale
+            name=""
         ))
     except:
         pass
