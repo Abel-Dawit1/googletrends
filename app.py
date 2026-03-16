@@ -1057,7 +1057,7 @@ with tabs[1]:
     # Add breakout indicator for Rising Queries (Growth >= 500%)
     queries_df["Breakout"] = queries_df["Growth"] >= 500
     
-    # Geographic filtering controls
+    # Geographic filtering controls with cascading selection
     st.markdown("**Filter by Geography**")
     
     # Define regions and state mappings
@@ -1077,35 +1077,77 @@ with tabs[1]:
             state_abbr = market.split(",")[1].strip()
             dma_states[market] = state_abbr
     
+    # Initialize session state for filters
+    if "selected_region" not in st.session_state:
+        st.session_state.selected_region = "All"
+    if "selected_state" not in st.session_state:
+        st.session_state.selected_state = "All"
+    if "selected_dma" not in st.session_state:
+        st.session_state.selected_dma = "All"
+    
     # Create filter columns
     fcol1, fcol2, fcol3 = st.columns(3)
     
     with fcol1:
-        selected_region = st.selectbox("Region", list(regions.keys()), key="region_filter")
+        selected_region = st.selectbox(
+            "Region",
+            list(regions.keys()),
+            index=list(regions.keys()).index(st.session_state.selected_region) if st.session_state.selected_region in regions else 0,
+            key="region_filter_temp"
+        )
+        # Update session state and reset dependent filters when region changes
+        if selected_region != st.session_state.selected_region:
+            st.session_state.selected_region = selected_region
+            st.session_state.selected_state = "All"
+            st.session_state.selected_dma = "All"
     
     # Get states for selected region
-    if selected_region == "All":
+    if st.session_state.selected_region == "All":
         available_states = sorted(list(set(dma_states.values())))
     else:
-        available_states = regions[selected_region]
+        available_states = regions[st.session_state.selected_region]
     
     with fcol2:
-        selected_state = st.selectbox("State", ["All"] + available_states, key="state_filter")
+        state_options = ["All"] + available_states
+        state_index = state_options.index(st.session_state.selected_state) if st.session_state.selected_state in state_options else 0
+        selected_state = st.selectbox(
+            "State",
+            state_options,
+            index=state_index,
+            key="state_filter_temp"
+        )
+        # Update session state and reset DMA when state changes
+        if selected_state != st.session_state.selected_state:
+            st.session_state.selected_state = selected_state
+            st.session_state.selected_dma = "All"
     
     # Get DMAs for selected state
-    if selected_state == "All":
+    if st.session_state.selected_state == "All":
         available_dmas = [m for m in dma_states.keys()]
     else:
-        available_dmas = [m for m, st in dma_states.items() if st == selected_state]
+        available_dmas = [m for m, st in dma_states.items() if st == st.session_state.selected_state]
     
     with fcol3:
-        selected_dma = st.selectbox("DMA", ["All"] + available_dmas, key="dma_filter")
+        dma_options = ["All"] + available_dmas
+        dma_index = dma_options.index(st.session_state.selected_dma) if st.session_state.selected_dma in dma_options else 0
+        selected_dma = st.selectbox(
+            "DMA",
+            dma_options,
+            index=dma_index,
+            key="dma_filter_temp"
+        )
+        if selected_dma != st.session_state.selected_dma:
+            st.session_state.selected_dma = selected_dma
+    
+    # Update session state with final selections
+    st.session_state.selected_region = selected_region
+    st.session_state.selected_state = selected_state
+    st.session_state.selected_dma = selected_dma
     
     # Apply geographic filters to queries
     filtered_queries = queries_df.copy()
     # Since queries don't have direct geographic info, we'll show all but indicate this limitation
     # In production, queries would be tagged with DMA/State/Region
-    
     
     st.markdown("---")
     
