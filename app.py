@@ -64,23 +64,27 @@ TIMEFRAME_MAP = {
 def fetch_trends_data(keywords, timeframe="today 3-m", geo="US"):
     """Fetch interest over time from Google Trends via pytrends."""
     try:
+        import time
         from pytrends.request import TrendReq
-        pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=1)
+        time.sleep(2)  # Rate limiting
+        pytrends = TrendReq(hl="en-US", tz=360)
         pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
         df = pytrends.interest_over_time()
         if "isPartial" in df.columns:
             df = df.drop("isPartial", axis=1)
         return df
     except Exception as e:
-        st.session_state["data_error"] = str(e)
+        st.session_state["data_error"] = f"Google Trends temporarily unavailable: {str(e)}"
         return None
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_regional_data(keywords, timeframe="today 3-m", geo="US", resolution="REGION"):
     """Fetch interest by region (state or DMA)."""
     try:
+        import time
         from pytrends.request import TrendReq
-        pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=1)
+        time.sleep(2)  # Rate limiting
+        pytrends = TrendReq(hl="en-US", tz=360)
         pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
         df = pytrends.interest_by_region(resolution=resolution, inc_low_vol=True, inc_geo_code=True)
         return df
@@ -91,8 +95,10 @@ def fetch_regional_data(keywords, timeframe="today 3-m", geo="US", resolution="R
 def fetch_related_queries(keyword, timeframe="today 12-m", geo="US"):
     """Fetch related and rising queries."""
     try:
+        import time
         from pytrends.request import TrendReq
-        pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=1)
+        time.sleep(2)  # Rate limiting
+        pytrends = TrendReq(hl="en-US", tz=360)
         pytrends.build_payload([keyword], timeframe=timeframe, geo=geo)
         related = pytrends.related_queries()
         return related.get(keyword, {"top": None, "rising": None})
@@ -384,7 +390,9 @@ with st.sidebar:
     st.markdown(f"<div style='text-align:center;font-size:12px;color:{source_color};font-weight:600'>● {source.upper()} DATA</div>", unsafe_allow_html=True)
     
     if st.session_state.get("data_error"):
-        st.caption(f"⚠ {st.session_state['data_error']}")
+        st.warning(f"⚠️ {st.session_state['data_error']}\n\n**Why?** Google Trends temporarily restricts rapid API requests. Demo data will be used.\n\n**Solution:** Click \"Refresh Data\" after 1-2 minutes, or leave the app open for automatic retry on next refresh cycle.")
+    else:
+        st.caption("ℹ️ Real Google Trends data is being used. Demo data falls back if API unavailable.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
