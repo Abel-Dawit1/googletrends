@@ -485,7 +485,7 @@ with tabs[1]:
             data=state_values,
             columns=["State", "avg_interest"],
             key_on="feature.properties.name",
-            fill_color="YlOrRd",
+            fill_color="Blues",
             fill_opacity=0.7,
             line_opacity=0.5,
             line_color="white",
