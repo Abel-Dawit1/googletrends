@@ -942,14 +942,21 @@ with tabs[1]:
             legend = "Skyrizi Search Interest Index"
             columns = ["State", "interest"]
 
-        # Add choropleth layer
+        # Add choropleth layer with brand-specific color
+        if brand_filter == "Rinvoq":
+            color_scheme = "Reds"
+        elif brand_filter == "Skyrizi":
+            color_scheme = "Purples"
+        else:
+            color_scheme = "Blues"
+        
         folium.Choropleth(
             geo_data=geo_data,
             name="Search Interest",
             data=state_values,
             columns=columns,
             key_on="feature.properties.name",
-            fill_color="Blues",
+            fill_color=color_scheme,
             fill_opacity=0.7,
             line_opacity=0.5,
             line_color="white",
