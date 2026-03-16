@@ -1594,187 +1594,187 @@ with tabs[7]:
     with config_tabs[0]:
         st.subheader("Manage Competitor Brands & Colors")
         st.markdown("Add, remove, or update competitor brands and their display colors.")
-        
-        col_c1, col_c2 = st.columns([1, 4])
-        with col_c1:
-            if st.button("➕ Add Competitor", key="add_comp"):
-                st.session_state.show_add_comp = True
-        
-        if st.session_state.get("show_add_comp", False):
-            with st.form("add_competitor_form", clear_on_submit=True):
-                new_brand = st.text_input("Brand Name", placeholder="e.g., NewBrand")
-                new_color = st.color_picker("Brand Color", "#3498db")
-                if st.form_submit_button("Add"):
-                    if new_brand and new_brand not in st.session_state.custom_comp_colors:
-                        st.session_state.custom_comp_colors[new_brand] = new_color
-                        st.session_state.show_add_comp = False
-                        st.success(f"✓ Added {new_brand}")
+            
+            col_c1, col_c2 = st.columns([1, 4])
+            with col_c1:
+                if st.button("➕ Add Competitor", key="add_comp"):
+                    st.session_state.show_add_comp = True
+            
+            if st.session_state.get("show_add_comp", False):
+                with st.form("add_competitor_form", clear_on_submit=True):
+                    new_brand = st.text_input("Brand Name", placeholder="e.g., NewBrand")
+                    new_color = st.color_picker("Brand Color", "#3498db")
+                    if st.form_submit_button("Add"):
+                        if new_brand and new_brand not in st.session_state.custom_comp_colors:
+                            st.session_state.custom_comp_colors[new_brand] = new_color
+                            st.session_state.show_add_comp = False
+                            st.success(f"✓ Added {new_brand}")
+                            st.rerun()
+                        elif new_brand in st.session_state.custom_comp_colors:
+                            st.error("Brand already exists")
+            
+            st.markdown("**Current Competitors:**")
+            for brand, color in st.session_state.custom_comp_colors.items():
+                col_b1, col_b2, col_b3 = st.columns([2, 1, 1])
+                with col_b1:
+                    st.markdown(f"**{brand}**")
+                with col_b2:
+                    st.markdown(f"<span style='background:{color};padding:4px 12px;border-radius:4px;color:white;font-weight:700'>{color}</span>", unsafe_allow_html=True)
+                with col_b3:
+                    if st.button("Remove", key=f"remove_comp_{brand}"):
+                        del st.session_state.custom_comp_colors[brand]
+                        st.success(f"✓ Removed {brand}")
                         st.rerun()
-                    elif new_brand in st.session_state.custom_comp_colors:
-                        st.error("Brand already exists")
         
-        st.markdown("**Current Competitors:**")
-        for brand, color in st.session_state.custom_comp_colors.items():
-            col_b1, col_b2, col_b3 = st.columns([2, 1, 1])
-            with col_b1:
-                st.markdown(f"**{brand}**")
-            with col_b2:
-                st.markdown(f"<span style='background:{color};padding:4px 12px;border-radius:4px;color:white;font-weight:700'>{color}</span>", unsafe_allow_html=True)
-            with col_b3:
-                if st.button("Remove", key=f"remove_comp_{brand}"):
-                    del st.session_state.custom_comp_colors[brand]
-                    st.success(f"✓ Removed {brand}")
-                    st.rerun()
-    
-    # TAB 8.2: Indications
-    with config_tabs[1]:
-        st.subheader("Manage Clinical Indications")
-        st.markdown("Define indication codes and their display names.")
-        
-        if st.button("➕ Add Indication", key="add_ind"):
-            st.session_state.show_add_ind = True
-        
-        if st.session_state.get("show_add_ind", False):
-            with st.form("add_indication_form", clear_on_submit=True):
-                new_code = st.text_input("Indication Code", placeholder="e.g., ra", max_chars=4).lower()
-                new_name = st.text_input("Display Name", placeholder="e.g., Rheumatoid Arthritis")
-                if st.form_submit_button("Add"):
-                    if new_code and new_name and new_code not in st.session_state.custom_ind_names:
-                        st.session_state.custom_ind_names[new_code] = new_name
-                        st.session_state.show_add_ind = False
-                        st.success(f"✓ Added {new_code}: {new_name}")
+        # TAB 8.2: Indications
+        with config_tabs[1]:
+            st.subheader("Manage Clinical Indications")
+            st.markdown("Define indication codes and their display names.")
+            
+            if st.button("➕ Add Indication", key="add_ind"):
+                st.session_state.show_add_ind = True
+            
+            if st.session_state.get("show_add_ind", False):
+                with st.form("add_indication_form", clear_on_submit=True):
+                    new_code = st.text_input("Indication Code", placeholder="e.g., ra", max_chars=4).lower()
+                    new_name = st.text_input("Display Name", placeholder="e.g., Rheumatoid Arthritis")
+                    if st.form_submit_button("Add"):
+                        if new_code and new_name and new_code not in st.session_state.custom_ind_names:
+                            st.session_state.custom_ind_names[new_code] = new_name
+                            st.session_state.show_add_ind = False
+                            st.success(f"✓ Added {new_code}: {new_name}")
+                            st.rerun()
+                        elif new_code in st.session_state.custom_ind_names:
+                            st.error("Indication code already exists")
+            
+            st.markdown("**Current Indications:**")
+            for code, name in st.session_state.custom_ind_names.items():
+                col_i1, col_i2, col_i3 = st.columns([1, 2, 1])
+                with col_i1:
+                    st.code(code)
+                with col_i2:
+                    st.markdown(f"**{name}**")
+                with col_i3:
+                    if st.button("Remove", key=f"remove_ind_{code}"):
+                        del st.session_state.custom_ind_names[code]
+                        st.success(f"✓ Removed {code}")
                         st.rerun()
-                    elif new_code in st.session_state.custom_ind_names:
-                        st.error("Indication code already exists")
         
-        st.markdown("**Current Indications:**")
-        for code, name in st.session_state.custom_ind_names.items():
-            col_i1, col_i2, col_i3 = st.columns([1, 2, 1])
-            with col_i1:
-                st.code(code)
-            with col_i2:
-                st.markdown(f"**{name}**")
-            with col_i3:
-                if st.button("Remove", key=f"remove_ind_{code}"):
-                    del st.session_state.custom_ind_names[code]
-                    st.success(f"✓ Removed {code}")
-                    st.rerun()
-    
-    # TAB 8.3: Franchises
-    with config_tabs[2]:
-        st.subheader("Manage Franchise Groupings")
-        st.markdown("Group indications into therapeutic franchises.")
-        
-        if st.button("➕ Add Franchise", key="add_fran"):
-            st.session_state.show_add_fran = True
-        
-        if st.session_state.get("show_add_fran", False):
-            with st.form("add_franchise_form", clear_on_submit=True):
-                new_fran = st.text_input("Franchise Name", placeholder="e.g., Oncology")
-                available_inds = list(st.session_state.custom_ind_names.keys())
-                selected_inds = st.multiselect("Include Indications", available_inds)
-                if st.form_submit_button("Add"):
-                    if new_fran and selected_inds and new_fran not in st.session_state.custom_franchise_map:
-                        st.session_state.custom_franchise_map[new_fran] = selected_inds
-                        st.session_state.show_add_fran = False
-                        st.success(f"✓ Added franchise {new_fran}")
+        # TAB 8.3: Franchises
+        with config_tabs[2]:
+            st.subheader("Manage Franchise Groupings")
+            st.markdown("Group indications into therapeutic franchises.")
+            
+            if st.button("➕ Add Franchise", key="add_fran"):
+                st.session_state.show_add_fran = True
+            
+            if st.session_state.get("show_add_fran", False):
+                with st.form("add_franchise_form", clear_on_submit=True):
+                    new_fran = st.text_input("Franchise Name", placeholder="e.g., Oncology")
+                    available_inds = list(st.session_state.custom_ind_names.keys())
+                    selected_inds = st.multiselect("Include Indications", available_inds)
+                    if st.form_submit_button("Add"):
+                        if new_fran and selected_inds and new_fran not in st.session_state.custom_franchise_map:
+                            st.session_state.custom_franchise_map[new_fran] = selected_inds
+                            st.session_state.show_add_fran = False
+                            st.success(f"✓ Added franchise {new_fran}")
+                            st.rerun()
+                        elif new_fran in st.session_state.custom_franchise_map:
+                            st.error("Franchise already exists")
+            
+            st.markdown("**Current Franchises:**")
+            for fran_name, ind_list in st.session_state.custom_franchise_map.items():
+                col_f1, col_f2, col_f3 = st.columns([2, 2, 1])
+                with col_f1:
+                    st.markdown(f"**{fran_name}**")
+                with col_f2:
+                    ind_names = [st.session_state.custom_ind_names.get(code, code) for code in ind_list]
+                    st.caption("📌 " + ", ".join(ind_names))
+                with col_f3:
+                    if st.button("Remove", key=f"remove_fran_{fran_name}"):
+                        del st.session_state.custom_franchise_map[fran_name]
+                        st.success(f"✓ Removed {fran_name}")
                         st.rerun()
-                    elif new_fran in st.session_state.custom_franchise_map:
-                        st.error("Franchise already exists")
         
-        st.markdown("**Current Franchises:**")
-        for fran_name, ind_list in st.session_state.custom_franchise_map.items():
-            col_f1, col_f2, col_f3 = st.columns([2, 2, 1])
-            with col_f1:
-                st.markdown(f"**{fran_name}**")
-            with col_f2:
-                ind_names = [st.session_state.custom_ind_names.get(code, code) for code in ind_list]
-                st.caption("📌 " + ", ".join(ind_names))
-            with col_f3:
-                if st.button("Remove", key=f"remove_fran_{fran_name}"):
-                    del st.session_state.custom_franchise_map[fran_name]
-                    st.success(f"✓ Removed {fran_name}")
-                    st.rerun()
-    
-    # TAB 8.4: Timeframes
-    with config_tabs[3]:
-        st.subheader("Manage Timeframe Options")
-        st.markdown("Define date range options for Google Trends queries.")
-        
-        if st.button("➕ Add Timeframe", key="add_tf"):
-            st.session_state.show_add_tf = True
-        
-        if st.session_state.get("show_add_tf", False):
-            with st.form("add_timeframe_form", clear_on_submit=True):
-                new_tf_label = st.text_input("Display Label", placeholder="e.g., 3 Months")
-                new_tf_param = st.text_input("Google Trends Parameter", placeholder="e.g., today 3-m")
-                if st.form_submit_button("Add"):
-                    if new_tf_label and new_tf_param and new_tf_label not in st.session_state.custom_timeframe_map:
-                        st.session_state.custom_timeframe_map[new_tf_label] = new_tf_param
-                        st.session_state.show_add_tf = False
-                        st.success(f"✓ Added timeframe {new_tf_label}")
+        # TAB 8.4: Timeframes
+        with config_tabs[3]:
+            st.subheader("Manage Timeframe Options")
+            st.markdown("Define date range options for Google Trends queries.")
+            
+            if st.button("➕ Add Timeframe", key="add_tf"):
+                st.session_state.show_add_tf = True
+            
+            if st.session_state.get("show_add_tf", False):
+                with st.form("add_timeframe_form", clear_on_submit=True):
+                    new_tf_label = st.text_input("Display Label", placeholder="e.g., 3 Months")
+                    new_tf_param = st.text_input("Google Trends Parameter", placeholder="e.g., today 3-m")
+                    if st.form_submit_button("Add"):
+                        if new_tf_label and new_tf_param and new_tf_label not in st.session_state.custom_timeframe_map:
+                            st.session_state.custom_timeframe_map[new_tf_label] = new_tf_param
+                            st.session_state.show_add_tf = False
+                            st.success(f"✓ Added timeframe {new_tf_label}")
+                            st.rerun()
+                        elif new_tf_label in st.session_state.custom_timeframe_map:
+                            st.error("Timeframe label already exists")
+            
+            st.markdown("**Current Timeframes:**")
+            for label, param in st.session_state.custom_timeframe_map.items():
+                col_t1, col_t2, col_t3 = st.columns([2, 2, 1])
+                with col_t1:
+                    st.markdown(f"**{label}**")
+                with col_t2:
+                    st.code(param, language="text")
+                with col_t3:
+                    if st.button("Remove", key=f"remove_tf_{label}"):
+                        del st.session_state.custom_timeframe_map[label]
+                        st.success(f"✓ Removed {label}")
                         st.rerun()
-                    elif new_tf_label in st.session_state.custom_timeframe_map:
-                        st.error("Timeframe label already exists")
         
-        st.markdown("**Current Timeframes:**")
-        for label, param in st.session_state.custom_timeframe_map.items():
-            col_t1, col_t2, col_t3 = st.columns([2, 2, 1])
-            with col_t1:
-                st.markdown(f"**{label}**")
-            with col_t2:
-                st.code(param, language="text")
-            with col_t3:
-                if st.button("Remove", key=f"remove_tf_{label}"):
-                    del st.session_state.custom_timeframe_map[label]
-                    st.success(f"✓ Removed {label}")
+        # TAB 8.5: Preview
+        with config_tabs[4]:
+            st.subheader("Configuration Preview")
+            st.markdown("View all current custom configurations defined in this session.")
+            
+            col_p1, col_p2 = st.columns(2)
+            
+            with col_p1:
+                st.markdown("**Competitors** (" + str(len(st.session_state.custom_comp_colors)) + ")")
+                st.json({k: v for k, v in list(st.session_state.custom_comp_colors.items())[:5]})
+                if len(st.session_state.custom_comp_colors) > 5:
+                    st.caption(f"... and {len(st.session_state.custom_comp_colors) - 5} more")
+            
+            with col_p2:
+                st.markdown("**Indications** (" + str(len(st.session_state.custom_ind_names)) + ")")
+                st.json({k: v for k, v in list(st.session_state.custom_ind_names.items())[:5]})
+                if len(st.session_state.custom_ind_names) > 5:
+                    st.caption(f"... and {len(st.session_state.custom_ind_names) - 5} more")
+            
+            col_p3, col_p4 = st.columns(2)
+            
+            with col_p3:
+                st.markdown("**Franchises** (" + str(len(st.session_state.custom_franchise_map)) + ")")
+                st.json({k: v for k, v in list(st.session_state.custom_franchise_map.items())[:3]})
+                if len(st.session_state.custom_franchise_map) > 3:
+                    st.caption(f"... and {len(st.session_state.custom_franchise_map) - 3} more")
+            
+            with col_p4:
+                st.markdown("**Timeframes** (" + str(len(st.session_state.custom_timeframe_map)) + ")")
+                st.json({k: v for k, v in list(st.session_state.custom_timeframe_map.items())[:3]})
+                if len(st.session_state.custom_timeframe_map) > 3:
+                    st.caption(f"... and {len(st.session_state.custom_timeframe_map) - 3} more")
+            
+            st.markdown("---")
+            col_reset1, col_reset2 = st.columns([1, 3])
+            with col_reset1:
+                if st.button("🔄 Reset to Defaults", key="reset_config"):
+                    st.session_state.custom_comp_colors = COMP_COLORS.copy()
+                    st.session_state.custom_ind_names = IND_NAMES.copy()
+                    st.session_state.custom_franchise_map = {k: v.copy() for k, v in FRANCHISE_MAP.items()}
+                    st.session_state.custom_timeframe_map = TIMEFRAME_MAP.copy()
+                    st.success("✓ All configurations reset to defaults")
                     st.rerun()
-    
-    # TAB 8.5: Preview
-    with config_tabs[4]:
-        st.subheader("Configuration Preview")
-        st.markdown("View all current custom configurations defined in this session.")
-        
-        col_p1, col_p2 = st.columns(2)
-        
-        with col_p1:
-            st.markdown("**Competitors** (" + str(len(st.session_state.custom_comp_colors)) + ")")
-            st.json({k: v for k, v in list(st.session_state.custom_comp_colors.items())[:5]})
-            if len(st.session_state.custom_comp_colors) > 5:
-                st.caption(f"... and {len(st.session_state.custom_comp_colors) - 5} more")
-        
-        with col_p2:
-            st.markdown("**Indications** (" + str(len(st.session_state.custom_ind_names)) + ")")
-            st.json({k: v for k, v in list(st.session_state.custom_ind_names.items())[:5]})
-            if len(st.session_state.custom_ind_names) > 5:
-                st.caption(f"... and {len(st.session_state.custom_ind_names) - 5} more")
-        
-        col_p3, col_p4 = st.columns(2)
-        
-        with col_p3:
-            st.markdown("**Franchises** (" + str(len(st.session_state.custom_franchise_map)) + ")")
-            st.json({k: v for k, v in list(st.session_state.custom_franchise_map.items())[:3]})
-            if len(st.session_state.custom_franchise_map) > 3:
-                st.caption(f"... and {len(st.session_state.custom_franchise_map) - 3} more")
-        
-        with col_p4:
-            st.markdown("**Timeframes** (" + str(len(st.session_state.custom_timeframe_map)) + ")")
-            st.json({k: v for k, v in list(st.session_state.custom_timeframe_map.items())[:3]})
-            if len(st.session_state.custom_timeframe_map) > 3:
-                st.caption(f"... and {len(st.session_state.custom_timeframe_map) - 3} more")
-        
-        st.markdown("---")
-        col_reset1, col_reset2 = st.columns([1, 3])
-        with col_reset1:
-            if st.button("🔄 Reset to Defaults", key="reset_config"):
-                st.session_state.custom_comp_colors = COMP_COLORS.copy()
-                st.session_state.custom_ind_names = IND_NAMES.copy()
-                st.session_state.custom_franchise_map = {k: v.copy() for k, v in FRANCHISE_MAP.items()}
-                st.session_state.custom_timeframe_map = TIMEFRAME_MAP.copy()
-                st.success("✓ All configurations reset to defaults")
-                st.rerun()
-        with col_reset2:
-            st.caption("⚠️ Configuration changes are session-only. Refresh the page to restore defaults.")
+            with col_reset2:
+                st.caption("⚠️ Configuration changes are session-only. Refresh the page to restore defaults.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
