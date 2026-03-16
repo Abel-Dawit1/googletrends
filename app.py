@@ -902,53 +902,82 @@ with tabs[1]:
     
     # Use demo state data or live state data
     display_states = DEMO_STATES.copy() if state_df is None or state_df.empty else state_df
-    
+
+    # Filter DMA and queries dataframes by brand filter
+    dma_data = DEMO_DMA.copy()
+    queries_data = DEMO_QUERIES.copy()
+    if brand_filter == "Rinvoq":
+        # Only keep Rinvoq column and drop Skyrizi
+        if "Skyrizi" in dma_data.columns:
+            dma_data = dma_data.drop(columns=["Skyrizi"])
+        queries_data = queries_data[queries_data["Brand"].isin(["Rinvoq", "Both"])]
+    elif brand_filter == "Skyrizi":
+        # Only keep Skyrizi column and drop Rinvoq
+        if "Rinvoq" in dma_data.columns:
+            dma_data = dma_data.drop(columns=["Rinvoq"])
+        queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
+    # For Both, keep all columns
+
     # Create map
     m = folium.Map(location=[39.5, -98.5], zoom_start=4, tiles="CartoDB positron", scroll_zoom=False)
-    
+
     # Add state choropleth with search interest shading
     try:
         # Load US state boundaries GeoJSON
         us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
         geo_data = requests.get(us_state_geo).json()
-        
-        # Prepare state data for choropleth (use average of Rinvoq and Skyrizi)
+
+        # Prepare state data for choropleth based on brand filter
         state_values = display_states.copy()
-        state_values["avg_interest"] = ((state_values["Rinvoq"] + state_values["Skyrizi"]) / 2).round().astype(int)
-        
-        # Create a dictionary mapping state names to avg values
-        state_dict = dict(zip(state_values["State"], state_values["avg_interest"]))
-        
+        if brand_filter == "Both":
+            state_values["interest"] = ((state_values["Rinvoq"] + state_values["Skyrizi"]) / 2).round().astype(int)
+            legend = "Avg Search Interest Index"
+            columns = ["State", "interest"]
+        elif brand_filter == "Rinvoq":
+            state_values["interest"] = state_values["Rinvoq"].round().astype(int)
+            legend = "Rinvoq Search Interest Index"
+            columns = ["State", "interest"]
+        else:
+            state_values["interest"] = state_values["Skyrizi"].round().astype(int)
+            legend = "Skyrizi Search Interest Index"
+            columns = ["State", "interest"]
+
         # Add choropleth layer
         folium.Choropleth(
             geo_data=geo_data,
             name="Search Interest",
             data=state_values,
-            columns=["State", "avg_interest"],
+            columns=columns,
             key_on="feature.properties.name",
             fill_color="Blues",
             fill_opacity=0.7,
             line_opacity=0.5,
             line_color="white",
             line_weight=1,
-            legend_name="Search Interest Index",
+            legend_name=legend,
             nan_fill_color="lightgray",
         ).add_to(m)
-        
+
         # Add custom tooltips for states with hover info
         for feature in geo_data["features"]:
             state_name = feature["properties"]["name"]
             state_data = state_values[state_values["State"] == state_name]
-            
+
             if not state_data.empty:
-                rinvoq_val = int(state_data["Rinvoq"].values[0])
-                skyrizi_val = int(state_data["Skyrizi"].values[0])
-                avg_val = int(state_data["avg_interest"].values[0])
-                
-                tooltip_text = f"<b>{state_name}</b><br>Rinvoq: {rinvoq_val}<br>Skyrizi: {skyrizi_val}<br>Avg: {avg_val}"
+                if brand_filter == "Both":
+                    rinvoq_val = int(state_data["Rinvoq"].values[0])
+                    skyrizi_val = int(state_data["Skyrizi"].values[0])
+                    avg_val = int(state_data["interest"].values[0])
+                    tooltip_text = f"<b>{state_name}</b><br>Rinvoq: {rinvoq_val}<br>Skyrizi: {skyrizi_val}<br>Avg: {avg_val}"
+                elif brand_filter == "Rinvoq":
+                    rinvoq_val = int(state_data["Rinvoq"].values[0])
+                    tooltip_text = f"<b>{state_name}</b><br>Rinvoq: {rinvoq_val}"
+                else:
+                    skyrizi_val = int(state_data["Skyrizi"].values[0])
+                    tooltip_text = f"<b>{state_name}</b><br>Skyrizi: {skyrizi_val}"
             else:
                 tooltip_text = f"<b>{state_name}</b><br>No data available"
-            
+
             # Add GeoJson layer with tooltips
             folium.GeoJson(
                 feature,
@@ -958,23 +987,90 @@ with tabs[1]:
                 },
                 tooltip=folium.Tooltip(tooltip_text, sticky=False),
             ).add_to(m)
-    
+
     except Exception as e:
         st.warning(f"Could not load state boundaries: {e}")
-    
-    # Add DMA circle markers on top
-    for _, row in DEMO_DMA.iterrows():
-        r_val, s_val = row["Rinvoq"], row["Skyrizi"]
-        avg = (r_val + s_val) / 2
-        color = RINVOQ if r_val > s_val else SKYRIZI
+
+    # Add DMA circle markers on top, filtered by brand
+    for _, row in dma_data.iterrows():
+        if brand_filter == "Both":
+            r_val, s_val = row["Rinvoq"], row["Skyrizi"]
+            avg = (r_val + s_val) / 2
+            color = RINVOQ if r_val > s_val else SKYRIZI
+            tooltip = f"<b>{row['Market']}</b><br>Rinvoq: {r_val} · Skyrizi: {s_val} {row['Trend']}"
+            radius = 4 + avg / 10
+        elif brand_filter == "Rinvoq":
+            r_val = row["Rinvoq"]
+            color = RINVOQ
+            tooltip = f"<b>{row['Market']}</b><br>Rinvoq: {r_val}"
+            radius = 4 + r_val / 10
+        else:
+            s_val = row["Skyrizi"]
+            color = SKYRIZI
+            tooltip = f"<b>{row['Market']}</b><br>Skyrizi: {s_val}"
+            radius = 4 + s_val / 10
         folium.CircleMarker(
-            [row["lat"], row["lng"]], radius=4 + avg / 10,
+            [row["lat"], row["lng"]], radius=radius,
             color="white", weight=2, fill=True, fill_color=color, fill_opacity=0.85,
-            tooltip=f"<b>{row['Market']}</b><br>Rinvoq: {r_val} · Skyrizi: {s_val} {row['Trend']}"
+            tooltip=tooltip
         ).add_to(m)
-    
+
     st_folium(m, height=500, use_container_width=True)
-    
+
+    # Top Markets Table - Apply brand filter
+    st.subheader("Top Markets")
+    dma_display = dma_data.copy()
+    if brand_filter == "Both":
+        dma_display["Avg"] = ((dma_display["Rinvoq"] + dma_display["Skyrizi"]) / 2).round().astype(int)
+        dma_display["Lead"] = dma_display.apply(lambda r: "Rinvoq" if r["Rinvoq"] > r["Skyrizi"] else "Skyrizi", axis=1)
+        columns_to_show = ["Market", "Rinvoq", "Skyrizi", "Avg", "Lead", "Trend"]
+        column_config = {
+            "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
+            "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
+        }
+        sort_column = "Avg"
+    elif brand_filter == "Rinvoq":
+        columns_to_show = ["Market", "Rinvoq", "Trend"]
+        column_config = {
+            "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
+        }
+        sort_column = "Rinvoq"
+    elif brand_filter == "Skyrizi":
+        columns_to_show = ["Market", "Skyrizi", "Trend"]
+        column_config = {
+            "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
+        }
+        sort_column = "Skyrizi"
+
+    st.dataframe(
+        dma_display[columns_to_show].sort_values(sort_column, ascending=False),
+        use_container_width=True, hide_index=True,
+        column_config=column_config
+    )
+
+    # Queries - Filter by brand
+    q1, q2 = st.columns(2)
+    queries_df = queries_data
+
+    with q1:
+        st.subheader("Top Search Queries")
+        top_q = queries_df.sort_values("Index", ascending=False).head(8)
+        for _, row in top_q.iterrows():
+            color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+            st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                        f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                        f"<span style='font-weight:700;color:{color}'>{row['Index']}</span></div>", unsafe_allow_html=True)
+    with q2:
+        st.subheader("Rising Queries")
+        rising_q = queries_df.sort_values("Growth", ascending=False).head(8)
+        for _, row in rising_q.iterrows():
+            badge_color = "#c0392b" if row["Growth"] >= 500 else SUCCESS
+            badge_bg = "#fdecea" if row["Growth"] >= 500 else "#eaf7f1"
+            brk = " <span style='background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700'>Breakout</span>" if row["Growth"] >= 500 else ""
+            st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                        f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                        f"<span style='background:{badge_bg};color:{badge_color};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700'>+{row['Growth']}%</span>{brk}</div>", unsafe_allow_html=True)
+
     # Regional comparison
     regions = {
         "Northeast": ["New York", "Boston", "Philadelphia"],
@@ -984,20 +1080,39 @@ with tabs[1]:
     }
     reg_data = []
     for reg, cities in regions.items():
-        matches = DEMO_DMA[DEMO_DMA["Market"].apply(lambda x: any(c in x for c in cities))]
+        matches = dma_data[dma_data["Market"].apply(lambda x: any(c in x for c in cities))]
         if not matches.empty:
-            reg_data.append({"Region": reg, "Rinvoq": matches["Rinvoq"].mean().round(), "Skyrizi": matches["Skyrizi"].mean().round()})
-    
+            if brand_filter == "Both":
+                reg_val_r = matches["Rinvoq"].mean().round()
+                reg_val_s = matches["Skyrizi"].mean().round()
+                reg_data.append({"Region": reg, "Rinvoq": reg_val_r, "Skyrizi": reg_val_s})
+            elif brand_filter == "Rinvoq":
+                reg_val_r = matches["Rinvoq"].mean().round()
+                reg_data.append({"Region": reg, "Rinvoq": reg_val_r})
+            else:
+                reg_val_s = matches["Skyrizi"].mean().round()
+                reg_data.append({"Region": reg, "Skyrizi": reg_val_s})
+
     if reg_data:
         reg_df = pd.DataFrame(reg_data)
         fig_reg = go.Figure()
-        fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Rinvoq"], name="Rinvoq", marker_color=RINVOQ))
-        fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI))
+        if brand_filter == "Both":
+            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Rinvoq"], name="Rinvoq", marker_color=RINVOQ))
+            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI))
+        elif brand_filter == "Rinvoq":
+            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Rinvoq"], name="Rinvoq", marker_color=RINVOQ))
+        else:
+            fig_reg.add_trace(go.Bar(x=reg_df["Region"], y=reg_df["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI))
         fig_reg.update_layout(title="Regional Performance", barmode="group", height=350, template="plotly_white", yaxis=dict(range=[0, 100]))
         st.plotly_chart(fig_reg, use_container_width=True)
-    
+
     # Insight
-    st.info("📍 **Geographic Insight:** Rinvoq leads in the Northeast and Midwest driven by concentrated rheumatology HCP networks. Skyrizi dominates the Southeast and West where dermatology-heavy populations drive psoriasis search volume. Recommend allocating incremental digital spend to the trending-up markets.")
+    if brand_filter == "Both":
+        st.info("📍 **Geographic Insight:** Rinvoq leads in the Northeast and Midwest driven by concentrated rheumatology HCP networks. Skyrizi dominates the Southeast and West where dermatology-heavy populations drive psoriasis search volume. Recommend allocating incremental digital spend to the trending-up markets.")
+    elif brand_filter == "Rinvoq":
+        st.info("📍 **Geographic Insight:** Rinvoq leads in the Northeast and Midwest driven by concentrated rheumatology HCP networks. Recommend allocating incremental digital spend to trending-up Rinvoq markets.")
+    else:
+        st.info("📍 **Geographic Insight:** Skyrizi dominates the Southeast and West where dermatology-heavy populations drive psoriasis search volume. Recommend allocating incremental digital spend to trending-up Skyrizi markets.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
