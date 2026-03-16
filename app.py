@@ -654,75 +654,38 @@ with tabs[0]:
     r_peak, s_peak = int(max(r_vals)), int(max(s_vals))
     r_avg, s_avg = int(np.mean(r_vals)), int(np.mean(s_vals))
     
+    # Helper function for professional metric cards
+    def metric_card(col, icon, title, value, subtitle, color):
+        col.markdown(f"""
+        <div style='background:linear-gradient(135deg,#f8f9fa 0%,#ffffff 100%);border-left:4px solid {color};border-radius:8px;padding:16px;margin-bottom:4px'>
+            <div style='display:flex;align-items:baseline;gap:8px;margin-bottom:8px'>
+                <span style='font-size:20px'>{icon}</span>
+                <span style='font-size:12px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.5px'>{title}</span>
+            </div>
+            <div style='font-size:32px;font-weight:700;color:{color};margin-bottom:4px'>{value}</div>
+            <div style='font-size:12px;color:#999;margin-top:4px'>{subtitle}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
     # KPIs - Show only selected brand(s)
     if brand_filter == "Both":
         k1, k2, k3, k4 = st.columns(4)
-        k1.metric(
-            "Rinvoq Peak Index", 
-            r_peak, 
-            f"Avg: {r_avg}",
-            help="Highest search interest value for Rinvoq during the selected period (0-100 scale). Higher values indicate greater patient and HCP search activity."
-        )
-        k2.metric(
-            "Skyrizi Peak Index", 
-            s_peak, 
-            f"Avg: {s_avg}",
-            help="Highest search interest value for Skyrizi during the selected period (0-100 scale). Trending upward particularly in dermatology and gastroenterology indications."
-        )
-        k3.metric(
-            "Top DMA", 
-            DEMO_DMA.iloc[0]["Market"].split(",")[0], 
-            f"Index {DEMO_DMA.iloc[0]['Rinvoq']}",
-            help="Designated Market Area with highest combined search interest. Indicates geographic concentration of treatment awareness and patient consideration."
-        )
-        k4.metric(
-            "Breakout Terms", 
-            str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), 
-            "Explosive growth",
-            help="Search queries with 500%+ YoY growth—early signals of emerging patient interests and new indication expansion opportunities."
-        )
+        metric_card(k1, "📊", "Rinvoq Peak", r_peak, f"Avg: {r_avg}", RINVOQ)
+        metric_card(k2, "📈", "Skyrizi Peak", s_peak, f"Avg: {s_avg}", SKYRIZI)
+        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index {DEMO_DMA.iloc[0]['Rinvoq']}", NAVY)
+        metric_card(k4, "⚡", "Breakout Terms", str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), "500%+ growth", GOLD)
     elif brand_filter == "Rinvoq":
         k1, k2, k3, k4 = st.columns(4)
-        k1.metric(
-            "Rinvoq Peak Index", 
-            r_peak, 
-            f"Avg: {r_avg}",
-            help="Highest search interest value for Rinvoq during the selected period (0-100 scale). Higher values indicate greater patient and HCP search activity."
-        )
-        k2.metric("Rinvoq Avg Index", r_avg, help="Average search interest for Rinvoq across the selected period.")
-        k3.metric(
-            "Top DMA", 
-            DEMO_DMA.iloc[0]["Market"].split(",")[0], 
-            f"Rinvoq: {DEMO_DMA.iloc[0]['Rinvoq']}",
-            help="Designated Market Area with highest Rinvoq search interest."
-        )
-        k4.metric(
-            "Rinvoq Queries", 
-            len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]), 
-            "Brand mentions",
-            help="Total search queries mentioning Rinvoq or both brands."
-        )
+        metric_card(k1, "📊", "Peak Index", r_peak, f"Avg: {r_avg}", RINVOQ)
+        metric_card(k2, "📉", "Avg Index", r_avg, "Period average", RINVOQ)
+        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index: {DEMO_DMA.iloc[0]['Rinvoq']}", NAVY)
+        metric_card(k4, "🔍", "Search Queries", len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]), "Brand mentions", RINVOQ)
     elif brand_filter == "Skyrizi":
         k1, k2, k3, k4 = st.columns(4)
-        k1.metric(
-            "Skyrizi Peak Index", 
-            s_peak, 
-            f"Avg: {s_avg}",
-            help="Highest search interest value for Skyrizi during the selected period (0-100 scale). Trending upward particularly in dermatology and gastroenterology indications."
-        )
-        k2.metric("Skyrizi Avg Index", s_avg, help="Average search interest for Skyrizi across the selected period.")
-        k3.metric(
-            "Top DMA", 
-            DEMO_DMA.iloc[0]["Market"].split(",")[0], 
-            f"Skyrizi: {DEMO_DMA.iloc[0]['Skyrizi']}",
-            help="Designated Market Area with highest Skyrizi search interest."
-        )
-        k4.metric(
-            "Skyrizi Queries", 
-            len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]), 
-            "Brand mentions",
-            help="Total search queries mentioning Skyrizi or both brands."
-        )
+        metric_card(k1, "📈", "Peak Index", s_peak, f"Avg: {s_avg}", SKYRIZI)
+        metric_card(k2, "📉", "Avg Index", s_avg, "Period average", SKYRIZI)
+        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index: {DEMO_DMA.iloc[0]['Skyrizi']}", NAVY)
+        metric_card(k4, "🔍", "Search Queries", len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]), "Brand mentions", SKYRIZI)
     
     st.markdown("---")
     
