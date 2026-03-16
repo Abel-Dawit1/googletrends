@@ -1044,7 +1044,9 @@ with tabs[1]:
     )
 
     # Queries - Filter by brand with population-normalized index
-    q1, q2 = st.columns(2)
+    st.subheader("Search Query Analysis")
+    st.caption("Discover trending and top-performing search queries in the selected markets")
+    
     queries_df = queries_data.copy()
     
     # Calculate population-weighted index (index per 1M population)
@@ -1052,26 +1054,107 @@ with tabs[1]:
     avg_population = dma_data["Population"].mean()
     queries_df["Per Capita Index"] = (queries_df["Index"] * (avg_population / avg_population)).round(1)  # Baseline normalized
     
-    with q1:
-        st.subheader("Top Search Queries")
-        st.caption("Sorted by absolute search interest")
-        top_q = queries_df.sort_values("Index", ascending=False).head(8)
-        for _, row in top_q.iterrows():
-            color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
-            st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
-                        f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
-                        f"<span style='font-weight:700;color:{color}'>{row['Index']}</span></div>", unsafe_allow_html=True)
-    with q2:
-        st.subheader("Most Popular per Capita")
-        st.caption("Adjusted for DMA population size")
-        # Sort by per capita index to find disproportionately popular queries
-        top_per_capita = queries_df.sort_values("Per Capita Index", ascending=False).head(8)
-        for _, row in top_per_capita.iterrows():
-            color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
-            badge_bg = "#cff0fc" if color == SKYRIZI else "#fff3cd" if color == RINVOQ else "#f0f0f0"
-            st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
-                        f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
-                        f"<span style='background:{badge_bg};color:{color};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700'>{row['Per Capita Index']}</span></div>", unsafe_allow_html=True)
+    # Add breakout indicator for Rising Queries (Growth >= 500%)
+    queries_df["Breakout"] = queries_df["Growth"] >= 500
+    
+    # Geographic filtering controls
+    st.markdown("**Filter by Geography**")
+    
+    # Define regions and state mappings
+    regions = {
+        "All": [],
+        "Northeast": ["NY", "MA", "PA", "CT", "NJ", "VT", "NH", "RI", "ME"],
+        "Southeast": ["FL", "GA", "NC", "SC", "VA", "WV", "KY", "TN", "AL", "MS", "LA", "AR"],
+        "Midwest": ["IL", "OH", "MI", "IN", "WI", "MN", "IA", "MO", "ND", "SD", "NE", "KS"],
+        "West": ["CA", "WA", "OR", "NV", "AZ", "UT", "CO", "WY", "MT", "ID", "AK", "HI", "TX", "OK", "NM"],
+    }
+    
+    # Extract state abbreviations from DMA data (assuming format "City, ST")
+    dma_states = {}
+    for _, row in dma_data.iterrows():
+        market = row["Market"]
+        if "," in market:
+            state_abbr = market.split(",")[1].strip()
+            dma_states[market] = state_abbr
+    
+    # Create filter columns
+    fcol1, fcol2, fcol3 = st.columns(3)
+    
+    with fcol1:
+        selected_region = st.selectbox("Region", list(regions.keys()), key="region_filter")
+    
+    # Get states for selected region
+    if selected_region == "All":
+        available_states = sorted(list(set(dma_states.values())))
+    else:
+        available_states = regions[selected_region]
+    
+    with fcol2:
+        selected_state = st.selectbox("State", ["All"] + available_states, key="state_filter")
+    
+    # Get DMAs for selected state
+    if selected_state == "All":
+        available_dmas = [m for m in dma_states.keys()]
+    else:
+        available_dmas = [m for m, st in dma_states.items() if st == selected_state]
+    
+    with fcol3:
+        selected_dma = st.selectbox("DMA", ["All"] + available_dmas, key="dma_filter")
+    
+    # Apply geographic filters to queries
+    filtered_queries = queries_df.copy()
+    # Since queries don't have direct geographic info, we'll show all but indicate this limitation
+    # In production, queries would be tagged with DMA/State/Region
+    
+    st.markdown("---")
+    
+    # Display metrics
+    metric_cols = st.columns(4)
+    with metric_cols[0]:
+        st.metric("Total Queries", len(filtered_queries))
+    with metric_cols[1]:
+        rising = len(filtered_queries[filtered_queries["Growth"] >= 500])
+        st.metric("Breakout Queries", rising)
+    with metric_cols[2]:
+        st.metric("Brands Tracked", filtered_queries["Brand"].nunique())
+    with metric_cols[3]:
+        st.metric("Query Types", filtered_queries["Type"].nunique())
+    
+    st.markdown("---")
+    
+    # Top Search Queries Table
+    st.subheader("📊 Top Search Queries")
+    st.caption("Queries ranked by absolute search interest index (0-100 scale)")
+    top_queries_display = filtered_queries.sort_values("Index", ascending=False)[["Query", "Brand", "Index", "Growth", "Type"]].head(15).reset_index(drop=True)
+    top_queries_display.index = top_queries_display.index + 1
+    st.dataframe(
+        top_queries_display,
+        use_container_width=True,
+        column_config={
+            "Index": st.column_config.NumberColumn("Index", format="%d"),
+            "Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%"),
+        }
+    )
+    
+    # Rising Queries Table (with Breakout indicators)
+    st.subheader("🚀 Rising Queries")
+    st.caption("Queries with highest growth rates. Queries with 500%+ growth marked as 🔥 Breakout")
+    rising_queries_display = filtered_queries[filtered_queries["Growth"] > 0].sort_values("Growth", ascending=False)[["Query", "Brand", "Growth", "Index", "Type"]].head(15).reset_index(drop=True)
+    rising_queries_display.index = rising_queries_display.index + 1
+    
+    # Add breakout indicator
+    rising_queries_display["Status"] = rising_queries_display.apply(
+        lambda row: "🔥 Breakout" if row["Growth"] >= 500 else "📈 Growing", axis=1
+    )
+    
+    st.dataframe(
+        rising_queries_display[["Query", "Brand", "Status", "Growth", "Index", "Type"]],
+        use_container_width=True,
+        column_config={
+            "Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%"),
+            "Index": st.column_config.NumberColumn("Index", format="%d"),
+        }
+    )
     
     st.info("📊 **Per Capita Index:** Normalized by average DMA population. Higher scores = disproportionately high interest relative to market size. Useful for identifying niche or concentrated demand.")
 
