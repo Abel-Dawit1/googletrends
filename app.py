@@ -905,35 +905,32 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create US-only map with proper bounds
-    # Set bounds to show only continental US and Alaska/Hawaii
-    bounds = [[25, -125], [50, -66]]
-    
+    # Create US-only map - no world basemap
     m = folium.Map(
         location=[39.5, -98.5], 
         zoom_start=4, 
-        tiles="CartoDB positron", 
+        tiles=None,  # No basemap tiles
         scroll_zoom=False, 
         zoom_control=False,
         dragging=False
     )
     
-    # Fit bounds to US after adding other layers
-    # Load and add US country boundary
+    # Load US state boundaries as the base layer
     try:
-        us_boundary = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
-        us_feature = next((f for f in us_boundary["features"] if f["properties"]["ADMIN"] == "United States of America"), None)
+        us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
+        geo_data = requests.get(us_state_geo).json()
         
-        if us_feature:
-            folium.GeoJson(
-                us_feature,
-                style_function=lambda x: {
-                    "fillColor": "#f0f0f0",
-                    "color": "#333",
-                    "weight": 2,
-                    "fillOpacity": 0.2
-                }
-            ).add_to(m)
+        # Add state outlines as base map layer (light gray background)
+        folium.GeoJson(
+            geo_data,
+            style_function=lambda x: {
+                "fillColor": "#ffffcc",
+                "color": "#cccccc",
+                "weight": 1,
+                "fillOpacity": 0.1
+            },
+            tooltip=False
+        ).add_to(m)
     except:
         pass
 
