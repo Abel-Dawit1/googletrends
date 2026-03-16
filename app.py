@@ -905,8 +905,18 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create map - US only, no zoom control
-    m = folium.Map(location=[39.5, -98.5], zoom_start=4, tiles="CartoDB positron", scroll_zoom=False, zoom_control=False)
+    # Create map - US only, no zoom control, locked bounds to prevent world view
+    m = folium.Map(
+        location=[39.5, -98.5], 
+        zoom_start=4, 
+        tiles="CartoDB positron", 
+        scroll_zoom=False, 
+        zoom_control=False,
+        min_zoom=3,
+        max_zoom=8,
+        max_bounds=True,
+        bounds=[[25, -130], [50, -65]]
+    )
 
     # Add state choropleth with search interest shading
     try:
