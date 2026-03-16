@@ -592,10 +592,30 @@ with tabs[0]:
     r_avg, s_avg = int(np.mean(r_vals)), int(np.mean(s_vals))
     
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Rinvoq Peak Index", r_peak, f"Avg: {r_avg}")
-    k2.metric("Skyrizi Peak Index", s_peak, f"Avg: {s_avg}")
-    k3.metric("Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index {DEMO_DMA.iloc[0]['Rinvoq']}")
-    k4.metric("Breakout Terms", str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), "Explosive growth")
+    k1.metric(
+        "Rinvoq Peak Index", 
+        r_peak, 
+        f"Avg: {r_avg}",
+        help="Highest search interest value for Rinvoq during the selected period (0-100 scale). Higher values indicate greater patient and HCP search activity."
+    )
+    k2.metric(
+        "Skyrizi Peak Index", 
+        s_peak, 
+        f"Avg: {s_avg}",
+        help="Highest search interest value for Skyrizi during the selected period (0-100 scale). Trending upward particularly in dermatology and gastroenterology indications."
+    )
+    k3.metric(
+        "Top DMA", 
+        DEMO_DMA.iloc[0]["Market"].split(",")[0], 
+        f"Index {DEMO_DMA.iloc[0]['Rinvoq']}",
+        help="Designated Market Area with highest combined search interest. Indicates geographic concentration of treatment awareness and patient consideration."
+    )
+    k4.metric(
+        "Breakout Terms", 
+        str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), 
+        "Explosive growth",
+        help="Search queries with 500%+ YoY growth—early signals of emerging patient interests and new indication expansion opportunities."
+    )
     
     st.markdown("---")
     
@@ -957,10 +977,30 @@ with tabs[4]:
     
     now = datetime.now()
     pk1, pk2, pk3, pk4 = st.columns(4)
-    pk1.metric("Active Campaigns", "3", "Across 2 brands")
-    pk2.metric("Rinvoq Peak In", f"{(2 - now.month + 12) % 12 or 12}mo", "Peak RA: February")
-    pk3.metric("Skyrizi Peak In", f"{(8 - now.month + 12) % 12 or 12}mo", "Peak Psoriasis: August")
-    pk4.metric("Search Alignment", "Good", "4/5 peaks covered")
+    pk1.metric(
+        "Active Campaigns", 
+        "3", 
+        "Across 2 brands",
+        help="Number of concurrent marketing campaigns currently running. Tracks multi-brand, multi-channel marketing initiatives."
+    )
+    pk2.metric(
+        "Rinvoq Peak In", 
+        f"{(2 - now.month + 12) % 12 or 12}mo", 
+        "Peak RA: February",
+        help="Months until Rinvoq search interest reaches annual peak. Prime timing window for awareness-stage campaign concentration."
+    )
+    pk3.metric(
+        "Skyrizi Peak In", 
+        f"{(8 - now.month + 12) % 12 or 12}mo", 
+        "Peak Psoriasis: August",
+        help="Months until Skyrizi search interest reaches annual peak. Strategic window for dermatology indication expansion and patient engagement."
+    )
+    pk4.metric(
+        "Search Alignment", 
+        "Good", 
+        "4/5 peaks covered",
+        help="Alignment score between planned campaign timing and natural search seasonality peaks. Higher alignment maximizes earned media lift."
+    )
     
     # Calendar
     st.markdown("**Annual Campaign Calendar**")
@@ -1015,10 +1055,29 @@ with tabs[5]:
     event = moments_df[moments_df["Event"] == selected_event].iloc[0]
     
     mk1, mk2, mk3, mk4 = st.columns(4)
-    mk1.metric("Rinvoq Lift", event["Rinvoq Lift"], "vs baseline")
-    mk2.metric("Skyrizi Lift", event["Skyrizi Lift"], "vs baseline")
-    mk3.metric("Peak Day Index", event["Peak"])
-    mk4.metric("Halo Duration", event["Halo"], "post-event")
+    mk1.metric(
+        "Rinvoq Lift", 
+        event["Rinvoq Lift"], 
+        "vs baseline",
+        help="Percent increase in Rinvoq search interest during the event period. Measures brand awareness lift driven by cultural moment exposure."
+    )
+    mk2.metric(
+        "Skyrizi Lift", 
+        event["Skyrizi Lift"], 
+        "vs baseline",
+        help="Percent increase in Skyrizi search interest during the event period. Indicates effectiveness of event sponsorship or partnerships."
+    )
+    mk3.metric(
+        "Peak Day Index", 
+        event["Peak"],
+        help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
+    )
+    mk4.metric(
+        "Halo Duration", 
+        event["Halo"], 
+        "post-event",
+        help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
+    )
     
     # Event trend chart
     r_lift = int(event["Rinvoq Lift"].replace("+", "").replace("%", ""))
