@@ -1,0 +1,4 @@
+# System dependencies for Streamlit Cloud
+# These may be needed for pytrends and other packages
+build-essential
+python3-dev
