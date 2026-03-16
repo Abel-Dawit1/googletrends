@@ -469,7 +469,9 @@ DEMO_AI_INSIGHTS = [
 
 def load_data(timeframe_key, brand_filter):
     """Load live data from pytrends, fall back to demo."""
-    tf = TIMEFRAME_MAP.get(timeframe_key, "today 3-m")
+    # Use custom timeframe map from session state, fallback to defaults
+    current_timeframe_map = st.session_state.get("custom_timeframe_map", TIMEFRAME_MAP)
+    tf = current_timeframe_map.get(timeframe_key, "today 3-m")
     
     # Try live data
     with st.spinner("Fetching Google Trends data..."):
@@ -506,14 +508,19 @@ with st.sidebar:
     
     st.divider()
     
-    franchise = st.selectbox("Franchise", ["All", "Rheumatology", "Dermatology", "Gastroenterology"])
-    brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"])
-    timeframe = st.selectbox("Timeframe", list(TIMEFRAME_MAP.keys()), index=2)
+    # Use custom configurations from session state, fallback to defaults
+    current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
+    current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
+    current_timeframe_map = st.session_state.get("custom_timeframe_map", TIMEFRAME_MAP)
     
-    ind_options = list(IND_NAMES.values())
+    franchise = st.selectbox("Franchise", ["All"] + list(current_franchise_map.keys()))
+    brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"])
+    timeframe = st.selectbox("Timeframe", list(current_timeframe_map.keys()), index=2)
+    
+    ind_options = list(current_ind_names.values())
     if franchise != "All":
-        ind_keys = FRANCHISE_MAP.get(franchise, [])
-        ind_options = [IND_NAMES[k] for k in ind_keys]
+        ind_keys = current_franchise_map.get(franchise, [])
+        ind_options = [current_ind_names.get(k, k) for k in ind_keys]
     indication = st.selectbox("Indication", ["All"] + ind_options)
     
     st.divider()
