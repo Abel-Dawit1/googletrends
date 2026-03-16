@@ -1005,17 +1005,20 @@ with tabs[1]:
         margin=dict(l=0, r=0, t=0, b=0),
         geo=dict(
             projection=dict(type='albers usa'),
-            showland=False,
+            showland=True,
+            landcolor='white',
+            showocean=True,
+            oceancolor='white',
+            showlakes=True,
+            lakecolor='white',
             showframe=False,
             coastlinewidth=0,
             showcoastlines=False,
-            showcountries=False,
-            showlakes=False,
-            showocean=False
+            showcountries=False
         ),
         hovermode='closest',
         paper_bgcolor='white',
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='white'
     )
     
     # Display the map with hover enabled but no zoom/pan/drag controls
