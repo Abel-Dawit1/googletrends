@@ -17,7 +17,15 @@ import json
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from anthropic import Anthropic
+
+# Try to import Anthropic, but make it optional
+try:
+    from anthropic import Anthropic
+    HAS_ANTHROPIC = True
+except ImportError:
+    HAS_ANTHROPIC = False
+    Anthropic = None
+
 from config import (
     NAVY, RINVOQ, SKYRIZI, GOLD, SUCCESS,
     COMP_COLORS, COMPETITORS,
@@ -35,6 +43,9 @@ from config import (
 @st.cache_resource
 def init_claude():
     """Initialize Anthropic Claude client with API key from secrets or environment."""
+    if not HAS_ANTHROPIC:
+        return None
+    
     try:
         # Try to get API key from Streamlit secrets first, then environment
         api_key = st.secrets.get("ANTHROPIC_API_KEY") or None
