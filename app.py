@@ -454,12 +454,12 @@ MOMENTS_DATA = [
 ]
 
 DEMO_AI_INSIGHTS = [
-    "**Geographic Opportunity: Northeast Dominance**\n\n📊 New York, Boston, Philadelphia: 15-25 pts above national avg\n→ Increase digital spend in Top-10 Northeast DMAs by 40%\n💰 Capture market share as Humira erodes",
-    "**Skyrizi Momentum: GI Expansion Breakout**\n\n📊 Crohn's disease searches: +42% YoY (highest growth)\n→ Launch IBD specialist campaigns aligned with GI conference\n💰 Premium positioning for high-intent patient segment",
-    "**Competitive Window: Humira Switching Signals**\n\n📊 'Rinvoq vs Humira' searches: +120% YoY\n→ Activate 'Switching from TNF inhibitors' content now\n💰 +23% conversion lift during Jan-Mar switching period",
-    "**HCP Intent: ACR Is Critical Event**\n\n📊 Generic 'upadacitinib' searches (88 index) = pure HCP traffic\n→ Launch CME content 6 weeks pre-ACR\n💰 Historically drives +35% Rinvoq lift over 10-day halo",
-    "**Safety Concerns: Proactive Messaging ROI**\n\n📊 JAK safety searches growing (+82 index)\n→ Develop evidence-based safety education content\n💰 Reduces objection handling time by ~30% in sales",
-    "**Emerging Markets: Untapped Potential**\n\n📊 South/Southwest states (48-58 range): 35-40 pt gap vs Northeast\n→ Launch targeted digital campaigns in low-saturation markets\n💰 $2M+ revenue upside from cost-effective acquisition"
+    "**Northeast Markets Show Persistent Dominance**\n\n📈 New York, Boston, Philadelphia sustained at 15-25 pts above national average. Strong search engagement across both condition and branded queries indicates deep market penetration.",
+    "**Skyrizi Driving GI Indication Growth**\n\n📈 Crohn's disease searches jumped +42% YoY—highest growth of any tracked indication. First signs of successful indication expansion beyond psoriasis into gastroenterology.",
+    "**Humira Competitive Pressure Accelerating**\n\n📈 'Rinvoq vs Humira' search intensity surged +120% YoY. Reflects high-intent patient population actively evaluating switching options. Peak switching behavior historically Jan-Mar.",
+    "**HCP Engagement Concentrated Around ACR**\n\n📈 Generic 'upadacitinib' searches (88 index) indicate strong HCP research activity. ACR conference period historically shows +35% lift, indicating HCP seasonality effect.",
+    "**Safety Becomes Search Driver**\n\n📈 JAK safety-related searches growing faster than branded searches (+82 index). Patients moving from interest phase to evaluation phase, prioritizing risk assessment.",
+    "**Geographic Disparity Widening**\n\n📈 South/Southwest states (48-58 range) sustaining 35-40 pt gap behind Northeast. Regional market maturation differences suggest different adoption curves by geography."
 ]
 
 
@@ -702,10 +702,10 @@ with tabs[0]:
             import re
             insight_html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', ai_insights)
             
-            insight_source = "Claude AI" if client else "Demo Data"
+            insight_label = "✦ Key Insight"
             st.markdown(f"""
             <div style='background:linear-gradient(135deg,{NAVY} 0%,#1a4094 100%);border-radius:10px;padding:16px 20px;color:white'>
-                <div style='font-weight:700;font-size:14px;margin-bottom:12px'>✦ Key Insight ({insight_source})</div>
+                <div style='font-weight:700;font-size:14px;margin-bottom:12px'>{insight_label}</div>
                 <div style='font-size:13px;line-height:1.8;opacity:0.95'>
                     {insight_html.replace(chr(10), '<br>')}
                 </div>
