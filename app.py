@@ -17,6 +17,13 @@ import json
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from anthropic import Anthropic
+
+# Initialize Claude client
+@st.cache_resource
+def init_claude():
+    """Initialize Anthropic Claude client."""
+    return Anthropic()
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -197,6 +204,110 @@ def transform_trends_to_queries(trend_df, related_rinvoq=None, related_skyrizi=N
     
     # Fallback to demo data if no real queries
     return pd.DataFrame(queries) if queries else DEMO_QUERIES
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CLAUDE AI ANALYSIS LAYER
+# ═══════════════════════════════════════════════════════════════════════════
+
+def format_data_context(trend_df, dma_df, state_df, queries_df):
+    """Format dashboard data into context for Claude."""
+    context = {
+        "trends_summary": {},
+        "geographic_insights": {},
+        "top_queries": [],
+        "queries_by_type": {}
+    }
+    
+    # Trend summary
+    if "Rinvoq" in trend_df.columns:
+        context["trends_summary"]["Rinvoq"] = {
+            "peak": int(trend_df["Rinvoq"].max()),
+            "avg": int(trend_df["Rinvoq"].mean()),
+            "current": int(trend_df["Rinvoq"].iloc[-1]) if not trend_df.empty else 0
+        }
+    if "Skyrizi" in trend_df.columns:
+        context["trends_summary"]["Skyrizi"] = {
+            "peak": int(trend_df["Skyrizi"].max()),
+            "avg": int(trend_df["Skyrizi"].mean()),
+            "current": int(trend_df["Skyrizi"].iloc[-1]) if not trend_df.empty else 0
+        }
+    
+    # Top DMA markets
+    if not dma_df.empty:
+        top_dmas = dma_df.nlargest(5, "Rinvoq")[["Market", "Rinvoq", "Skyrizi", "Trend"]].to_dict("records")
+        context["geographic_insights"]["top_dmas"] = top_dmas
+    
+    # State-level summary
+    if state_df is not None and not state_df.empty:
+        context["geographic_insights"]["strong_states"] = state_df.nlargest(5, "Rinvoq")[["State", "Rinvoq", "Skyrizi"]].to_dict("records")
+    
+    # Top queries
+    if not queries_df.empty:
+        context["top_queries"] = queries_df.nlargest(10, "Index")[["Query", "Brand", "Index", "Type"]].to_dict("records")
+        # Group by type
+        for query_type in queries_df["Type"].unique():
+            type_queries = queries_df[queries_df["Type"] == query_type].nlargest(3, "Index")[["Query", "Index"]].to_dict("records")
+            context["queries_by_type"][query_type] = type_queries
+    
+    return context
+
+def generate_ai_insights(trend_df, dma_df, state_df, queries_df, client):
+    """Generate strategic insights using Claude based on current data."""
+    try:
+        context = format_data_context(trend_df, dma_df, state_df, queries_df)
+        
+        prompt = f"""You are a strategic business analyst for AbbVie's Immunology division. 
+        
+Analyze the following Google Trends data and provide 3-4 specific, actionable business insights that would help inform marketing and commercial strategy decisions. Focus on geographic opportunities, competitive positioning, and patient/HCP search intent patterns.
+
+DATA CONTEXT:
+{json.dumps(context, indent=2)}
+
+Provide insights that are:
+- Data-driven and specific (reference actual numbers where relevant)
+- Actionable (suggest specific business actions)
+- Focused on competitive advantage and market opportunity
+- Written for C-suite executives who make budget allocation decisions
+
+Format: Start with a brief executive summary, then list 3-4 key insights with supporting data and recommended actions."""
+
+        response = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=800,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        return response.content[0].text
+    except Exception as e:
+        return f"Error generating insights: {str(e)}"
+
+def chat_with_claude(client, messages, trend_df, dma_df, state_df, queries_df):
+    """Chat with Claude about the dashboard data."""
+    try:
+        context = format_data_context(trend_df, dma_df, state_df, queries_df)
+        
+        system_prompt = f"""You are a search intelligence analyst for AbbVie Immunology. 
+You have access to current Google Trends data for Rinvoq and Skyrizi across the US.
+
+CURRENT DATA:
+{json.dumps(context, indent=2)}
+
+Answer user questions about search trends, market opportunities, geographic performance, and competitive positioning. 
+Be specific with data points and actionable in recommendations. If asked about something not in the data, acknowledge the limitation."""
+
+        response = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=500,
+            system=system_prompt,
+            messages=messages
+        )
+        
+        return response.content[0].text
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -432,7 +543,17 @@ DEMO_QUERIES = transform_trends_to_queries(trend_df, related_rinvoq, related_sky
 # TABS
 # ═══════════════════════════════════════════════════════════════════════════
 
-tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "⚡ Key Moments", "⚙️ Data Config"])
+# Initialize Claude and chat history
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+    
+try:
+    client = init_claude()
+except Exception as e:
+    st.session_state["api_error"] = str(e)
+    client = None
+
+tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "⚡ Key Moments", "💬 AI Chat"])
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 1: OVERVIEW
@@ -542,14 +663,24 @@ with tabs[0]:
     
     # AI Insight
     st.markdown("---")
-    st.markdown(f"""
-    <div style='background:linear-gradient(135deg,{NAVY} 0%,#1a4094 100%);border-radius:10px;padding:16px 20px;color:white'>
-        <div style='font-weight:700;font-size:14px;margin-bottom:8px'>✦ AI-Powered Strategic Insights</div>
-        <div style='font-size:13px;line-height:1.8;opacity:0.9'>
-            Rinvoq's search dominance in the Northeast — led by New York (91), Philadelphia (82), and Boston (75) — reflects concentrated rheumatology HCP density, making this region highest-priority for Q1 digital investment. Skyrizi's superior YoY growth (+45% Q4) and summer psoriasis peak (index 95) signal a prime opportunity to front-run patient intent with a May campaign in dermatology-heavy Sun Belt markets. Crohn's/UC represents the largest underleveraged search opportunity for expanded clinical positioning.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    
+    # AI-Powered Insights using Claude
+    with st.spinner("✦ Generating AI-powered insights..."):
+        if client:
+            try:
+                ai_insights = generate_ai_insights(trend_df, DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client)
+                st.markdown(f"""
+                <div style='background:linear-gradient(135deg,{NAVY} 0%,#1a4094 100%);border-radius:10px;padding:16px 20px;color:white'>
+                    <div style='font-weight:700;font-size:14px;margin-bottom:12px'>✦ AI-Powered Strategic Insights (Claude)</div>
+                    <div style='font-size:13px;line-height:1.8;opacity:0.95;white-space:pre-wrap'>
+                        {ai_insights}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            except Exception as e:
+                st.error(f"Could not generate insights: {str(e)}")
+        else:
+            st.warning("Claude API not available. Set ANTHROPIC_API_KEY environment variable to enable AI insights.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -882,49 +1013,102 @@ with tabs[5]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# TAB 7: DATA CONFIG
+# TAB 7: AI CHAT
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[6]:
-    st.subheader("Search Query Library")
-    st.caption("Edit the queries that power the dashboard. Changes apply to the current session.")
+    st.subheader("💬 AI Chat — Ask Questions About Your Data")
+    st.caption("Ask Claude anything about the search trends, geographic performance, or competitive insights. Questions are answered based on your current dashboard data.")
     
-    edited_df = st.data_editor(
-        DEMO_QUERIES,
-        use_container_width=True,
-        num_rows="dynamic",
-        column_config={
-            "Index": st.column_config.NumberColumn("Index", min_value=0, max_value=100),
-            "Growth": st.column_config.NumberColumn("Growth %", min_value=0),
-            "Brand": st.column_config.SelectboxColumn("Brand", options=["Rinvoq", "Skyrizi", "Both"]),
-            "Type": st.column_config.SelectboxColumn("Type", options=["condition", "generic", "branded", "competitive", "safety", "drug_class"]),
-        }
-    )
-    
-    st.divider()
-    st.markdown("**Data Source Configuration**")
-    st.code("""
-# To connect to live Google Trends data, ensure pytrends is installed:
-pip install pytrends
-
-# The app automatically tries Google Trends on each load.
-# If rate-limited, it falls back to built-in demo data.
-# Click "Refresh Data" in the sidebar to retry.
-    """)
-    
-    st.markdown("**Pipeline Setup (for daily automation)**")
-    st.code("""
-# Install pipeline dependencies
-pip install pytrends flask flask-cors apscheduler
-
-# Run the pipeline once
-python pipeline.py
-
-# Schedule daily runs (6 AM)
-python scheduler.py
-
-# Or use cron:
-# 0 6 * * * cd /path/to/pipeline && python pipeline.py
-    """)
+    if not client:
+        st.error("🔌 Claude API connection required. Set the ANTHROPIC_API_KEY environment variable to enable chat.")
+    else:
+        # Chat interface
+        chat_container = st.container()
+        
+        # Display chat history
+        with chat_container:
+            for i, message in enumerate(st.session_state.chat_history):
+                if message["role"] == "user":
+                    with st.chat_message("user"):
+                        st.markdown(message["content"])
+                else:
+                    with st.chat_message("assistant"):
+                        st.markdown(message["content"])
+        
+        # Input area
+        st.divider()
+        
+        user_input = st.chat_input("Ask about trends, markets, queries, or strategy...", key="chat_input")
+        
+        if user_input:
+            # Add user message to history
+            st.session_state.chat_history.append({
+                "role": "user",
+                "content": user_input
+            })
+            
+            # Display user message
+            with st.chat_message("user"):
+                st.markdown(user_input)
+            
+            # Get Claude response
+            with st.chat_message("assistant"):
+                with st.spinner("Claude is thinking..."):
+                    # Prepare messages for Claude (exclude system message)
+                    messages_for_claude = [
+                        {"role": msg["role"], "content": msg["content"]}
+                        for msg in st.session_state.chat_history
+                    ]
+                    
+                    response = chat_with_claude(
+                        client, 
+                        messages_for_claude,
+                        trend_df, 
+                        DEMO_DMA, 
+                        DEMO_STATES, 
+                        DEMO_QUERIES
+                    )
+                    st.markdown(response)
+                    
+                    # Add assistant response to history
+                    st.session_state.chat_history.append({
+                        "role": "assistant",
+                        "content": response
+                    })
+            
+            # Auto-rerun to update chat
+            st.rerun()
+        
+        # Quick prompt suggestions
+        st.divider()
+        st.markdown("**Quick Questions:**")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📍 Which markets are strongest?"):
+                st.session_state.chat_history.append({
+                    "role": "user",
+                    "content": "Which markets are strongest for Rinvoq vs Skyrizi?"
+                })
+                st.rerun()
+            if st.button("📈 What's the growth trend?"):
+                st.session_state.chat_history.append({
+                    "role": "user",
+                    "content": "What's the growth trend for Rinvoq and Skyrizi?"
+                })
+                st.rerun()
+        with col2:
+            if st.button("🎯 Where should we allocate budget?"):
+                st.session_state.chat_history.append({
+                    "role": "user",
+                    "content": "Where should we allocate marketing budget based on this data?"
+                })
+                st.rerun()
+            if st.button("🔍 What patient intents matter most?"):
+                st.session_state.chat_history.append({
+                    "role": "user",
+                    "content": "What patient search intents should we focus on?"
+                })
+                st.rerun()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
