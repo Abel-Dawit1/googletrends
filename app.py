@@ -18,6 +18,12 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from anthropic import Anthropic
+from config import (
+    NAVY, RINVOQ, SKYRIZI, GOLD, SUCCESS,
+    COMP_COLORS, COMPETITORS,
+    IND_NAMES, FRANCHISE_MAP, TIMEFRAME_MAP,
+    DEMO_AI_INSIGHTS
+)
 
 # Initialize Claude client
 @st.cache_resource
@@ -46,34 +52,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-# ═══════════════════════════════════════════════════════════════════════════
-# BRAND COLORS
-# ═══════════════════════════════════════════════════════════════════════════
-NAVY = "#071d49"
-RINVOQ = "#FFB84D"
-SKYRIZI = "#4db8ff"
-GOLD = "#b8860b"
-SUCCESS = "#1a7f4f"
-COMP_COLORS = {
-    "Enbrel": "#6b4c9a", "Humira": "#e67e22", "Xeljanz": "#3498db",
-    "Tremfya": "#27ae60", "Cosentyx": "#8e44ad", "Bimzelx": "#e84393",
-    "Dupixent": "#00b894", "Ebglyss": "#fd79a8", "Nemluvio": "#636e72",
-    "Otezla": "#fdcb6e", "Icotrokinra": "#00cec9", "Entyvio": "#d35400",
-}
-COMPETITORS = list(COMP_COLORS.keys())
-
-IND_NAMES = {"ra": "RA", "pso": "Psoriasis", "psa": "PsA", "as": "AS",
-             "ad": "AD", "cd": "Crohn's", "uc": "UC", "gca": "GCA"}
-FRANCHISE_MAP = {
-    "Rheumatology": ["ra", "psa", "as", "gca"],
-    "Dermatology": ["pso", "psa", "ad"],
-    "Gastroenterology": ["uc", "cd"],
-}
-TIMEFRAME_MAP = {
-    "7 Days": "now 7-d", "30 Days": "today 1-m", "90 Days": "today 3-m",
-    "12 Months": "today 12-m", "5 Years": "today 5-y",
-}
 
 # ═══════════════════════════════════════════════════════════════════════════
 # GOOGLE TRENDS DATA LAYER
@@ -451,15 +429,6 @@ MOMENTS_DATA = [
     {"Event": "Grammy Awards", "Category": "Entertainment", "Date": "Feb 2, 2025", "Rinvoq Lift": "+8%", "Skyrizi Lift": "+15%", "Peak": 65, "Halo": "3d", "Breakout": "psoriasis awareness", "Insight": "Grammy Awards drove targeted lift via celebrity psoriasis awareness moments."},
     {"Event": "Mother's Day", "Category": "Cultural", "Date": "May 11, 2025", "Rinvoq Lift": "+10%", "Skyrizi Lift": "+14%", "Peak": 68, "Halo": "4d", "Breakout": "caregiver support", "Insight": "Caregiver campaigns drove 14% Skyrizi lift on quality-of-life messaging."},
     {"Event": "Winter Olympics", "Category": "Sports", "Date": "Feb 2026", "Rinvoq Lift": "+12%", "Skyrizi Lift": "+10%", "Peak": 72, "Halo": "14d", "Breakout": "athlete sponsorship", "Insight": "Extended 14-day halo. Joint RA/PsA messaging resonated with active lifestyle narrative."},
-]
-
-DEMO_AI_INSIGHTS = [
-    "**Skyrizi Outpacing Rinvoq in Growth Rate**\n\n📈 Skyrizi YoY growth +45% vs Rinvoq +38%. Gap widening across all quarters in 2024. Suggests stronger momentum in dermatology indication expansion, particularly psoriasis and newer areas.",
-    "**Skyrizi Crohn's Breakout: +42% Spike**\n\n📈 Crohn's disease searches for Skyrizi jumped 42% YoY—highest growth among any tracked indication. Marks successful entry into GI market with legitimate clinical demand signal.",
-    "**Rinvoq Command in RA/Rheumatology Searches**\n\n📈 Rheumatoid arthritis searches favor Rinvoq (94 index) over Skyrizi (88 index). Upadacitinib JAK mechanism maintains strong HCP research activity, particularly around clinical data.",
-    "**Northeast Duopoly: Both Brands Dominate**\n\n📈 Rinvoq and Skyrizi both sustained 15-25 pts above national average in Northeast DMAs. NYC/Boston/Philadelphia show deepest market penetration for both products combined.",
-    "**Skyrizi Emerging in New Indications**\n\n📈 Atopic dermatitis searches up 52% YoY for Skyrizi. Signals successful label expansion beyond plaque psoriasis gaining traction with patients exploring treatment options.",
-    "**Safety Research: Patients Evaluating Both**\n\n📈 JAK inhibitor safety searches (+82 index) tracking Rinvoq research. Patients in evaluation phase want evidence-based safety profiles as part of treatment selection."
 ]
 
 
