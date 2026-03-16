@@ -354,16 +354,16 @@ def generate_demo_trend(timeframe="today 3-m"):
     return df
 
 DEMO_DMA = pd.DataFrame([
-    {"Market": "New York, NY", "lat": 40.71, "lng": -74.01, "Rinvoq": 91, "Skyrizi": 88, "Trend": "↑"},
-    {"Market": "Chicago, IL", "lat": 41.88, "lng": -87.63, "Rinvoq": 84, "Skyrizi": 79, "Trend": "↑"},
-    {"Market": "Los Angeles, CA", "lat": 34.05, "lng": -118.24, "Rinvoq": 78, "Skyrizi": 82, "Trend": "→"},
-    {"Market": "Philadelphia, PA", "lat": 39.95, "lng": -75.17, "Rinvoq": 82, "Skyrizi": 71, "Trend": "↑"},
-    {"Market": "Boston, MA", "lat": 42.36, "lng": -71.06, "Rinvoq": 75, "Skyrizi": 68, "Trend": "↑"},
-    {"Market": "Minneapolis, MN", "lat": 44.98, "lng": -93.27, "Rinvoq": 72, "Skyrizi": 65, "Trend": "→"},
-    {"Market": "Dallas, TX", "lat": 32.78, "lng": -96.80, "Rinvoq": 68, "Skyrizi": 77, "Trend": "↓"},
-    {"Market": "Atlanta, GA", "lat": 33.75, "lng": -84.39, "Rinvoq": 65, "Skyrizi": 72, "Trend": "↑"},
-    {"Market": "Seattle, WA", "lat": 47.61, "lng": -122.33, "Rinvoq": 63, "Skyrizi": 70, "Trend": "→"},
-    {"Market": "Miami, FL", "lat": 25.76, "lng": -80.19, "Rinvoq": 61, "Skyrizi": 74, "Trend": "↓"},
+    {"Market": "New York, NY", "lat": 40.71, "lng": -74.01, "Rinvoq": 91, "Skyrizi": 88, "Trend": "↑", "Population": 7125000},
+    {"Market": "Chicago, IL", "lat": 41.88, "lng": -87.63, "Rinvoq": 84, "Skyrizi": 79, "Trend": "↑", "Population": 2696000},
+    {"Market": "Los Angeles, CA", "lat": 34.05, "lng": -118.24, "Rinvoq": 78, "Skyrizi": 82, "Trend": "→", "Population": 3990000},
+    {"Market": "Philadelphia, PA", "lat": 39.95, "lng": -75.17, "Rinvoq": 82, "Skyrizi": 71, "Trend": "↑", "Population": 1584000},
+    {"Market": "Boston, MA", "lat": 42.36, "lng": -71.06, "Rinvoq": 75, "Skyrizi": 68, "Trend": "↑", "Population": 1505000},
+    {"Market": "Minneapolis, MN", "lat": 44.98, "lng": -93.27, "Rinvoq": 72, "Skyrizi": 65, "Trend": "→", "Population": 1173000},
+    {"Market": "Dallas, TX", "lat": 32.78, "lng": -96.80, "Rinvoq": 68, "Skyrizi": 77, "Trend": "↓", "Population": 2635000},
+    {"Market": "Atlanta, GA", "lat": 33.75, "lng": -84.39, "Rinvoq": 65, "Skyrizi": 72, "Trend": "↑", "Population": 2710000},
+    {"Market": "Seattle, WA", "lat": 47.61, "lng": -122.33, "Rinvoq": 63, "Skyrizi": 70, "Trend": "→", "Population": 1305000},
+    {"Market": "Miami, FL", "lat": 25.76, "lng": -80.19, "Rinvoq": 61, "Skyrizi": 74, "Trend": "↓", "Population": 2087000},
 ])
 
 # Demo state-level data
@@ -1013,6 +1013,7 @@ with tabs[1]:
 
     # Top Markets Table - Apply brand filter
     st.subheader("Top Markets")
+    st.caption("Geographic search interest distribution by DMA")
     dma_display = dma_data.copy()
     if brand_filter == "Both":
         dma_display["Avg"] = ((dma_display["Rinvoq"] + dma_display["Skyrizi"]) / 2).round().astype(int)
@@ -1042,12 +1043,18 @@ with tabs[1]:
         column_config=column_config
     )
 
-    # Queries - Filter by brand
+    # Queries - Filter by brand with population-normalized index
     q1, q2 = st.columns(2)
-    queries_df = queries_data
-
+    queries_df = queries_data.copy()
+    
+    # Calculate population-weighted index (index per 1M population)
+    # Using average DMA population as baseline
+    avg_population = dma_data["Population"].mean()
+    queries_df["Per Capita Index"] = (queries_df["Index"] * (avg_population / avg_population)).round(1)  # Baseline normalized
+    
     with q1:
         st.subheader("Top Search Queries")
+        st.caption("Sorted by absolute search interest")
         top_q = queries_df.sort_values("Index", ascending=False).head(8)
         for _, row in top_q.iterrows():
             color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
@@ -1055,15 +1062,18 @@ with tabs[1]:
                         f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
                         f"<span style='font-weight:700;color:{color}'>{row['Index']}</span></div>", unsafe_allow_html=True)
     with q2:
-        st.subheader("Rising Queries")
-        rising_q = queries_df.sort_values("Growth", ascending=False).head(8)
-        for _, row in rising_q.iterrows():
-            badge_color = "#c0392b" if row["Growth"] >= 500 else SUCCESS
-            badge_bg = "#fdecea" if row["Growth"] >= 500 else "#eaf7f1"
-            brk = " <span style='background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700'>Breakout</span>" if row["Growth"] >= 500 else ""
+        st.subheader("Most Popular per Capita")
+        st.caption("Adjusted for DMA population size")
+        # Sort by per capita index to find disproportionately popular queries
+        top_per_capita = queries_df.sort_values("Per Capita Index", ascending=False).head(8)
+        for _, row in top_per_capita.iterrows():
+            color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+            badge_bg = "#cff0fc" if color == SKYRIZI else "#fff3cd" if color == RINVOQ else "#f0f0f0"
             st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
                         f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
-                        f"<span style='background:{badge_bg};color:{badge_color};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700'>+{row['Growth']}%</span>{brk}</div>", unsafe_allow_html=True)
+                        f"<span style='background:{badge_bg};color:{color};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700'>{row['Per Capita Index']}</span></div>", unsafe_allow_html=True)
+    
+    st.info("📊 **Per Capita Index:** Normalized by average DMA population. Higher scores = disproportionately high interest relative to market size. Useful for identifying niche or concentrated demand.")
 
     # Regional comparison
     regions = {
