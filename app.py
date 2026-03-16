@@ -22,8 +22,20 @@ from anthropic import Anthropic
 # Initialize Claude client
 @st.cache_resource
 def init_claude():
-    """Initialize Anthropic Claude client."""
-    return Anthropic()
+    """Initialize Anthropic Claude client with API key from secrets or environment."""
+    try:
+        # Try to get API key from Streamlit secrets first, then environment
+        api_key = st.secrets.get("ANTHROPIC_API_KEY") or None
+        if not api_key:
+            import os
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+        
+        if not api_key:
+            return None
+            
+        return Anthropic(api_key=api_key)
+    except Exception as e:
+        return None
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -678,9 +690,19 @@ with tabs[0]:
                 </div>
                 """, unsafe_allow_html=True)
             except Exception as e:
-                st.error(f"Could not generate insights: {str(e)}")
+                st.error(f"⚠️ Could not generate insights: {str(e)}", icon="🔑")
+                st.info("**Setup Instructions:**\n"
+                       "1. Get your API key from [console.anthropic.com](https://console.anthropic.com/keys)\n"
+                       "2. Add to Streamlit secrets: `~/.streamlit/secrets.toml`\n"
+                       "```\nANTHROPIC_API_KEY = \"your-api-key-here\"\n```\n"
+                       "3. Restart the app or click 'Refresh Data' in sidebar")
         else:
-            st.warning("Claude API not available. Set ANTHROPIC_API_KEY environment variable to enable AI insights.")
+            st.warning("🔑 Claude API key not configured", icon="⚠️")
+            st.info("**To enable AI insights and chat:**\n"
+                   "1. Get your API key from [console.anthropic.com](https://console.anthropic.com/keys)\n"
+                   "2. Add to Streamlit secrets: `~/.streamlit/secrets.toml`\n"
+                   "```\nANTHROPIC_API_KEY = \"your-api-key-here\"\n```\n"
+                   "3. Restart the app or click 'Refresh Data' in sidebar")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1020,8 +1042,13 @@ with tabs[6]:
     st.caption("Ask Claude anything about the search trends, geographic performance, or competitive insights. Questions are answered based on your current dashboard data.")
     
     if not client:
-        st.error("🔌 Claude API connection required. Set the ANTHROPIC_API_KEY environment variable to enable chat.")
-    else:
+        st.error("� Claude API key not configured", icon="⚠️")
+        st.info("**To enable AI chat:**\n"
+               "1. Get your API key from [console.anthropic.com](https://console.anthropic.com/keys)\n"
+               "2. Add to Streamlit secrets: `~/.streamlit/secrets.toml`\n"
+               "```\nANTHROPIC_API_KEY = \"your-api-key-here\"\n```\n"
+               "3. Restart the app or click 'Refresh Data' in sidebar")
+        st.stop()
         # Chat interface
         chat_container = st.container()
         
