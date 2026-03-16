@@ -1594,58 +1594,58 @@ with tabs[7]:
     with config_tabs[0]:
         st.subheader("Manage Competitor Brands & Colors")
         st.markdown("Add, remove, or update competitor brands and their display colors.")
-            
-            col_c1, col_c2 = st.columns([1, 4])
-            with col_c1:
-                if st.button("➕ Add Competitor", key="add_comp"):
-                    st.session_state.show_add_comp = True
-            
-            if st.session_state.get("show_add_comp", False):
-                with st.form("add_competitor_form", clear_on_submit=True):
-                    new_brand = st.text_input("Brand Name", placeholder="e.g., NewBrand")
-                    new_color = st.color_picker("Brand Color", "#3498db")
-                    if st.form_submit_button("Add"):
-                        if new_brand and new_brand not in st.session_state.custom_comp_colors:
-                            st.session_state.custom_comp_colors[new_brand] = new_color
-                            st.session_state.show_add_comp = False
-                            st.success(f"✓ Added {new_brand}")
-                            st.rerun()
-                        elif new_brand in st.session_state.custom_comp_colors:
-                            st.error("Brand already exists")
-            
-            st.markdown("**Current Competitors:**")
-            for brand, color in st.session_state.custom_comp_colors.items():
-                col_b1, col_b2, col_b3 = st.columns([2, 1, 1])
-                with col_b1:
-                    st.markdown(f"**{brand}**")
-                with col_b2:
-                    st.markdown(f"<span style='background:{color};padding:4px 12px;border-radius:4px;color:white;font-weight:700'>{color}</span>", unsafe_allow_html=True)
-                with col_b3:
-                    if st.button("Remove", key=f"remove_comp_{brand}"):
-                        del st.session_state.custom_comp_colors[brand]
-                        st.success(f"✓ Removed {brand}")
-                        st.rerun()
         
-        # TAB 8.2: Indications
-        with config_tabs[1]:
-            st.subheader("Manage Clinical Indications")
-            st.markdown("Define indication codes and their display names.")
-            
-            if st.button("➕ Add Indication", key="add_ind"):
-                st.session_state.show_add_ind = True
-            
-            if st.session_state.get("show_add_ind", False):
-                with st.form("add_indication_form", clear_on_submit=True):
-                    new_code = st.text_input("Indication Code", placeholder="e.g., ra", max_chars=4).lower()
-                    new_name = st.text_input("Display Name", placeholder="e.g., Rheumatoid Arthritis")
-                    if st.form_submit_button("Add"):
-                        if new_code and new_name and new_code not in st.session_state.custom_ind_names:
-                            st.session_state.custom_ind_names[new_code] = new_name
-                            st.session_state.show_add_ind = False
-                            st.success(f"✓ Added {new_code}: {new_name}")
-                            st.rerun()
-                        elif new_code in st.session_state.custom_ind_names:
-                            st.error("Indication code already exists")
+        col_c1, col_c2 = st.columns([1, 4])
+        with col_c1:
+            if st.button("➕ Add Competitor", key="add_comp"):
+                st.session_state.show_add_comp = True
+        
+        if st.session_state.get("show_add_comp", False):
+            with st.form("add_competitor_form", clear_on_submit=True):
+                new_brand = st.text_input("Brand Name", placeholder="e.g., NewBrand")
+                new_color = st.color_picker("Brand Color", "#3498db")
+                if st.form_submit_button("Add"):
+                    if new_brand and new_brand not in st.session_state.custom_comp_colors:
+                        st.session_state.custom_comp_colors[new_brand] = new_color
+                        st.session_state.show_add_comp = False
+                        st.success(f"✓ Added {new_brand}")
+                        st.rerun()
+                    elif new_brand in st.session_state.custom_comp_colors:
+                        st.error("Brand already exists")
+        
+        st.markdown("**Current Competitors:**")
+        for brand, color in st.session_state.custom_comp_colors.items():
+            col_b1, col_b2, col_b3 = st.columns([2, 1, 1])
+            with col_b1:
+                st.markdown(f"**{brand}**")
+            with col_b2:
+                st.markdown(f"<span style='background:{color};padding:4px 12px;border-radius:4px;color:white;font-weight:700'>{color}</span>", unsafe_allow_html=True)
+            with col_b3:
+                if st.button("Remove", key=f"remove_comp_{brand}"):
+                    del st.session_state.custom_comp_colors[brand]
+                    st.success(f"✓ Removed {brand}")
+                    st.rerun()
+    
+    # TAB 8.2: Indications
+    with config_tabs[1]:
+        st.subheader("Manage Clinical Indications")
+        st.markdown("Define indication codes and their display names.")
+        
+        if st.button("➕ Add Indication", key="add_ind"):
+            st.session_state.show_add_ind = True
+        
+        if st.session_state.get("show_add_ind", False):
+            with st.form("add_indication_form", clear_on_submit=True):
+                new_code = st.text_input("Indication Code", placeholder="e.g., ra", max_chars=4).lower()
+                new_name = st.text_input("Display Name", placeholder="e.g., Rheumatoid Arthritis")
+                if st.form_submit_button("Add"):
+                    if new_code and new_name and new_code not in st.session_state.custom_ind_names:
+                        st.session_state.custom_ind_names[new_code] = new_name
+                        st.session_state.show_add_ind = False
+                        st.success(f"✓ Added {new_code}: {new_name}")
+                        st.rerun()
+                    elif new_code in st.session_state.custom_ind_names:
+                        st.error("Indication code already exists")
             
             st.markdown("**Current Indications:**")
             for code, name in st.session_state.custom_ind_names.items():
