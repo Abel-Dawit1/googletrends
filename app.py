@@ -905,15 +905,19 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create US-only map - no world basemap
+    # Create completely static US-only map
     m = folium.Map(
         location=[39.5, -98.5], 
         zoom_start=4, 
         tiles=None,  # No basemap tiles
         scroll_zoom=False, 
         zoom_control=False,
-        dragging=False
+        dragging=False,
+        keyboard=False  # Disable keyboard navigation
     )
+    
+    # Disable double-click zoom and all other interactions
+    m.options['doubleClickZoom'] = False
     
     # Load US state boundaries as the base layer
     try:
@@ -931,6 +935,37 @@ with tabs[1]:
             },
             tooltip=False
         ).add_to(m)
+        
+        # Extract Alaska and Hawaii for inset maps
+        alaska_feature = next((f for f in geo_data["features"] if f["properties"]["name"] == "Alaska"), None)
+        hawaii_feature = next((f for f in geo_data["features"] if f["properties"]["name"] == "Hawaii"), None)
+        
+        # Add Alaska inset box in bottom left
+        if alaska_feature:
+            folium.GeoJson(
+                alaska_feature,
+                style_function=lambda x: {
+                    "fillColor": "#ffffcc",
+                    "color": "#333333",
+                    "weight": 2,
+                    "fillOpacity": 0.3
+                },
+                tooltip=False
+            ).add_to(m)
+        
+        # Add Hawaii inset box in bottom left (next to Alaska)
+        if hawaii_feature:
+            folium.GeoJson(
+                hawaii_feature,
+                style_function=lambda x: {
+                    "fillColor": "#ffffcc",
+                    "color": "#333333",
+                    "weight": 2,
+                    "fillOpacity": 0.3
+                },
+                tooltip=False
+            ).add_to(m)
+        
     except:
         pass
 
