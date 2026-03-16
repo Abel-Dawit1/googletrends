@@ -1094,6 +1094,21 @@ with tabs[1]:
         }
     )
     
+    # Add clickable state buttons below map for zooming
+    st.markdown("**Click a state to zoom:**")
+    
+    # Get list of states with DMA data for button display
+    zoomable_states_list = sorted(list(STATE_NAME_TO_ABBR.keys()))
+    
+    # Create buttons in columns (2 per row)
+    button_cols = st.columns(5)
+    for idx, state_name in enumerate(zoomable_states_list):
+        col = button_cols[idx % 5]
+        with col:
+            if st.button(state_name, key=f"state_btn_{state_name}", use_container_width=True):
+                st.session_state.map_zoom_state = state_name
+                st.rerun()
+    
     # Add zoom controls below map
     if currently_zoomed_state:
         st.info(f"📍 Zoomed into {currently_zoomed_state}. Click button below to return to USA view.")
