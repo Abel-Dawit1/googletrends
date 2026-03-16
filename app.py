@@ -329,14 +329,12 @@ with tabs[0]:
     s_vals = trend_df["Skyrizi"].values if "Skyrizi" in trend_df.columns else [0]
     r_peak, s_peak = int(max(r_vals)), int(max(s_vals))
     r_avg, s_avg = int(np.mean(r_vals)), int(np.mean(s_vals))
-    sov = round(r_peak / (r_peak + s_peak) * 100) if (r_peak + s_peak) > 0 else 50
     
-    k1, k2, k3, k4, k5 = st.columns(5)
+    k1, k2, k3, k4 = st.columns(4)
     k1.metric("Rinvoq Peak Index", r_peak, f"Avg: {r_avg}")
     k2.metric("Skyrizi Peak Index", s_peak, f"Avg: {s_avg}")
-    k3.metric("Share of Voice", f"{sov}%", f"R:{sov} / S:{100-sov}")
-    k4.metric("Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index {DEMO_DMA.iloc[0]['Rinvoq']}")
-    k5.metric("Breakout Terms", str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), "Explosive growth")
+    k3.metric("Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index {DEMO_DMA.iloc[0]['Rinvoq']}")
+    k4.metric("Breakout Terms", str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), "Explosive growth")
     
     st.markdown("---")
     
@@ -357,19 +355,10 @@ with tabs[0]:
     )
     st.plotly_chart(fig_trend, use_container_width=True)
     
-    # SOV + Seasonality + YoY
-    c1, c2, c3 = st.columns(3)
+    # Seasonality + YoY
+    c1, c2 = st.columns(2)
     
     with c1:
-        fig_sov = go.Figure(go.Pie(
-            labels=["Rinvoq", "Skyrizi"], values=[sov, 100-sov],
-            marker_colors=[RINVOQ, SKYRIZI], hole=0.65,
-            textinfo="label+percent", textposition="outside"
-        ))
-        fig_sov.update_layout(title="Share of Voice", height=300, showlegend=False, margin=dict(t=40, b=20))
-        st.plotly_chart(fig_sov, use_container_width=True)
-    
-    with c2:
         fig_season = go.Figure()
         if brand_filter != "Skyrizi":
             fig_season.add_trace(go.Bar(x=SEASON_DATA["Month"], y=SEASON_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ, opacity=0.8))
@@ -378,7 +367,7 @@ with tabs[0]:
         fig_season.update_layout(title="Seasonality", height=300, barmode="group", yaxis=dict(range=[0, 100]), template="plotly_white", margin=dict(t=40, b=20))
         st.plotly_chart(fig_season, use_container_width=True)
     
-    with c3:
+    with c2:
         fig_yoy = go.Figure()
         if brand_filter != "Skyrizi":
             fig_yoy.add_trace(go.Bar(x=YOY_DATA["Quarter"], y=YOY_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ))
@@ -443,7 +432,7 @@ with tabs[0]:
     <div style='background:linear-gradient(135deg,{NAVY} 0%,#1a4094 100%);border-radius:10px;padding:16px 20px;color:white'>
         <div style='font-weight:700;font-size:14px;margin-bottom:8px'>✦ AI-Powered Strategic Insights</div>
         <div style='font-size:13px;line-height:1.8;opacity:0.9'>
-            Rinvoq's search dominance in the Northeast — led by New York (91), Philadelphia (82), and Boston (75) — reflects concentrated rheumatology HCP density, making this region highest-priority for Q1 digital investment. Skyrizi's superior YoY growth (+45% Q4) and summer psoriasis peak (index 95) signal a prime opportunity to front-run patient intent with a May campaign in dermatology-heavy Sun Belt markets. Current SOV stands at Rinvoq {sov}% vs Skyrizi {100-sov}%, with Crohn's/UC representing the largest underleveraged search opportunity.
+            Rinvoq's search dominance in the Northeast — led by New York (91), Philadelphia (82), and Boston (75) — reflects concentrated rheumatology HCP density, making this region highest-priority for Q1 digital investment. Skyrizi's superior YoY growth (+45% Q4) and summer psoriasis peak (index 95) signal a prime opportunity to front-run patient intent with a May campaign in dermatology-heavy Sun Belt markets. Crohn's/UC represents the largest underleveraged search opportunity for expanded clinical positioning.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -580,17 +569,10 @@ with tabs[2]:
     ck3.metric("Top Competitor", top_comp["Brand"], f"Index {top_comp['Index']}")
     ck4.metric("Brands Tracked", len(brand_df), f"{len(COMPETITORS)} competitors")
     
-    c1, c2 = st.columns(2)
-    with c1:
-        fig_sov2 = px.pie(brand_df.head(8), names="Brand", values="Index", title="Share of Voice",
-                          color="Brand", color_discrete_map={b["Brand"]: b["Color"] for b in all_brands}, hole=0.5)
-        fig_sov2.update_layout(height=380, margin=dict(t=40))
-        st.plotly_chart(fig_sov2, use_container_width=True)
-    with c2:
-        fig_rank = px.bar(brand_df, x="Index", y="Brand", orientation="h", title="Competitive Index Ranking",
-                          color="Brand", color_discrete_map={b["Brand"]: b["Color"] for b in all_brands})
-        fig_rank.update_layout(height=380, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=40))
-        st.plotly_chart(fig_rank, use_container_width=True)
+    fig_rank = px.bar(brand_df, x="Index", y="Brand", orientation="h", title="Competitive Index Ranking",
+                      color="Brand", color_discrete_map={b["Brand"]: b["Color"] for b in all_brands})
+    fig_rank.update_layout(height=380, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=40))
+    st.plotly_chart(fig_rank, use_container_width=True)
     
     c3, c4 = st.columns(2)
     with c3:
