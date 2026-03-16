@@ -905,7 +905,7 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create map - US only, no zoom control, locked bounds to prevent world view
+    # Create map - US only view
     m = folium.Map(
         location=[39.5, -98.5], 
         zoom_start=4, 
@@ -914,9 +914,53 @@ with tabs[1]:
         zoom_control=False,
         min_zoom=3,
         max_zoom=8,
-        max_bounds=True,
-        bounds=[[25, -130], [50, -65]]
+        max_bounds=False
     )
+    
+    # Add white rectangles to hide non-US areas
+    # Top rectangle (covers everything north of US)
+    folium.Rectangle(
+        bounds=[[50, -180], [90, 180]],
+        color='white',
+        fill=True,
+        fillColor='white',
+        fillOpacity=1,
+        weight=0,
+        zIndex=100
+    ).add_to(m)
+    
+    # Bottom rectangle (covers everything south of US)
+    folium.Rectangle(
+        bounds=[[-90, -180], [25, 180]],
+        color='white',
+        fill=True,
+        fillColor='white',
+        fillOpacity=1,
+        weight=0,
+        zIndex=100
+    ).add_to(m)
+    
+    # Left rectangle (covers areas west of US)
+    folium.Rectangle(
+        bounds=[[25, -180], [50, -130]],
+        color='white',
+        fill=True,
+        fillColor='white',
+        fillOpacity=1,
+        weight=0,
+        zIndex=100
+    ).add_to(m)
+    
+    # Right rectangle (covers areas east of US)
+    folium.Rectangle(
+        bounds=[[25, -65], [50, 180]],
+        color='white',
+        fill=True,
+        fillColor='white',
+        fillOpacity=1,
+        weight=0,
+        zIndex=100
+    ).add_to(m)
 
     # Add state choropleth with search interest shading
     try:
