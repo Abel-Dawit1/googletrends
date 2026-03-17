@@ -19,7 +19,6 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 import requests
-from bs4 import BeautifulSoup
 from urllib.parse import quote
 
 # Try to import Anthropic, but make it optional
