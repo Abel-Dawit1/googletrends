@@ -108,12 +108,14 @@ def scrape_real_reddit_posts(keywords, limit=5):
     RSS format: https://www.reddit.com/r/subreddit/.rss
     
     This approach gets real Reddit data without needing API credentials.
+    Prioritizes keyword matches but includes all real posts.
     """
     try:
         if not HAS_FEEDPARSER or feedparser is None:
             return _get_demo_posts(keywords, limit)
         
         posts = []
+        matched_posts = []  # Posts matching keywords
         seen_titles = set()
         
         # Relevant healthcare subreddits - RSS feeds available for all
@@ -128,7 +130,7 @@ def scrape_real_reddit_posts(keywords, limit=5):
         
         # Try each subreddit's RSS feed
         for subreddit in subreddits:
-            if len(posts) >= limit:
+            if len(posts) >= limit * 2:  # Get more posts to filter through
                 break
             
             try:
@@ -139,43 +141,52 @@ def scrape_real_reddit_posts(keywords, limit=5):
                 feed = feedparser.parse(rss_url)
                 
                 # Process entries from RSS feed
-                for entry in feed.entries[:10]:  # Check up to 10 entries
-                    if len(posts) >= limit:
+                for entry in feed.entries[:20]:  # Check more entries to find matches
+                    if len(posts) >= limit * 2:
                         break
                     
                     title = entry.get('title', '')
+                    if not title or title in seen_titles:
+                        continue
+                    
+                    # Try to extract score from summary (sometimes available)
+                    score = _extract_score_from_feed_entry(entry)
+                    
+                    post = {
+                        "title": title[:150],
+                        "score": score,
+                        "subreddit": subreddit,
+                        "url": entry.get('link', '#')
+                    }
                     
                     # Check if any keyword matches
                     keyword_match = False
-                    matched_keyword = None
                     for keyword in keywords[:3]:
                         if keyword.lower() in title.lower():
                             keyword_match = True
-                            matched_keyword = keyword
+                            matched_posts.append(post)
                             break
                     
-                    if keyword_match and title not in seen_titles:
-                        # Try to extract score from summary (sometimes available)
-                        score = _extract_score_from_feed_entry(entry)
-                        
-                        posts.append({
-                            "title": title[:150],
-                            "score": score,
-                            "subreddit": subreddit,
-                            "keyword": matched_keyword,
-                            "url": entry.get('link', '#')
-                        })
-                        seen_titles.add(title)
+                    if not keyword_match:
+                        posts.append(post)
+                    
+                    seen_titles.add(title)
             
             except Exception as e:
                 # Continue to next subreddit if one fails
                 continue
         
-        # If we found real posts, return them
-        if posts:
-            return posts[:limit]
+        # Combine: prioritize matched posts first, then add remaining real posts
+        final_posts = matched_posts[:limit]  # Start with keyword matches
+        if len(final_posts) < limit:
+            # Fill remaining with any real posts
+            final_posts.extend(posts[:limit - len(final_posts)])
         
-        # Otherwise fall back to demo
+        # If we found real posts, return them
+        if final_posts:
+            return final_posts[:limit]
+        
+        # Otherwise fall back to demo only if no real posts found
         return _get_demo_posts(keywords, limit)
         
     except Exception as e:
