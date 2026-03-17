@@ -4,7 +4,7 @@ The dashboard can display real Reddit posts about healthcare topics. To enable t
 
 ## Step 1: Create a Reddit App
 
-1. Navigate to: **https://www.reddit.com/prefs/apps**
+1. Navigate to: **https://developers.reddit.com/new/template**
 2. Click **"Create an app"** or **"Create another app"**
 3. Fill in the form:
    - **Name**: e.g., "Healthcare Analytics Dashboard"
