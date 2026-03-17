@@ -674,10 +674,10 @@ def load_data(timeframe_key, brand_filter):
 
 with st.sidebar:
     st.markdown(f"""
-    <div style='text-align:center;padding:12px 0'>
-        <div style='background:{NAVY};color:white;width:42px;height:42px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;margin-bottom:8px'>A</div>
-        <h3 style='margin:0;color:{NAVY}'>AbbVie Immunology</h3>
-        <p style='margin:0;font-size:12px;color:#8a9ab5'>Search Intelligence Dashboard</p>
+    <div style='text-align:center;padding:8px 0;margin-bottom:12px'>
+        <div style='background:{NAVY};color:white;width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;margin-bottom:6px'>A</div>
+        <h4 style='margin:2px 0;color:{NAVY}'>AbbVie Immunology</h4>
+        <p style='margin:0;font-size:11px;color:#8a9ab5'>Search Intelligence</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -688,15 +688,15 @@ with st.sidebar:
     current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
     current_timeframe_map = st.session_state.get("custom_timeframe_map", TIMEFRAME_MAP)
     
-    franchise = st.selectbox("Franchise", ["All"] + list(current_franchise_map.keys()))
-    brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"])
-    timeframe = st.selectbox("Timeframe", list(current_timeframe_map.keys()), index=2)
+    franchise = st.selectbox("Franchise", ["All"] + list(current_franchise_map.keys()), label_visibility="collapsed")
+    brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"], label_visibility="collapsed")
+    timeframe = st.selectbox("Timeframe", list(current_timeframe_map.keys()), index=2, label_visibility="collapsed")
     
     ind_options = list(current_ind_names.values())
     if franchise != "All":
         ind_keys = current_franchise_map.get(franchise, [])
         ind_options = [current_ind_names.get(k, k) for k in ind_keys]
-    indication = st.selectbox("Indication", ["All"] + ind_options)
+    indication = st.selectbox("Indication", ["All"] + ind_options, label_visibility="collapsed")
     
     st.divider()
     
@@ -706,12 +706,13 @@ with st.sidebar:
     
     source = st.session_state.get("data_source", "loading...")
     source_color = SUCCESS if source == "live" else GOLD
-    st.markdown(f"<div style='text-align:center;font-size:12px;color:{source_color};font-weight:600'>● {source.upper()} DATA</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600;margin-top:8px'>● {source.upper()} DATA</div>", unsafe_allow_html=True)
     
     if st.session_state.get("data_error"):
-        st.warning(f"⚠️ {st.session_state['data_error']}\n\n**Why?** Google Trends temporarily restricts rapid API requests. Demo data will be used.\n\n**Solution:** Click \"Refresh Data\" after 1-2 minutes, or leave the app open for automatic retry on next refresh cycle.")
+        with st.expander("⚠️ API Issue", expanded=False):
+            st.caption("Google Trends temporarily restricted. **Solution:** Refresh after 1-2 min or check back later.")
     else:
-        st.caption("ℹ️ Real Google Trends data is being used. Demo data falls back if API unavailable.")
+        st.caption("✓ Using real data")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
