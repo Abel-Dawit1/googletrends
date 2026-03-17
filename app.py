@@ -723,19 +723,69 @@ with st.sidebar:
     
     st.divider()
     
-    if st.button("↻ Refresh Data", type="primary", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
+    # Manual refresh controls
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("↻ Refresh Now", use_container_width=True):
+            st.cache_data.clear()
+            st.session_state["last_refresh"] = time.time()
+            st.rerun()
+    
+    with c2:
+        if st.button("⏹ Stop Auto", use_container_width=True):
+            st.session_state["auto_refresh_enabled"] = False
+            st.rerun()
+    
+    # Auto-refresh controls
+    st.markdown("**Auto-Refresh**", help="Automatically update data at selected interval")
+    
+    # Initialize auto-refresh state
+    if "auto_refresh_enabled" not in st.session_state:
+        st.session_state.auto_refresh_enabled = False
+    if "last_refresh" not in st.session_state:
+        st.session_state.last_refresh = time.time()
+    if "auto_refresh_interval" not in st.session_state:
+        st.session_state.auto_refresh_interval = 5
+    
+    auto_enabled = st.checkbox("Enable", value=st.session_state.auto_refresh_enabled, label_visibility="collapsed")
+    st.session_state.auto_refresh_enabled = auto_enabled
+    
+    if auto_enabled:
+        interval_options = {"1 min": 60, "5 min": 300, "15 min": 900, "30 min": 1800, "1 hour": 3600}
+        selected_interval = st.selectbox(
+            "Interval",
+            list(interval_options.keys()),
+            index=1,  # Default to 5 min
+            label_visibility="collapsed"
+        )
+        st.session_state.auto_refresh_interval = interval_options[selected_interval]
+        
+        # Auto-refresh logic
+        current_time = time.time()
+        time_since_refresh = current_time - st.session_state.get("last_refresh", current_time)
+        
+        if time_since_refresh >= st.session_state.auto_refresh_interval:
+            st.cache_data.clear()
+            st.session_state["last_refresh"] = current_time
+            st.rerun()
+        
+        # Show next refresh countdown
+        time_remaining = st.session_state.auto_refresh_interval - time_since_refresh
+        minutes = int(time_remaining // 60)
+        seconds = int(time_remaining % 60)
+        st.caption(f"Next refresh: {minutes}:{seconds:02d}")
+    
+    st.markdown("---")
     
     source = st.session_state.get("data_source", "loading...")
     source_color = SUCCESS if source == "live" else GOLD
-    st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600;margin-top:8px'>● {source.upper()} DATA</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600'>● {source.upper()} DATA</div>", unsafe_allow_html=True)
     
     if st.session_state.get("data_error"):
         with st.expander("⚠️ API Issue", expanded=False):
             st.caption("Google Trends temporarily restricted. **Solution:** Refresh after 1-2 min or check back later.")
     else:
-        st.caption("✓ Using real data")
+        st.caption("✓ Data updated")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
