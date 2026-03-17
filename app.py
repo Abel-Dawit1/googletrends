@@ -15,8 +15,6 @@ import pandas as pd
 import numpy as np
 import json
 import time
-import folium
-from streamlit_folium import st_folium
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -892,21 +890,6 @@ with tabs[1]:
     # Use demo state data or live state data
     display_states = DEMO_STATES.copy() if state_df is None or state_df.empty else state_df
 
-    # State bounds for zooming (center lat/lng and zoom level for each state)
-    STATE_BOUNDS = {
-        "All": {"center": [39.8283, -98.5795], "zoom": 3.5},
-        "New York": {"center": [42.9682, -75.9272], "zoom": 6},
-        "Pennsylvania": {"center": [40.5908, -77.2098], "zoom": 6},
-        "Massachusetts": {"center": [42.2302, -71.5301], "zoom": 7},
-        "Illinois": {"center": [40.3297, -88.9860], "zoom": 6},
-        "Minnesota": {"center": [45.6945, -93.9196], "zoom": 6},
-        "California": {"center": [36.1162, -119.6816], "zoom": 5.5},
-        "Texas": {"center": [31.9686, -99.9018], "zoom": 5},
-        "Florida": {"center": [27.9947, -81.7603], "zoom": 6},
-        "Georgia": {"center": [33.0406, -83.6431], "zoom": 6},
-        "Washington": {"center": [47.7511, -120.7401], "zoom": 6},
-    }
-
     # Filter DMA and queries dataframes by brand filter
     dma_data = DEMO_DMA.copy()
     queries_data = DEMO_QUERIES.copy()
@@ -922,199 +905,111 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create state-level map using Plotly with interactive zoom
-    # Get state data for choropleth
-    state_values = display_states.copy()
-    if brand_filter == "Both":
-        state_values["interest"] = ((state_values["Rinvoq"] + state_values["Skyrizi"]) / 2).round().astype(int)
-        legend = "Avg Search Interest Index"
-        color_col = "interest"
-        color_scale = "Oranges"
-    elif brand_filter == "Rinvoq":
-        state_values["interest"] = state_values["Rinvoq"].round().astype(int)
-        legend = "Rinvoq Search Interest Index"
-        color_col = "interest"
-        color_scale = "Oranges"
-    else:
-        state_values["interest"] = state_values["Skyrizi"].round().astype(int)
-        legend = "Skyrizi Search Interest Index"
-        color_col = "interest"
-        color_scale = "Blues"
+    # Create map
+    m = folium.Map(location=[39.5, -98.5], zoom_start=4, tiles="CartoDB positron", scroll_zoom=False)
 
-    # Get mapping of state names to abbreviations for filtering
-    STATE_NAME_TO_ABBR = {
-        "New York": "NY", "Pennsylvania": "PA", "Massachusetts": "MA", "Illinois": "IL",
-        "Minnesota": "MN", "California": "CA", "Texas": "TX", "Florida": "FL",
-        "Georgia": "GA", "Washington": "WA"
-    }
-    
-    # Create reverse mapping: abbreviation to full state name
-    ABBR_TO_STATE_NAME = {v: k for k, v in STATE_NAME_TO_ABBR.items()}
-
-    # Extract state abbreviations from DMA data for filtering
-    dma_states = {}
-    for _, row in dma_data.iterrows():
-        market = row["Market"]
-        if "," in market:
-            state_abbr = market.split(",")[1].strip()
-            dma_states[market] = state_abbr
-
-    # Determine which DMAs to show based on state filter
-    dma_display = dma_data.copy()
-    currently_zoomed_state = None
-
-    # Initialize session state for map zoom
-    if "map_zoom_state" not in st.session_state:
-        st.session_state.map_zoom_state = "All"
-
-    # Get current map zoom level
-    current_zoom_state = st.session_state.map_zoom_state
-
-    # Filter DMAs if zoomed into a specific state
-    if current_zoom_state != "All":
-        state_abbr = STATE_NAME_TO_ABBR.get(current_zoom_state)
-        if state_abbr:
-            dma_display = dma_display[dma_display["Market"].str.contains(f", {state_abbr}")]
-            currently_zoomed_state = current_zoom_state
-
-    # Create interactive Folium map with clickable states
-    if current_zoom_state == "All":
-        center_lat, center_lng = 39.8283, -98.5795
-        zoom_level = 4
-    else:
-        zoom_bounds = STATE_BOUNDS.get(current_zoom_state, STATE_BOUNDS["All"])
-        center_lat, center_lng = zoom_bounds["center"]
-        zoom_level = int(zoom_bounds.get("zoom", 4))
-    
-    map_folium = folium.Map(
-        location=[center_lat, center_lng],
-        zoom_start=zoom_level,
-        tiles="OpenStreetMap"
-    )
-    
+    # Add state choropleth with search interest shading
     try:
-        import requests
+        # Load US state boundaries GeoJSON
         us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
         geo_data = requests.get(us_state_geo).json()
+
+        # Prepare state data for choropleth based on brand filter
+        state_values = display_states.copy()
+        if brand_filter == "Both":
+            state_values["interest"] = ((state_values["Rinvoq"] + state_values["Skyrizi"]) / 2).round().astype(int)
+            legend = "Avg Search Interest Index"
+            columns = ["State", "interest"]
+        elif brand_filter == "Rinvoq":
+            state_values["interest"] = state_values["Rinvoq"].round().astype(int)
+            legend = "Rinvoq Search Interest Index"
+            columns = ["State", "interest"]
+        else:
+            state_values["interest"] = state_values["Skyrizi"].round().astype(int)
+            legend = "Skyrizi Search Interest Index"
+            columns = ["State", "interest"]
+
+        # Add choropleth layer with brand-specific color
+        if brand_filter == "Rinvoq":
+            color_scheme = "Oranges"
+        elif brand_filter == "Skyrizi":
+            color_scheme = "Blues"
+        else:
+            color_scheme = "Blues"
         
-        # Create color mapping for states
-        state_interest_dict = {}
-        for _, row in state_values.iterrows():
-            state_interest_dict[row["State"]] = row["interest"]
-        
-        max_interest = state_values["interest"].max()
-        min_interest = state_values["interest"].min()
-        
-        def get_color(interest_value):
-            if interest_value is None:
-                return '#f0f0f0'
-            normalized = (interest_value - min_interest) / (max_interest - min_interest) if max_interest > min_interest else 0.5
-            if brand_filter == "Rinvoq" or (brand_filter == "Both" and color_scale == "Oranges"):
-                if normalized < 0.33:
-                    return '#ffe8ba'
-                elif normalized < 0.66:
-                    return '#ffcc99'
-                else:
-                    return '#ff9933'
-            else:
-                if normalized < 0.33:
-                    return '#d9e7f7'
-                elif normalized < 0.66:
-                    return '#6fa3d9'
-                else:
-                    return '#1f5aa0'
-        
-        # Add state GeoJSON features
+        folium.Choropleth(
+            geo_data=geo_data,
+            name="Search Interest",
+            data=state_values,
+            columns=columns,
+            key_on="feature.properties.name",
+            fill_color=color_scheme,
+            fill_opacity=0.7,
+            line_opacity=0.5,
+            line_color="white",
+            line_weight=1,
+            legend_name=legend,
+            nan_fill_color="lightgray",
+        ).add_to(m)
+
+        # Add custom tooltips for states with hover info
         for feature in geo_data["features"]:
             state_name = feature["properties"]["name"]
-            interest = state_interest_dict.get(state_name, 0)
-            color = get_color(interest)
-            popup_text = f"<b>{state_name}</b><br>Interest: {interest}"
-            
+            state_data = state_values[state_values["State"] == state_name]
+
+            if not state_data.empty:
+                if brand_filter == "Both":
+                    rinvoq_val = int(state_data["Rinvoq"].values[0])
+                    skyrizi_val = int(state_data["Skyrizi"].values[0])
+                    avg_val = int(state_data["interest"].values[0])
+                    tooltip_text = f"<b>{state_name}</b><br>Rinvoq: {rinvoq_val}<br>Skyrizi: {skyrizi_val}<br>Avg: {avg_val}"
+                elif brand_filter == "Rinvoq":
+                    rinvoq_val = int(state_data["Rinvoq"].values[0])
+                    tooltip_text = f"<b>{state_name}</b><br>Rinvoq: {rinvoq_val}"
+                else:
+                    skyrizi_val = int(state_data["Skyrizi"].values[0])
+                    tooltip_text = f"<b>{state_name}</b><br>Skyrizi: {skyrizi_val}"
+            else:
+                tooltip_text = f"<b>{state_name}</b><br>No data available"
+
+            # Add GeoJson layer with tooltips
             folium.GeoJson(
-                data=feature,
-                style_function=lambda x, c=color: {
-                    'fillColor': c,
-                    'color': 'white',
-                    'weight': 1,
-                    'fillOpacity': 0.8
+                feature,
+                style_function=lambda x: {
+                    "fillOpacity": 0,
+                    "color": "transparent",
                 },
-                popup=folium.Popup(popup_text, max_width=300),
-                highlight_function=lambda x: {'fillOpacity': 0.95}
-            ).add_to(map_folium)
-        
-        # Map state bounds for click detection
-        state_bounds = {
-            "New York": {"bounds": [[40.5, -79.5], [45.0, -71.0]]},
-            "Pennsylvania": {"bounds": [[39.7, -80.5], [42.3, -74.7]]},
-            "Massachusetts": {"bounds": [[41.2, -73.5], [42.9, -69.9]]},
-            "Illinois": {"bounds": [[37.0, -91.5], [42.5, -87.0]]},
-            "Minnesota": {"bounds": [[43.5, -97.2], [49.4, -89.4]]},
-            "California": {"bounds": [[32.5, -124.5], [42.0, -114.1]]},
-            "Texas": {"bounds": [[25.8, -106.6], [36.5, -93.5]]},
-            "Florida": {"bounds": [[24.5, -87.6], [30.8, -80.0]]},
-            "Georgia": {"bounds": [[30.3, -85.6], [35.0, -80.8]]},
-            "Washington": {"bounds": [[45.6, -124.7], [49.0, -116.9]]},
-        }
-        
-        # Store state bounds in session state for click handling
-        st.session_state.state_bounds = state_bounds
-        
+                tooltip=folium.Tooltip(tooltip_text, sticky=False),
+            ).add_to(m)
+
     except Exception as e:
-        st.error(f"Error loading map: {str(e)}")
-    
-    # Add DMA markers
-    for _, row in dma_display.iterrows():
+        st.warning(f"Could not load state boundaries: {e}")
+
+    # Add DMA circle markers on top, filtered by brand
+    for _, row in dma_data.iterrows():
         if brand_filter == "Both":
             r_val, s_val = row["Rinvoq"], row["Skyrizi"]
+            avg = (r_val + s_val) / 2
             color = RINVOQ if r_val > s_val else SKYRIZI
-            text = f"{row['Market']}<br>Rinvoq: {r_val} · Skyrizi: {s_val}"
+            tooltip = f"<b>{row['Market']}</b><br>Rinvoq: {r_val} · Skyrizi: {s_val} {row['Trend']}"
+            radius = 4 + avg / 10
         elif brand_filter == "Rinvoq":
             r_val = row["Rinvoq"]
             color = RINVOQ
-            text = f"{row['Market']}<br>Rinvoq: {r_val}"
+            tooltip = f"<b>{row['Market']}</b><br>Rinvoq: {r_val}"
+            radius = 4 + r_val / 10
         else:
             s_val = row["Skyrizi"]
             color = SKYRIZI
-            text = f"{row['Market']}<br>Skyrizi: {s_val}"
-        
+            tooltip = f"<b>{row['Market']}</b><br>Skyrizi: {s_val}"
+            radius = 4 + s_val / 10
         folium.CircleMarker(
-            location=[row["lat"], row["lng"]],
-            radius=6,
-            popup=folium.Popup(text, max_width=200),
-            color=color,
-            fill=True,
-            fillColor=color,
-            fillOpacity=0.9,
-            weight=2,
-            opacity=0.9
-        ).add_to(map_folium)
-    
-    # Display map and capture interactions
-    map_data = st_folium(map_folium, width=1200, height=600)
-    
-    # Handle state clicks
-    if map_data and map_data.get('last_clicked'):
-        clicked = map_data['last_clicked']
-        if clicked and 'state_bounds' in st.session_state:
-            lat, lng = clicked['lat'], clicked['lng']
-            for state_name, bounds_data in st.session_state.state_bounds.items():
-                bounds = bounds_data['bounds']
-                if (bounds[0][0] <= lat <= bounds[1][0] and 
-                    bounds[0][1] <= lng <= bounds[1][1]):
-                    if st.session_state.map_zoom_state != state_name:
-                        st.session_state.map_zoom_state = state_name
-                        st.rerun()
-                    break
+            [row["lat"], row["lng"]], radius=radius,
+            color="white", weight=2, fill=True, fill_color=color, fill_opacity=0.85,
+            tooltip=tooltip
+        ).add_to(m)
 
-    # Back button when zoomed in
-    if currently_zoomed_state:
-        col1, col2, col3 = st.columns([2, 1, 2])
-        with col2:
-            if st.button("← Back to USA Map", key="back_to_usa_main"):
-                st.session_state.map_zoom_state = "All"
-                st.rerun()
-        st.markdown("---")
+    st_folium(m, height=500, use_container_width=True)
 
     # Top Markets Table - Apply brand filter
     st.subheader("Top Markets")
@@ -1225,16 +1120,6 @@ with tabs[1]:
         if selected_state != st.session_state.selected_state:
             st.session_state.selected_state = selected_state
             st.session_state.selected_dma = "All"
-            
-            # Trigger map zoom when a state is selected
-            if selected_state != "All" and selected_state in ABBR_TO_STATE_NAME:
-                # Convert abbreviation to full state name for map zoom
-                full_state_name = ABBR_TO_STATE_NAME[selected_state]
-                st.session_state.map_zoom_state = full_state_name
-                st.rerun()
-            elif selected_state == "All":
-                st.session_state.map_zoom_state = "All"
-                st.rerun()
     
     # Get DMAs for selected region and state
     # First, determine which states should be available based on region
