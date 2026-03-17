@@ -905,7 +905,7 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # State bounds for zooming
+    # State bounds for zooming when a state is selected in filters
     STATE_BOUNDS = {
         "All": {"center": [39.8283, -98.5795], "zoom": 3.5},
         "NY": {"center": [42.9682, -75.9272], "zoom": 6},
@@ -933,24 +933,120 @@ with tabs[1]:
         "Georgia": "GA",
         "Washington": "WA",
     }
-
-    # Add state selection
-    col_map, col_state = st.columns([3, 1])
-    with col_state:
-        available_state_names = ["All"] + list(STATE_NAME_TO_ABBR.keys())
-        selected_state_name = st.selectbox("Zoom to State", available_state_names, key="map_state_filter")
     
-    # Get the state abbreviation for filtering DMAs
-    if selected_state_name == "All":
-        selected_state_abbr = "All"
+    # Define regions and state mappings for filters
+    regions = {
+        "All": [],
+        "Northeast": ["NY", "MA", "PA", "CT", "NJ", "VT", "NH", "RI", "ME"],
+        "Southeast": ["FL", "GA", "NC", "SC", "VA", "WV", "KY", "TN", "AL", "MS", "LA", "AR"],
+        "Midwest": ["IL", "OH", "MI", "IN", "WI", "MN", "IA", "MO", "ND", "SD", "NE", "KS"],
+        "West": ["CA", "WA", "OR", "NV", "AZ", "UT", "CO", "WY", "MT", "ID", "AK", "HI", "TX", "OK", "NM"],
+    }
+    
+    # Extract state abbreviations from DMA data (assuming format "City, ST")
+    dma_states = {}
+    for _, row in dma_data.iterrows():
+        market = row["Market"]
+        if "," in market:
+            state_abbr = market.split(",")[1].strip()
+            dma_states[market] = state_abbr
+    
+    # Initialize session state for filters
+    if "selected_region" not in st.session_state:
+        st.session_state.selected_region = "All"
+    if "selected_state" not in st.session_state:
+        st.session_state.selected_state = "All"
+    if "selected_dma" not in st.session_state:
+        st.session_state.selected_dma = "All"
+    
+    # Geographic filtering controls with cascading selection
+    st.markdown("**Filter by Geography** (Click state to zoom map)")
+    
+    # Create filter columns
+    fcol1, fcol2, fcol3 = st.columns(3)
+    
+    with fcol1:
+        selected_region = st.selectbox(
+            "Region",
+            list(regions.keys()),
+            index=list(regions.keys()).index(st.session_state.selected_region) if st.session_state.selected_region in regions else 0,
+            key="region_filter_temp"
+        )
+        # Update session state and reset dependent filters when region changes
+        if selected_region != st.session_state.selected_region:
+            st.session_state.selected_region = selected_region
+            st.session_state.selected_state = "All"
+            st.session_state.selected_dma = "All"
+    
+    # Get states for selected region
+    if st.session_state.selected_region == "All":
+        available_states = sorted(list(set(dma_states.values())))
     else:
-        selected_state_abbr = STATE_NAME_TO_ABBR.get(selected_state_name, "All")
+        available_states = regions[st.session_state.selected_region]
     
-    with col_map:
-        st.write("")  # Spacing
-
+    with fcol2:
+        state_options = ["All"] + available_states
+        state_index = state_options.index(st.session_state.selected_state) if st.session_state.selected_state in state_options else 0
+        selected_state = st.selectbox(
+            "State",
+            state_options,
+            index=state_index,
+            key="state_filter_temp"
+        )
+        # Update session state and reset DMA when state changes
+        if selected_state != st.session_state.selected_state:
+            st.session_state.selected_state = selected_state
+            st.session_state.selected_dma = "All"
+    
+    # Get DMAs for selected region and state
+    # First, determine which states should be available based on region
+    if st.session_state.selected_region == "All":
+        region_states = sorted(list(set(dma_states.values())))
+    else:
+        region_states = regions[st.session_state.selected_region]
+    
+    # Then filter DMAs based on region and state
+    if st.session_state.selected_state == "All":
+        # Show all DMAs in the selected region
+        available_dmas = [m for m, state_abbr in dma_states.items() if state_abbr in region_states]
+    else:
+        # Show only DMAs in the selected state (which is guaranteed to be in the selected region)
+        available_dmas = [m for m, state_abbr in dma_states.items() if state_abbr == st.session_state.selected_state]
+    
+    with fcol3:
+        dma_options = ["All"] + available_dmas
+        dma_index = dma_options.index(st.session_state.selected_dma) if st.session_state.selected_dma in dma_options else 0
+        selected_dma = st.selectbox(
+            "DMA",
+            dma_options,
+            index=dma_index,
+            key="dma_filter_temp"
+        )
+        if selected_dma != st.session_state.selected_dma:
+            st.session_state.selected_dma = selected_dma
+    
+    # Update session state with final selections
+    st.session_state.selected_region = selected_region
+    st.session_state.selected_state = selected_state
+    st.session_state.selected_dma = selected_dma
+    
+    st.markdown("---")
+    
+    # Create and display the map with zoom based on selected state
+    # Get the selected state abbreviation
+    if st.session_state.selected_state == "All":
+        map_state_abbr = "All"
+    else:
+        # Extract abbreviation from selected state 
+        for state_name, abbr in STATE_NAME_TO_ABBR.items():
+            if selected_state == state_name:
+                map_state_abbr = abbr
+                break
+        else:
+            map_state_abbr = st.session_state.selected_state[:2].upper() if len(st.session_state.selected_state) >= 2 else "All"
+    
     # Create map with zoom based on selected state
-    map_center = STATE_BOUNDS.get(selected_state_abbr, STATE_BOUNDS["All"])
+    map_center = STATE_BOUNDS.get(map_state_abbr, STATE_BOUNDS["All"])
     m = folium.Map(
         location=map_center["center"],
         zoom_start=map_center["zoom"],
@@ -1041,7 +1137,7 @@ with tabs[1]:
         dma_state_abbr = market.split(",")[1].strip() if "," in market else ""
         
         # Skip DMA if it's not in the selected state
-        if selected_state_abbr != "All" and dma_state_abbr != selected_state_abbr:
+        if map_state_abbr != "All" and dma_state_abbr != map_state_abbr:
             continue
         
         if brand_filter == "Both":
@@ -1067,40 +1163,10 @@ with tabs[1]:
         ).add_to(m)
 
     st_folium(m, height=500, use_container_width=True)
-
-    # Top Markets Table - Apply brand filter
-    st.subheader("Top Markets")
-    st.caption("Geographic search interest distribution by DMA")
-    dma_display = dma_data.copy()
-    if brand_filter == "Both":
-        dma_display["Avg"] = ((dma_display["Rinvoq"] + dma_display["Skyrizi"]) / 2).round().astype(int)
-        dma_display["Lead"] = dma_display.apply(lambda r: "Rinvoq" if r["Rinvoq"] > r["Skyrizi"] else "Skyrizi", axis=1)
-        columns_to_show = ["Market", "Rinvoq", "Skyrizi", "Avg", "Lead", "Trend"]
-        column_config = {
-            "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
-            "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
-        }
-        sort_column = "Avg"
-    elif brand_filter == "Rinvoq":
-        columns_to_show = ["Market", "Rinvoq", "Trend"]
-        column_config = {
-            "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
-        }
-        sort_column = "Rinvoq"
-    elif brand_filter == "Skyrizi":
-        columns_to_show = ["Market", "Skyrizi", "Trend"]
-        column_config = {
-            "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
-        }
-        sort_column = "Skyrizi"
-
-    st.dataframe(
-        dma_display[columns_to_show].sort_values(sort_column, ascending=False),
-        use_container_width=True, hide_index=True,
-        column_config=column_config
-    )
-
-    # Queries - Filter by brand with population-normalized index
+    
+    st.markdown("---")
+    
+    # Search Query Analysis - setup queries dataframe
     st.subheader("Search Query Analysis")
     st.caption("Discover trending and top-performing search queries in the selected markets")
     
@@ -1114,102 +1180,6 @@ with tabs[1]:
     # Add breakout indicator for Rising Queries (Growth >= 500%)
     queries_df["Breakout"] = queries_df["Growth"] >= 500
     
-    # Geographic filtering controls with cascading selection
-    st.markdown("**Filter by Geography**")
-    
-    # Define regions and state mappings
-    regions = {
-        "All": [],
-        "Northeast": ["NY", "MA", "PA", "CT", "NJ", "VT", "NH", "RI", "ME"],
-        "Southeast": ["FL", "GA", "NC", "SC", "VA", "WV", "KY", "TN", "AL", "MS", "LA", "AR"],
-        "Midwest": ["IL", "OH", "MI", "IN", "WI", "MN", "IA", "MO", "ND", "SD", "NE", "KS"],
-        "West": ["CA", "WA", "OR", "NV", "AZ", "UT", "CO", "WY", "MT", "ID", "AK", "HI", "TX", "OK", "NM"],
-    }
-    
-    # Extract state abbreviations from DMA data (assuming format "City, ST")
-    dma_states = {}
-    for _, row in dma_data.iterrows():
-        market = row["Market"]
-        if "," in market:
-            state_abbr = market.split(",")[1].strip()
-            dma_states[market] = state_abbr
-    
-    # Initialize session state for filters
-    if "selected_region" not in st.session_state:
-        st.session_state.selected_region = "All"
-    if "selected_state" not in st.session_state:
-        st.session_state.selected_state = "All"
-    if "selected_dma" not in st.session_state:
-        st.session_state.selected_dma = "All"
-    
-    # Create filter columns
-    fcol1, fcol2, fcol3 = st.columns(3)
-    
-    with fcol1:
-        selected_region = st.selectbox(
-            "Region",
-            list(regions.keys()),
-            index=list(regions.keys()).index(st.session_state.selected_region) if st.session_state.selected_region in regions else 0,
-            key="region_filter_temp"
-        )
-        # Update session state and reset dependent filters when region changes
-        if selected_region != st.session_state.selected_region:
-            st.session_state.selected_region = selected_region
-            st.session_state.selected_state = "All"
-            st.session_state.selected_dma = "All"
-    
-    # Get states for selected region
-    if st.session_state.selected_region == "All":
-        available_states = sorted(list(set(dma_states.values())))
-    else:
-        available_states = regions[st.session_state.selected_region]
-    
-    with fcol2:
-        state_options = ["All"] + available_states
-        state_index = state_options.index(st.session_state.selected_state) if st.session_state.selected_state in state_options else 0
-        selected_state = st.selectbox(
-            "State",
-            state_options,
-            index=state_index,
-            key="state_filter_temp"
-        )
-        # Update session state and reset DMA when state changes
-        if selected_state != st.session_state.selected_state:
-            st.session_state.selected_state = selected_state
-            st.session_state.selected_dma = "All"
-    
-    # Get DMAs for selected region and state
-    # First, determine which states should be available based on region
-    if st.session_state.selected_region == "All":
-        region_states = sorted(list(set(dma_states.values())))
-    else:
-        region_states = regions[st.session_state.selected_region]
-    
-    # Then filter DMAs based on region and state
-    if st.session_state.selected_state == "All":
-        # Show all DMAs in the selected region
-        available_dmas = [m for m, state_abbr in dma_states.items() if state_abbr in region_states]
-    else:
-        # Show only DMAs in the selected state (which is guaranteed to be in the selected region)
-        available_dmas = [m for m, state_abbr in dma_states.items() if state_abbr == st.session_state.selected_state]
-    
-    with fcol3:
-        dma_options = ["All"] + available_dmas
-        dma_index = dma_options.index(st.session_state.selected_dma) if st.session_state.selected_dma in dma_options else 0
-        selected_dma = st.selectbox(
-            "DMA",
-            dma_options,
-            index=dma_index,
-            key="dma_filter_temp"
-        )
-        if selected_dma != st.session_state.selected_dma:
-            st.session_state.selected_dma = selected_dma
-    
-    # Update session state with final selections
-    st.session_state.selected_region = selected_region
-    st.session_state.selected_state = selected_state
-    st.session_state.selected_dma = selected_dma
-    
     # Apply geographic filters to queries
     filtered_queries = queries_df.copy()
     # Since queries don't have direct geographic info, we'll show all but indicate this limitation
@@ -1217,7 +1187,7 @@ with tabs[1]:
     
     st.markdown("---")
     
-    # Top Search Queries Table and Rising Queries Table - Side by Side
+    # Top Search Queries and Rising Queries Table - Side by Side
     col1, col2 = st.columns(2)
     
     with col1:
@@ -1636,11 +1606,41 @@ with tabs[2]:
     
     fig_moment = go.Figure()
     if brand_filter in ["Both", "Rinvoq"]:
-        fig_moment.add_trace(go.Scatter(x=x_days, y=r_trend, name="Rinvoq", line=dict(color=RINVOQ, width=2)))
+        fig_moment.add_trace(go.Scatter(
+            x=x_days, y=r_trend, name="Rinvoq", 
+            line=dict(color=RINVOQ, width=2.5),
+            mode="lines",
+            fill="tozeroy",
+            fillcolor=f"rgba({int(RINVOQ[1:3],16)},{int(RINVOQ[3:5],16)},{int(RINVOQ[5:7],16)},0.08)",
+            hovertemplate="<b>Rinvoq</b><br>Day: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"
+        ))
     if brand_filter in ["Both", "Skyrizi"]:
-        fig_moment.add_trace(go.Scatter(x=x_days, y=s_trend, name="Skyrizi", line=dict(color=SKYRIZI, width=2)))
-    fig_moment.add_vline(x=0, line_dash="dash", line_color="gray", annotation_text="Event Day")
-    fig_moment.update_layout(title=f"Search Trend — {selected_event}", height=350, template="plotly_white", xaxis_title="Days from Event")
+        fig_moment.add_trace(go.Scatter(
+            x=x_days, y=s_trend, name="Skyrizi", 
+            line=dict(color=SKYRIZI, width=2.5),
+            mode="lines",
+            fill="tozeroy",
+            fillcolor=f"rgba({int(SKYRIZI[1:3],16)},{int(SKYRIZI[3:5],16)},{int(SKYRIZI[5:7],16)},0.08)",
+            hovertemplate="<b>Skyrizi</b><br>Day: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"
+        ))
+    fig_moment.add_vline(
+        x=0, line_dash="dash", line_color="#ccc", line_width=1,
+        annotation_text="<b>Event</b>",
+        annotation_position="top right",
+        annotation_font=dict(size=11, color="#666")
+    )
+    fig_moment.update_layout(
+        title=f"Search Trend — {selected_event}",
+        height=350,
+        template="plotly_white",
+        xaxis_title="Days from Event",
+        yaxis_title="Search Interest Index",
+        yaxis=dict(range=[0, 100]),
+        hovermode="x unified",
+        legend=dict(x=0.02, y=0.98, bgcolor="rgba(255,255,255,0.8)"),
+        margin=dict(t=40, b=20),
+        hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif")
+    )
     st.plotly_chart(fig_moment, use_container_width=True, key=f"moment_chart_{selected_event}_{brand_filter}")
     
     st.markdown(f"**Event Intelligence:** {event['Insight']}")
