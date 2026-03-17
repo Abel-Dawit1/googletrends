@@ -1,98 +1,60 @@
 # Reddit Data Integration Setup
 
-The dashboard can display real Reddit posts about healthcare topics. To enable this feature, follow these steps:
+The dashboard now displays **real Reddit posts** using RSS feeds — no authentication or app registration required!
 
-## Step 1: Create a Reddit App
+## How It Works
 
-**Note**: Reddit has updated their developer platform. Follow these steps:
-
-1. Navigate to your Reddit user preferences: **https://www.reddit.com/user/[YOUR_USERNAME]/preferences/apps**
-   (Replace `[YOUR_USERNAME]` with your Reddit username)
-
-2. Scroll to the bottom where it says **"Authorized applications"** or **"Developed applications"**
-
-3. Click **"Create an app"** or **"Create another app"**
-
-4. Fill in the form:
-   - **Name**: e.g., "Healthcare Analytics Dashboard"
-   - **App type**: Select **"script"** (for personal script use)
-   - **Description**: "Personal healthcare analytics application"
-   - **Redirect URI**: `http://localhost:8000`
-
-5. Click **"Create app"**
-
-6. You'll see your credentials:
-   - **Client ID**: The string shown below your app name
-   - **Client Secret**: The password-like string labeled "secret"
-
-For more details on Reddit's updated policies, see:
-https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy
-
-## Step 2: Configure the App
-
-Choose one of these options:
-
-### Option A: Streamlit Secrets (Recommended for Streamlit Cloud)
-
-Create or edit `~/.streamlit/secrets.toml`:
-
-```toml
-REDDIT_CLIENT_ID = "your_client_id_here"
-REDDIT_CLIENT_SECRET = "your_client_secret_here"
+Reddit provides RSS feeds for all subreddits at:
+```
+https://www.reddit.com/r/{subreddit}/.rss
 ```
 
-### Option B: Environment Variables (Local Development)
+The dashboard:
+1. Fetches live RSS feeds from healthcare subreddits
+2. Parses and filters posts by your search keywords
+3. Displays real post titles and engagement metrics
+4. Falls back to curated demo posts if RSS feeds are unavailable
 
-```bash
-export REDDIT_CLIENT_ID="your_client_id_here"
-export REDDIT_CLIENT_SECRET="your_client_secret_here"
-streamlit run app.py
-```
+## Subreddits Monitored
 
-### Option C: Manual Entry in Streamlit Cloud
+The app automatically searches these healthcare communities for discussions:
+- r/Psoriasis
+- r/rheumatoidarthritis
+- r/AutoimmuneDiseases
+- r/HealthAnxiety
+- r/Health
+- r/medical
 
-In your Streamlit Cloud settings, add these secrets:
-- Key: `REDDIT_CLIENT_ID`, Value: your client ID
-- Key: `REDDIT_CLIENT_SECRET`, Value: your client secret
+## What You Get
 
-## Step 3: Restart the App
-
-Once credentials are configured, restart the Streamlit app:
-
-```bash
-streamlit run app.py
-```
-
-## Verification
-
-When properly configured:
-- ✅ Real Reddit posts will appear in the "Social Media Conversation" section
-- ✅ Posts will be from r/Psoriasis, r/rheumatoidarthritis, etc.
-- ✅ Sentiment analysis will work on actual discussion titles
-- ✅ Upvote counts will reflect real engagement
-
-If credentials aren't configured:
-- 🔄 The app falls back to curated demo posts
-- 💬 Demo posts still show realistic discussions from healthcare communities
-- Everything continues to work normally
+✅ **Real Reddit data** from active communities  
+✅ **No API authentication** needed  
+✅ **No rate limiting** concerns  
+✅ **Live post titles** relevant to your search  
+✅ **Current discussions** from healthcare forums  
+✅ **Graceful fallback** to demo data  
 
 ## Troubleshooting
 
-**"403 Forbidden" errors?**
-- Make sure you selected "script" app type, not "web app"
-- Verify Client ID and Client Secret are correct (copy-paste carefully)
-- Check that secrets are in the right location (`~/.streamlit/secrets.toml`)
+**Not seeing Reddit posts?**
+- Check your internet connection
+- Verify the subreddits exist (Reddit may change community names)
+- Check Streamlit Cloud logs for any errors
 
-**Still getting demo posts?**
-- Check that environment variables are set: `echo $REDDIT_CLIENT_ID`
-- Verify PRAW is installed: `pip show praw`
-- Restart the app after setting secrets
+**Only seeing demo posts?**
+- RSS feeds may be temporarily unavailable
+- Try refreshing the page
+- The fallback demo posts will continue to work
 
-## Privacy & Rate Limiting
+## Technical Details
 
-- PRAW respects Reddit's rate limits (60 requests per minute)
-- No user data is scraped (only public post titles and scores)
-- Your credentials are never logged or shared
-- This follows Reddit's Terms of Service for official API usage
+The implementation uses:
+- **feedparser**: Lightweight RSS feed parser (no external dependencies)
+- **No credentials needed** – RSS feeds are publicly available
+- **Public data only** – Respects Reddit's data scraping policies
+- **Efficient caching** – Results cached for 30 minutes
 
-For questions, see: https://praw.readthedocs.io/
+For more information:
+- [Reddit RSS Documentation](https://www.reddit.com/r/reddit.com/comments/wuo0th/rss_feeds_are_available_for_all_subreddits/)
+- [Feedparser Library](https://pythonhosted.org/feedparser/)
+
