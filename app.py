@@ -905,8 +905,58 @@ with tabs[1]:
         queries_data = queries_data[queries_data["Brand"].isin(["Skyrizi", "Both"])]
     # For Both, keep all columns
 
-    # Create map
-    m = folium.Map(location=[39.5, -98.5], zoom_start=4, tiles="CartoDB positron", scroll_zoom=False)
+    # State bounds for zooming
+    STATE_BOUNDS = {
+        "All": {"center": [39.8283, -98.5795], "zoom": 3.5},
+        "NY": {"center": [42.9682, -75.9272], "zoom": 6},
+        "PA": {"center": [40.5908, -77.2098], "zoom": 6},
+        "MA": {"center": [42.2302, -71.5301], "zoom": 7},
+        "IL": {"center": [40.3297, -88.9860], "zoom": 6},
+        "MN": {"center": [45.6945, -93.9196], "zoom": 6},
+        "CA": {"center": [36.1162, -119.6816], "zoom": 5.5},
+        "TX": {"center": [31.9686, -99.9018], "zoom": 5},
+        "FL": {"center": [27.9947, -81.7603], "zoom": 6},
+        "GA": {"center": [33.0406, -83.6431], "zoom": 6},
+        "WA": {"center": [47.7511, -120.7401], "zoom": 6},
+    }
+    
+    # Map state names to abbreviations for DMA filtering
+    STATE_NAME_TO_ABBR = {
+        "New York": "NY",
+        "Pennsylvania": "PA",
+        "Massachusetts": "MA",
+        "Illinois": "IL",
+        "Minnesota": "MN",
+        "California": "CA",
+        "Texas": "TX",
+        "Florida": "FL",
+        "Georgia": "GA",
+        "Washington": "WA",
+    }
+
+    # Add state selection
+    col_map, col_state = st.columns([3, 1])
+    with col_state:
+        available_state_names = ["All"] + list(STATE_NAME_TO_ABBR.keys())
+        selected_state_name = st.selectbox("Zoom to State", available_state_names, key="map_state_filter")
+    
+    # Get the state abbreviation for filtering DMAs
+    if selected_state_name == "All":
+        selected_state_abbr = "All"
+    else:
+        selected_state_abbr = STATE_NAME_TO_ABBR.get(selected_state_name, "All")
+    
+    with col_map:
+        st.write("")  # Spacing
+
+    # Create map with zoom based on selected state
+    map_center = STATE_BOUNDS.get(selected_state_abbr, STATE_BOUNDS["All"])
+    m = folium.Map(
+        location=map_center["center"],
+        zoom_start=map_center["zoom"],
+        tiles="CartoDB positron",
+        scroll_zoom=False
+    )
 
     # Add state choropleth with search interest shading
     try:
@@ -985,8 +1035,15 @@ with tabs[1]:
     except Exception as e:
         st.warning(f"Could not load state boundaries: {e}")
 
-    # Add DMA circle markers on top, filtered by brand
+    # Add DMA circle markers - filter by selected state if not "All"
     for _, row in dma_data.iterrows():
+        market = row["Market"]
+        dma_state_abbr = market.split(",")[1].strip() if "," in market else ""
+        
+        # Skip DMA if it's not in the selected state
+        if selected_state_abbr != "All" and dma_state_abbr != selected_state_abbr:
+            continue
+        
         if brand_filter == "Both":
             r_val, s_val = row["Rinvoq"], row["Skyrizi"]
             avg = (r_val + s_val) / 2
