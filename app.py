@@ -1340,7 +1340,14 @@ with tabs[1]:
             ).add_to(m)
 
     except Exception as e:
-        st.warning(f"Could not load state boundaries: {e}")
+        st.warning(f"⚠️ Could not load state boundaries. Using simple map. Error: {str(e)}")
+        # Fallback: Create simple marker-only map without choropleth
+        m = folium.Map(
+            location=map_center["center"],
+            zoom_start=map_center["zoom"],
+            tiles="CartoDB positron",
+            scroll_zoom=False
+        )
 
     # Add DMA circle markers - filter by selected state if not "All"
     for _, row in dma_data.iterrows():
