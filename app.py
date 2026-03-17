@@ -673,46 +673,80 @@ def load_data(timeframe_key, brand_filter):
 # ═══════════════════════════════════════════════════════════════════════════
 
 with st.sidebar:
+    # Apply custom CSS to prevent scrolling and add nice spacing
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] {
+            overflow-y: visible !important;
+            min-height: 100vh !important;
+            display: flex;
+            flex-direction: column;
+        }
+        [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+            gap: 1.5rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Header
     st.markdown(f"""
-    <div style='text-align:center;padding:8px 0;margin-bottom:12px'>
-        <div style='background:{NAVY};color:white;width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;margin-bottom:6px'>A</div>
-        <h4 style='margin:2px 0;color:{NAVY}'>AbbVie Immunology</h4>
-        <p style='margin:0;font-size:11px;color:#8a9ab5'>Search Intelligence</p>
+    <div style='text-align:center;padding:16px 0;margin-bottom:8px'>
+        <div style='background:{NAVY};color:white;width:48px;height:48px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;margin-bottom:12px'>A</div>
+        <h3 style='margin:2px 0 4px 0;color:{NAVY};font-size:16px'>AbbVie Immunology</h3>
+        <p style='margin:0;font-size:12px;color:#8a9ab5;font-weight:500'>Search Intelligence</p>
     </div>
     """, unsafe_allow_html=True)
     
     st.divider()
+    
+    # Filters Section
+    st.markdown("<p style='font-size:12px;font-weight:600;color:#071d49;margin-bottom:8px'>FILTERS</p>", unsafe_allow_html=True)
     
     # Use custom configurations from session state, fallback to defaults
     current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
     current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
     current_timeframe_map = st.session_state.get("custom_timeframe_map", TIMEFRAME_MAP)
     
-    franchise = st.selectbox("Franchise", ["All"] + list(current_franchise_map.keys()), label_visibility="collapsed")
-    brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"], label_visibility="collapsed")
-    timeframe = st.selectbox("Timeframe", list(current_timeframe_map.keys()), index=2, label_visibility="collapsed")
+    st.selectbox("Franchise", ["All"] + list(current_franchise_map.keys()), key="sidebar_franchise")
+    franchise = st.session_state.get("sidebar_franchise", "All")
+    
+    st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"], key="sidebar_brand")
+    brand_filter = st.session_state.get("sidebar_brand", "Both")
+    
+    st.selectbox("Timeframe", list(current_timeframe_map.keys()), index=2, key="sidebar_timeframe")
+    timeframe = st.session_state.get("sidebar_timeframe", list(current_timeframe_map.keys())[2])
     
     ind_options = list(current_ind_names.values())
     if franchise != "All":
         ind_keys = current_franchise_map.get(franchise, [])
         ind_options = [current_ind_names.get(k, k) for k in ind_keys]
-    indication = st.selectbox("Indication", ["All"] + ind_options, label_visibility="collapsed")
+    
+    st.selectbox("Indication", ["All"] + ind_options, key="sidebar_indication")
+    indication = st.session_state.get("sidebar_indication", "All")
     
     st.divider()
+    
+    # Actions Section
+    st.markdown("<p style='font-size:12px;font-weight:600;color:#071d49;margin-bottom:8px'>ACTIONS</p>", unsafe_allow_html=True)
     
     if st.button("↻ Refresh Data", type="primary", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
     
+    st.divider()
+    
+    # Status Section
+    st.markdown("<p style='font-size:12px;font-weight:600;color:#071d49;margin-bottom:8px'>STATUS</p>", unsafe_allow_html=True)
+    
     source = st.session_state.get("data_source", "loading...")
     source_color = SUCCESS if source == "live" else GOLD
-    st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600;margin-top:8px'>● {source.upper()} DATA</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center;font-size:12px;color:{source_color};font-weight:600;padding:8px;background:rgba(0,0,0,0.02);border-radius:6px'>● {source.upper()} DATA</div>", unsafe_allow_html=True)
     
     if st.session_state.get("data_error"):
-        with st.expander("⚠️ API Issue", expanded=False):
-            st.caption("Google Trends temporarily restricted. **Solution:** Refresh after 1-2 min or check back later.")
+        with st.expander("⚠️ Data Issue"):
+            st.caption("Google Trends temporarily rate-limited. Click 'Refresh Data' after 1-2 minutes.")
     else:
-        st.caption("✓ Using real data")
+        st.caption("✓ Real data available")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
@@ -764,6 +798,12 @@ def load_data(timeframe, brand_filter):
             "date": date_range,
             "Skyrizi": skyrizi_data
         }).set_index("date")
+
+# Get filter values from sidebar session state
+brand_filter = st.session_state.get("sidebar_brand", "Both")
+franchise = st.session_state.get("sidebar_franchise", "All")
+timeframe = st.session_state.get("sidebar_timeframe", "today 3-m")
+indication = st.session_state.get("sidebar_indication", "All")
 
 trend_df = load_data(timeframe, brand_filter)
 
