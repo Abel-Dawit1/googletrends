@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import json
 import time
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 import requests
@@ -104,17 +105,79 @@ REDDIT_DEMO_POSTS = {
 @st.cache_data(ttl=1800, show_spinner=False)
 def scrape_real_reddit_posts(keywords, limit=5):
     """
-    Attempts to scrape real Reddit posts. Reddit's terms and technical restrictions
-    prevent automated scraping, so we provide curated demo posts based on actual
-    Reddit community discussions from r/Psoriasis, r/rheumatoidarthritis, etc.
+    Use official Reddit API via PRAW to pull real posts.
+    Requires credentials from Streamlit secrets or environment variables:
+    - REDDIT_CLIENT_ID
+    - REDDIT_CLIENT_SECRET
     
-    For production use with real Reddit data, consider:
-    - Official Reddit API with proper authentication (requires app registration)
-    - Third-party services like pushshift (limited availability)
-    - Direct API partnerships with Reddit
+    Setup: https://www.reddit.com/prefs/apps (create "script" app)
     """
-    # Due to Reddit's anti-scraping measures, use curated demo data
-    return _get_demo_posts(keywords, limit)
+    try:
+        # Try to get credentials
+        client_id = st.secrets.get("REDDIT_CLIENT_ID") or os.environ.get("REDDIT_CLIENT_ID")
+        client_secret = st.secrets.get("REDDIT_CLIENT_SECRET") or os.environ.get("REDDIT_CLIENT_SECRET")
+        
+        if not client_id or not client_secret:
+            # No credentials - return demo data
+            return _get_demo_posts(keywords, limit)
+        
+        if not HAS_PRAW or praw is None:
+            return _get_demo_posts(keywords, limit)
+        
+        # Initialize PRAW with credentials
+        reddit = praw.Reddit(
+            client_id=client_id,
+            client_secret=client_secret,
+            user_agent="HealthcareDashboard/1.0"
+        )
+        
+        posts = []
+        seen_urls = set()
+        
+        # Relevant healthcare subreddits
+        subreddits = [
+            "Psoriasis",
+            "rheumatoidarthritis",
+            "AutoimmuneDiseases",
+            "HealthAnxiety",
+            "Health",
+        ]
+        
+        # Search for each keyword in relevant subreddits
+        for keyword in keywords[:3]:
+            for sub_name in subreddits:
+                if len(posts) >= limit:
+                    break
+                
+                try:
+                    subreddit = reddit.subreddit(sub_name)
+                    
+                    # Get top posts from this month
+                    for submission in subreddit.top(time_filter="month", limit=5):
+                        # Check if keyword is in title
+                        if keyword.lower() in submission.title.lower():
+                            if submission.url not in seen_urls and len(posts) < limit:
+                                posts.append({
+                                    "title": submission.title[:150],
+                                    "score": submission.score,
+                                    "subreddit": submission.subreddit.display_name,
+                                    "keyword": keyword,
+                                    "url": submission.url
+                                })
+                                seen_urls.add(submission.url)
+                except Exception as e:
+                    continue
+        
+        # If we found real posts, return them
+        if posts:
+            return posts[:limit]
+        
+        # Otherwise fall back to demo
+        return _get_demo_posts(keywords, limit)
+        
+    except Exception as e:
+        # Fall back to demo on any error
+        return _get_demo_posts(keywords, limit)
 
 def _get_demo_posts(keywords, limit=5):
     """
