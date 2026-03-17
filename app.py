@@ -1258,18 +1258,30 @@ with tabs[1]:
     
     # Create map with zoom based on selected state
     map_center = STATE_BOUNDS.get(map_state_abbr, STATE_BOUNDS["All"])
-    m = folium.Map(
-        location=map_center["center"],
-        zoom_start=map_center["zoom"],
-        tiles="CartoDB positron",
-        scroll_zoom=False
-    )
-
+    
+    try:
+        m = folium.Map(
+            location=map_center["center"],
+            zoom_start=map_center["zoom"],
+            tiles="CartoDB positron",
+            scroll_zoom=False
+        )
+    except Exception as e:
+        st.error(f"❌ Failed to create map: {str(e)}")
+        st.stop()
+    
     # Add state choropleth with search interest shading
     try:
+        m = folium.Map(
+            location=map_center["center"],
+            zoom_start=map_center["zoom"],
+            tiles="CartoDB positron",
+            scroll_zoom=False
+        )
+        
         # Load US state boundaries GeoJSON
         us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
-        geo_data = requests.get(us_state_geo).json()
+        geo_data = requests.get(us_state_geo, timeout=5).json()
 
         # Prepare state data for choropleth based on brand filter
         state_values = display_states.copy()
@@ -1340,8 +1352,8 @@ with tabs[1]:
             ).add_to(m)
 
     except Exception as e:
-        st.warning(f"⚠️ Could not load state boundaries. Using simple map. Error: {str(e)}")
-        # Fallback: Create simple marker-only map without choropleth
+        st.error(f"⚠️ Map error: {str(e)}")
+        # Create simple fallback map with just markers
         m = folium.Map(
             location=map_center["center"],
             zoom_start=map_center["zoom"],
@@ -1380,7 +1392,14 @@ with tabs[1]:
             tooltip=tooltip
         ).add_to(m)
 
-    st_folium(m, height=500, use_container_width=True)
+    # Display the map
+    try:
+        map_data = st_folium(m, height=500, use_container_width=True)
+        if map_data is None:
+            st.info("📍 Map loaded. Click on states or markets for details.")
+    except Exception as e:
+        st.error(f"Map display error: {str(e)}")
+        st.info("Try refreshing the page or switching tabs.")
     
     st.markdown("---")
     
