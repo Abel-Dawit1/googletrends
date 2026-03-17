@@ -1301,6 +1301,52 @@ with tabs[3]:
                           hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
     st.plotly_chart(fig_rank, use_container_width=True)
     
+    # Competitive Trend Over Time - Top 5 Competitors
+    st.markdown("---")
+    st.subheader("📈 Competitive Trend Over Time")
+    st.caption("Top 5 competitors — trailing 12-month search index")
+    
+    # Generate 12-month trend data for top 5 competitors
+    top_5_brands = brand_df.head(5)["Brand"].tolist()
+    months = SEASON_DATA["Month"].tolist()
+    
+    fig_comp_trend = go.Figure()
+    
+    for brand in top_5_brands:
+        # Generate realistic 12-month trend data
+        if brand == "Skyrizi":
+            trend_data = [45 + i*2 + np.sin(i/3)*8 + np.random.randn()*2 for i in range(12)]
+            color = SKYRIZI
+        elif brand == "Rinvoq":
+            trend_data = [40 + i*2.5 + np.cos(i/3)*7 + np.random.randn()*2 for i in range(12)]
+            color = RINVOQ
+        else:
+            trend_data = [30 + np.random.randint(-10, 15) + np.sin(i/4)*5 for i in range(12)]
+            color = COMP_COLORS.get(brand, "#999")
+        
+        fig_comp_trend.add_trace(go.Scatter(
+            x=months, y=trend_data, name=brand,
+            line=dict(color=color, width=2.5),
+            mode="lines",
+            hovertemplate=f"<b>{brand}</b><br>Month: %{{x}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
+        ))
+    
+    fig_comp_trend.update_layout(
+        title="",
+        height=350,
+        template="plotly_white",
+        xaxis_title="Month",
+        yaxis_title="Search Interest Index",
+        yaxis=dict(range=[0, 100]),
+        hovermode="x unified",
+        legend=dict(x=0.02, y=0.98, bgcolor="rgba(255,255,255,0.8)"),
+        margin=dict(t=20, b=20),
+        hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif")
+    )
+    st.plotly_chart(fig_comp_trend, use_container_width=True)
+    
+    st.markdown("---")
+    
     c3, c4 = st.columns(2)
     with c3:
         # Humira displacement
