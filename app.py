@@ -1008,7 +1008,7 @@ with tabs[1]:
             marker_line_width=1,
             marker_line_color='white',
             colorbar=dict(title=legend, len=0),
-            hovertemplate="<b>%{text}</b><br>Search Interest: %{z}<br><i>Select state to zoom</i><extra></extra>",
+            hovertemplate="<b>%{text}</b><br>Search Interest: %{z}<extra></extra>",
             showscale=False,
             name=""
         ))
@@ -1078,7 +1078,7 @@ with tabs[1]:
         plot_bgcolor='white'
     )
     
-    # Display the map with state-click info in hover
+    # Display the map with hover enabled but no zoom/pan/drag controls
     st.plotly_chart(
         fig, 
         use_container_width=True, 
@@ -1089,32 +1089,50 @@ with tabs[1]:
             'scrollZoom': False,
             'doubleClick': 'reset',
             'showLink': False,
-            'dragmode': False,
+            'dragmode': 'None',
             'toImageButtonOptions': {'format': 'png'}
         }
     )
     
-    # Add clickable state buttons below map for zooming
-    st.markdown("**Click a state to zoom:**")
+    # Add instruction banner
+    st.markdown("""
+    <div style="background-color: #f0f2f6; padding: 12px 16px; border-radius: 4px; margin: -10px 0 10px 0;">
+    <p style="margin: 0; font-size: 14px;">💡 <strong>How to zoom:</strong> Click any state button below to zoom and view metro areas. Hover over states to see search interest data.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add state zoom buttons - styled as interactive legend
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.markdown("**📍 Click a state to zoom and view metro areas:**")
+    
+    with col2:
+        if currently_zoomed_state:
+            if st.button("← Back to USA", key="back_to_usa_top"):
+                st.session_state.map_zoom_state = "All"
+                st.rerun()
     
     # Get list of states with DMA data for button display
     zoomable_states_list = sorted(list(STATE_NAME_TO_ABBR.keys()))
     
-    # Create buttons in columns (2 per row)
-    button_cols = st.columns(5)
-    for idx, state_name in enumerate(zoomable_states_list):
-        col = button_cols[idx % 5]
-        with col:
-            if st.button(state_name, key=f"state_btn_{state_name}", use_container_width=True):
-                st.session_state.map_zoom_state = state_name
-                st.rerun()
+    # Create buttons in rows (5 per row)
+    rows = [zoomable_states_list[i:i+5] for i in range(0, len(zoomable_states_list), 5)]
     
-    # Add zoom controls below map
-    if currently_zoomed_state:
-        st.info(f"📍 Zoomed into {currently_zoomed_state}. Click button below to return to USA view.")
-        if st.button("← Back to USA", key="back_to_usa"):
-            st.session_state.map_zoom_state = "All"
-            st.rerun()
+    for row_states in rows:
+        button_cols = st.columns(len(row_states))
+        for idx, state_name in enumerate(row_states):
+            with button_cols[idx]:
+                # Highlight the currently selected state
+                button_style = " ← ZOOMED" if currently_zoomed_state == state_name else ""
+                button_label = f"{state_name}{button_style}"
+                
+                if currently_zoomed_state == state_name:
+                    # Disable button if already zoomed to this state
+                    st.info(button_label)
+                else:
+                    if st.button(button_label, key=f"state_btn_{state_name}", use_container_width=True):
+                        st.session_state.map_zoom_state = state_name
+                        st.rerun()
 
     # Top Markets Table - Apply brand filter
     st.subheader("Top Markets")
