@@ -1691,6 +1691,117 @@ with tabs[2]:
     
     st.markdown(f"**Event Intelligence:** {event['Insight']}")
     
+    # Social Media Insights
+    st.markdown("---")
+    st.subheader("📱 Social Media Conversation")
+    st.caption("Reddit & Facebook mentions during and around the event")
+    
+    # Generate demo social media data for this event
+    np.random.seed(hash(selected_event) % 2**31)
+    
+    # Social metrics for the event
+    total_mentions = np.random.randint(1200, 4500)
+    rinvoq_mentions = int(total_mentions * (0.35 if brand_filter != "Skyrizi" else 0.15))
+    skyrizi_mentions = int(total_mentions * (0.40 if brand_filter != "Rinvoq" else 0.20))
+    
+    # Sentiment breakdown
+    sentiment_split = {
+        "Positive": np.random.randint(35, 55),
+        "Neutral": np.random.randint(25, 40),
+        "Negative": np.random.randint(10, 25)
+    }
+    sentiment_split["Positive"] = 100 - sentiment_split["Neutral"] - sentiment_split["Negative"]
+    
+    # Display metrics
+    sm1, sm2, sm3, sm4 = st.columns(4)
+    sm1.metric("Total Mentions", f"{total_mentions:,}", "Reddit + Facebook")
+    sm2.metric("Positive Sentiment", f"{sentiment_split['Positive']}%", "Favorable discussion")
+    sm3.metric("Rinvoq Mentions", f"{rinvoq_mentions:,}", "Brand-specific")
+    sm4.metric("Skyrizi Mentions", f"{skyrizi_mentions:,}", "Brand-specific")
+    
+    # Sentiment breakdown pie chart + trending posts
+    soc1, soc2 = st.columns(2)
+    
+    with soc1:
+        st.markdown("**Sentiment Breakdown**")
+        sentiment_df = pd.DataFrame(list(sentiment_split.items()), columns=["Sentiment", "Percentage"])
+        sentiment_colors = {"Positive": "#1a7f4f", "Neutral": "#b8860b", "Negative": "#c0392b"}
+        fig_sentiment = px.pie(
+            sentiment_df, 
+            names="Sentiment", 
+            values="Percentage",
+            color="Sentiment",
+            color_discrete_map=sentiment_colors,
+            hole=0.4
+        )
+        fig_sentiment.update_layout(height=280, margin=dict(t=20, b=20))
+        st.plotly_chart(fig_sentiment, use_container_width=True)
+    
+    with soc2:
+        st.markdown("**Top Trending Posts**")
+        # Generate demo trending posts
+        sample_posts = [
+            {"Platform": "Reddit", "Likes": np.random.randint(500, 2500), "Post": f"Just started Rinvoq for my RA after the recent clinical data. Feeling hopeful!", "Sentiment": "Positive"},
+            {"Platform": "Facebook", "Likes": np.random.randint(300, 1500), "Post": "Has anyone had success with Skyrizi for psoriasis? Looking for patient experiences.", "Sentiment": "Neutral"},
+            {"Platform": "Reddit", "Likes": np.random.randint(700, 3000), "Post": "The new Rinvoq indication for GCA has been a game changer for me and many others in our support group.", "Sentiment": "Positive"},
+            {"Platform": "Facebook", "Likes": np.random.randint(200, 1000), "Post": "Comparing Skyrizi vs Tremfya - which one worked better for you?", "Sentiment": "Neutral"},
+            {"Platform": "Reddit", "Likes": np.random.randint(400, 1800), "Post": "Skyrizi cleared my psoriasis in 3 months. Worth the switch from my old treatment.", "Sentiment": "Positive"},
+        ]
+        
+        for post in sample_posts:
+            sentiment_color = "#1a7f4f" if post["Sentiment"] == "Positive" else "#b8860b" if post["Sentiment"] == "Neutral" else "#c0392b"
+            st.markdown(f"""
+            <div style='background:#f8f9fa;border-left:4px solid {sentiment_color};padding:12px;margin-bottom:10px;border-radius:6px'>
+                <div style='display:flex;justify-content:space-between;margin-bottom:8px'>
+                    <span style='font-weight:600;font-size:12px'>{post["Platform"]}</span>
+                    <span style='color:{sentiment_color};font-weight:600;font-size:11px'>{post["Sentiment"].upper()}</span>
+                </div>
+                <div style='font-size:13px;color:#333;margin-bottom:8px;line-height:1.6'>{post["Post"]}</div>
+                <div style='font-size:11px;color:#999'>👍 {post["Likes"]:,} reactions</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Mention volume trend during event
+    st.markdown("---")
+    st.markdown("**Mention Volume Trend (Event Window)**")
+    
+    # Generate mention volume trend data
+    event_window_days = 14
+    mention_baseline = 50
+    peak_day = 3  # Peak on day 3 of event
+    x_event_days = list(range(-3, event_window_days))
+    mention_trend = [
+        mention_baseline + (
+            max(0, (total_mentions/30 - mention_baseline) * np.exp(-(max(0, i - peak_day)) / 4)) if i >= peak_day 
+            else mention_baseline * (0.6 + 0.4 * (i + 3) / 3)
+        ) + np.random.randn() * 10 
+        for i in range(len(x_event_days))
+    ]
+    
+    fig_mentions = go.Figure()
+    fig_mentions.add_trace(go.Scatter(
+        x=x_event_days, y=mention_trend, 
+        fill="tozeroy", fillcolor="rgba(77,184,255,0.1)",
+        line=dict(color=SKYRIZI, width=2.5),
+        hovertemplate="<b>Day %{x}</b><br>Mentions/hour: <b>%{y:.0f}</b><extra></extra>"
+    ))
+    fig_mentions.add_vline(
+        x=0, line_dash="dash", line_color="#999", line_width=1,
+        annotation_text="Event Start",
+        annotation_position="top right"
+    )
+    fig_mentions.update_layout(
+        height=280,
+        template="plotly_white",
+        xaxis_title="Days from Event Start",
+        yaxis_title="Mentions per Hour",
+        margin=dict(t=20, b=20),
+        hoverlabel=dict(bgcolor="white", font_size=12)
+    )
+    st.plotly_chart(fig_mentions, use_container_width=True)
+    
+    st.info(f"🔍 **Social Media Insight:** Reddit and Facebook conversations spiked {(total_mentions/30):.0f} mentions/hour at peak, with {sentiment_split['Positive']}% positive sentiment. Key topics: patient experiences, treatment comparisons, and clinical efficacy. Monitor ongoing discussions for emerging concerns or brand loyalty signals.")
+    
     # Summary table - Filter columns by brand
     st.markdown("---")
     st.subheader("Annual Moments Summary")
