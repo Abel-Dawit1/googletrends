@@ -15,6 +15,8 @@ import pandas as pd
 import numpy as np
 import json
 import time
+import folium
+from streamlit_folium import st_folium
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -975,164 +977,144 @@ with tabs[1]:
             dma_display = dma_display[dma_display["Market"].str.contains(f", {state_abbr}")]
             currently_zoomed_state = current_zoom_state
 
-    # Create Plotly map with potential zoom capability
-    fig = go.Figure()
+    # Create interactive Folium map with clickable states
+    if current_zoom_state == "All":
+        center_lat, center_lng = 39.8283, -98.5795
+        zoom_level = 4
+    else:
+        zoom_bounds = STATE_BOUNDS.get(current_zoom_state, STATE_BOUNDS["All"])
+        center_lat, center_lng = zoom_bounds["center"]
+        zoom_level = int(zoom_bounds.get("zoom", 4))
+    
+    map_folium = folium.Map(
+        location=[center_lat, center_lng],
+        zoom_start=zoom_level,
+        tiles="OpenStreetMap"
+    )
     
     try:
-        # Load US state boundaries
+        import requests
         us_state_geo = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
         geo_data = requests.get(us_state_geo).json()
         
-        # Add choropleth for states using proper state name mapping
-        state_names = [d["properties"]["name"] for d in geo_data["features"]]
+        # Create color mapping for states
+        state_interest_dict = {}
+        for _, row in state_values.iterrows():
+            state_interest_dict[row["State"]] = row["interest"]
         
-        # Create z-values matching state order in GeoJSON
-        z_values = []
+        max_interest = state_values["interest"].max()
+        min_interest = state_values["interest"].min()
+        
+        def get_color(interest_value):
+            if interest_value is None:
+                return '#f0f0f0'
+            normalized = (interest_value - min_interest) / (max_interest - min_interest) if max_interest > min_interest else 0.5
+            if brand_filter == "Rinvoq" or (brand_filter == "Both" and color_scale == "Oranges"):
+                if normalized < 0.33:
+                    return '#ffe8ba'
+                elif normalized < 0.66:
+                    return '#ffcc99'
+                else:
+                    return '#ff9933'
+            else:
+                if normalized < 0.33:
+                    return '#d9e7f7'
+                elif normalized < 0.66:
+                    return '#6fa3d9'
+                else:
+                    return '#1f5aa0'
+        
+        # Add state GeoJSON features
         for feature in geo_data["features"]:
             state_name = feature["properties"]["name"]
-            state_row = state_values[state_values["State"] == state_name]
-            if not state_row.empty:
-                z_values.append(int(state_row['interest'].values[0]))
-            else:
-                z_values.append(0)
+            interest = state_interest_dict.get(state_name, 0)
+            color = get_color(interest)
+            popup_text = f"<b>{state_name}</b><br>Interest: {interest}"
+            
+            folium.GeoJson(
+                data=feature,
+                style_function=lambda x, c=color: {
+                    'fillColor': c,
+                    'color': 'white',
+                    'weight': 1,
+                    'fillOpacity': 0.8
+                },
+                popup=folium.Popup(popup_text, max_width=300),
+                highlight_function=lambda x: {'fillOpacity': 0.95}
+            ).add_to(map_folium)
         
-        # Add choropleth for states with proper hover display
-        fig.add_trace(go.Choropleth(
-            locations=state_names,
-            z=z_values,
-            text=state_names,  # Add state names for hover
-            customdata=state_names,  # Add state names for click handling
-            geojson=geo_data,
-            featureidkey="properties.name",
-            colorscale=color_scale,
-            marker_line_width=1,
-            marker_line_color='white',
-            colorbar=dict(title=legend, len=0),
-            hovertemplate="<b>%{text}</b><br>Search Interest: %{z}<extra></extra>",
-            showscale=False,
-            name=""
-        ))
-    except:
-        pass
+        # Map state bounds for click detection
+        state_bounds = {
+            "New York": {"bounds": [[40.5, -79.5], [45.0, -71.0]]},
+            "Pennsylvania": {"bounds": [[39.7, -80.5], [42.3, -74.7]]},
+            "Massachusetts": {"bounds": [[41.2, -73.5], [42.9, -69.9]]},
+            "Illinois": {"bounds": [[37.0, -91.5], [42.5, -87.0]]},
+            "Minnesota": {"bounds": [[43.5, -97.2], [49.4, -89.4]]},
+            "California": {"bounds": [[32.5, -124.5], [42.0, -114.1]]},
+            "Texas": {"bounds": [[25.8, -106.6], [36.5, -93.5]]},
+            "Florida": {"bounds": [[24.5, -87.6], [30.8, -80.0]]},
+            "Georgia": {"bounds": [[30.3, -85.6], [35.0, -80.8]]},
+            "Washington": {"bounds": [[45.6, -124.7], [49.0, -116.9]]},
+        }
+        
+        # Store state bounds in session state for click handling
+        st.session_state.state_bounds = state_bounds
+        
+    except Exception as e:
+        st.error(f"Error loading map: {str(e)}")
     
-    # Add DMA circle markers - only show those in current view
+    # Add DMA markers
     for _, row in dma_display.iterrows():
         if brand_filter == "Both":
             r_val, s_val = row["Rinvoq"], row["Skyrizi"]
-            avg = (r_val + s_val) / 2
             color = RINVOQ if r_val > s_val else SKYRIZI
-            text = f"{row['Market']}<br>Rinvoq: {r_val} · Skyrizi: {s_val} {row['Trend']}"
-            size = 8 + avg / 5
+            text = f"{row['Market']}<br>Rinvoq: {r_val} · Skyrizi: {s_val}"
         elif brand_filter == "Rinvoq":
             r_val = row["Rinvoq"]
             color = RINVOQ
             text = f"{row['Market']}<br>Rinvoq: {r_val}"
-            size = 8 + r_val / 5
         else:
             s_val = row["Skyrizi"]
             color = SKYRIZI
             text = f"{row['Market']}<br>Skyrizi: {s_val}"
-            size = 8 + s_val / 5
         
-        fig.add_trace(go.Scattergeo(
-            lon=[row["lng"]],
-            lat=[row["lat"]],
-            mode='markers',
-            marker=dict(
-                size=12,
-                color=color,
-                line=dict(width=2, color='white'),
-                opacity=0.9,
-                symbol='circle'
-            ),
-            text=text,
-            hovertemplate="%{text}<extra></extra>",
-            showlegend=False,
-            name='Markets'
-        ))
+        folium.CircleMarker(
+            location=[row["lat"], row["lng"]],
+            radius=6,
+            popup=folium.Popup(text, max_width=200),
+            color=color,
+            fill=True,
+            fillColor=color,
+            fillOpacity=0.9,
+            weight=2,
+            opacity=0.9
+        ).add_to(map_folium)
     
-    # Get zoom bounds
-    zoom_bounds = STATE_BOUNDS.get(current_zoom_state, STATE_BOUNDS["All"])
-    center_lat, center_lng = zoom_bounds["center"]
+    # Display map and capture interactions
+    map_data = st_folium(map_folium, width=1200, height=600)
     
-    # Configure map layout with zoom capability
-    fig.update_layout(
-        height=500,
-        margin=dict(l=0, r=0, t=0, b=0),
-        geo=dict(
-            projection=dict(type='albers usa'),
-            center=dict(lat=center_lat, lon=center_lng),
-            showland=True,
-            landcolor='white',
-            showocean=True,
-            oceancolor='white',
-            showlakes=True,
-            lakecolor='white',
-            showframe=False,
-            coastlinewidth=0,
-            showcoastlines=False,
-            showcountries=False
-        ),
-        hovermode='closest',
-        paper_bgcolor='white',
-        plot_bgcolor='white'
-    )
-    
-    # Display the map with hover enabled but no zoom/pan/drag controls
-    st.plotly_chart(
-        fig, 
-        use_container_width=True, 
-        config={
-            'displayModeBar': False,
-            'displaylogo': False,
-            'responsive': True,
-            'scrollZoom': False,
-            'doubleClick': 'reset',
-            'showLink': False,
-            'dragmode': 'None',
-            'toImageButtonOptions': {'format': 'png'}
-        }
-    )
-    
-    # Add instruction banner
-    st.markdown("""
-    <div style="background-color: #f0f2f6; padding: 12px 16px; border-radius: 4px; margin: -10px 0 10px 0;">
-    <p style="margin: 0; font-size: 14px;">💡 <strong>How to zoom:</strong> Click any state button below to zoom and view metro areas. Hover over states to see search interest data.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Add state zoom buttons - styled as interactive legend
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.markdown("**📍 Click a state to zoom and view metro areas:**")
-    
-    with col2:
-        if currently_zoomed_state:
-            if st.button("← Back to USA", key="back_to_usa_top"):
-                st.session_state.map_zoom_state = "All"
-                st.rerun()
-    
-    # Get list of states with DMA data for button display
-    zoomable_states_list = sorted(list(STATE_NAME_TO_ABBR.keys()))
-    
-    # Create buttons in rows (5 per row)
-    rows = [zoomable_states_list[i:i+5] for i in range(0, len(zoomable_states_list), 5)]
-    
-    for row_states in rows:
-        button_cols = st.columns(len(row_states))
-        for idx, state_name in enumerate(row_states):
-            with button_cols[idx]:
-                # Highlight the currently selected state
-                button_style = " ← ZOOMED" if currently_zoomed_state == state_name else ""
-                button_label = f"{state_name}{button_style}"
-                
-                if currently_zoomed_state == state_name:
-                    # Disable button if already zoomed to this state
-                    st.info(button_label)
-                else:
-                    if st.button(button_label, key=f"state_btn_{state_name}", use_container_width=True):
+    # Handle state clicks
+    if map_data and map_data.get('last_clicked'):
+        clicked = map_data['last_clicked']
+        if clicked and 'state_bounds' in st.session_state:
+            lat, lng = clicked['lat'], clicked['lng']
+            for state_name, bounds_data in st.session_state.state_bounds.items():
+                bounds = bounds_data['bounds']
+                if (bounds[0][0] <= lat <= bounds[1][0] and 
+                    bounds[0][1] <= lng <= bounds[1][1]):
+                    if st.session_state.map_zoom_state != state_name:
                         st.session_state.map_zoom_state = state_name
                         st.rerun()
+                    break
+
+    # Back button when zoomed in
+    if currently_zoomed_state:
+        col1, col2, col3 = st.columns([2, 1, 2])
+        with col2:
+            if st.button("← Back to USA Map", key="back_to_usa_main"):
+                st.session_state.map_zoom_state = "All"
+                st.rerun()
+        st.markdown("---")
 
     # Top Markets Table - Apply brand filter
     st.subheader("Top Markets")
