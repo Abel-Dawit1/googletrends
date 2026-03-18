@@ -1128,8 +1128,8 @@ def load_csv_geomap_data(timeframe):
     Returns a DataFrame with columns: State, Rinvoq, Skyrizi
     Format: [Brand] Search Intent [Timeframe] geomap.csv
     
-    Note: Not all timeframes have state-level geomap data available.
-    30-day data is time-series only, so falls back to demo data.
+    Note: Some files may be time-series only (e.g., Rinvoq 30-day is by date).
+    This function extracts regional data when available and gracefully handles mismatches.
     """
     # Map pytrends timeframe to geomap CSV filename pattern
     # Note: Geomap files use "5 years" not "5 year"
@@ -1151,18 +1151,18 @@ def load_csv_geomap_data(timeframe):
         for brand in ["Rinvoq", "Skyrizi"]:
             filename = f"data/{brand} Search Intent {time_label} geomap.csv"
             if not os.path.exists(filename):
-                return None  # Return None if either file is missing
+                continue  # Skip if file doesn't exist, will use fallback
             
             # Read CSV, skip the first 2 rows (Category header and empty row)
             df = pd.read_csv(filename, skiprows=2)
             
-            # Check if this is regional data (state-based) or time-series data
+            # Check the first column to determine data type
             first_col = df.columns[0]
             
-            # If first column is "Day", it's time-series data (like 30-day geomap)
-            # We can't use time-series data for state-based map, so return None
+            # If first column is "Day" or contains date data, skip this brand
+            # (it's time-series only, not regional data)
             if first_col.lower() == "day":
-                return None
+                continue
             
             # The CSV has Region as first column and Index as second
             # Rename columns: "Region" -> "State", second column -> brand name
@@ -1173,13 +1173,24 @@ def load_csv_geomap_data(timeframe):
             
             dfs[brand] = df
         
-        # Merge the two dataframes on State
-        combined_df = dfs["Rinvoq"].merge(dfs["Skyrizi"], on="State", how="outer")
-        combined_df = combined_df.dropna(subset=['Rinvoq', 'Skyrizi'])
+        # If we don't have at least one brand, return None
+        if not dfs:
+            return None
+        
+        # If we have both brands, merge them
+        if len(dfs) == 2:
+            combined_df = dfs["Rinvoq"].merge(dfs["Skyrizi"], on="State", how="outer")
+            combined_df = combined_df.dropna(subset=['Rinvoq', 'Skyrizi'])
+        else:
+            # If only one brand is available, use it
+            brand_name = list(dfs.keys())[0]
+            combined_df = dfs[brand_name].copy()
         
         # Convert to integers
-        combined_df['Rinvoq'] = combined_df['Rinvoq'].astype(int)
-        combined_df['Skyrizi'] = combined_df['Skyrizi'].astype(int)
+        if 'Rinvoq' in combined_df.columns:
+            combined_df['Rinvoq'] = combined_df['Rinvoq'].astype(int)
+        if 'Skyrizi' in combined_df.columns:
+            combined_df['Skyrizi'] = combined_df['Skyrizi'].astype(int)
         
         return combined_df if not combined_df.empty else None
     except Exception as e:
