@@ -3070,7 +3070,7 @@ with tabs[2]:
     s_lift = int(event["Skyrizi Lift"].replace("+", "").replace("%", ""))
     
     # Determine which CSV timeframe to use (90 days for Super Bowl & Grammy, 1 year for others)
-    csv_timeframe = "90 days" if selected_event in ["Super Bowl", "Grammy Awards"] else "1 year"
+    csv_timeframe = "90 days" if selected_event in ["Super Bowl LX", "Grammy Awards"] else "1 year"
     
     # Try to load actual trend data from CSV
     csv_data = load_moment_trend_data(event["Date"], timeframe=csv_timeframe)
