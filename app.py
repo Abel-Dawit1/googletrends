@@ -967,7 +967,8 @@ YOY_DATA = pd.DataFrame({
     "Skyrizi": [20,24,28,32,35,40,42,45],
 })
 
-MOMENTS_DATA = [
+# Realistic demo moments data as fallback
+DEMO_MOMENTS_DATA = [
     {"Event": "Super Bowl LIX", "Category": "Sports", "Date": "Feb 9, 2025", "Rinvoq Lift": "+18%", "Skyrizi Lift": "+22%", "Peak": 82, "Halo": "5d", "Breakout": "Rinvoq commercial", "Insight": "Super Bowl drove a 22% Skyrizi search lift sustained 5 days, strongest in 25–44 demo and Sun Belt DMAs."},
     {"Event": "ACR Annual Meeting", "Category": "Conference", "Date": "Nov 2025", "Rinvoq Lift": "+35%", "Skyrizi Lift": "+8%", "Peak": 95, "Halo": "10d", "Breakout": "upadacitinib data", "Insight": "ACR delivers highest Rinvoq lift (+35%) driven by HCP search for clinical data. Single most important event."},
     {"Event": "NFL Playoffs", "Category": "Sports", "Date": "Jan 2025", "Rinvoq Lift": "+14%", "Skyrizi Lift": "+16%", "Peak": 74, "Halo": "6d", "Breakout": "Skyrizi NFL ad", "Insight": "NFL Playoffs provide sustained multi-week exposure. Skyrizi 16% lift exceeded single-event spikes."},
@@ -975,6 +976,29 @@ MOMENTS_DATA = [
     {"Event": "Mother's Day", "Category": "Cultural", "Date": "May 11, 2025", "Rinvoq Lift": "+10%", "Skyrizi Lift": "+14%", "Peak": 68, "Halo": "4d", "Breakout": "caregiver support", "Insight": "Caregiver campaigns drove 14% Skyrizi lift on quality-of-life messaging."},
     {"Event": "Winter Olympics", "Category": "Sports", "Date": "Feb 2026", "Rinvoq Lift": "+12%", "Skyrizi Lift": "+10%", "Peak": 72, "Halo": "14d", "Breakout": "athlete sponsorship", "Insight": "Extended 14-day halo. Joint RA/PsA messaging resonated with active lifestyle narrative."},
 ]
+
+def load_csv_moments_data():
+    """Load Key Moments data from CSV file, fallback to demo data."""
+    try:
+        filename = "data/Key Moments events.csv"
+        if not os.path.exists(filename):
+            return DEMO_MOMENTS_DATA
+        
+        df = pd.read_csv(filename)
+        # Convert dataframe to list of dicts
+        moments_list = df.to_dict('records')
+        
+        # Ensure required columns exist
+        required_cols = ["Event", "Category", "Date", "Rinvoq Lift", "Skyrizi Lift", "Peak", "Halo"]
+        if all(col in df.columns for col in required_cols):
+            return moments_list
+        else:
+            return DEMO_MOMENTS_DATA
+    except Exception as e:
+        return DEMO_MOMENTS_DATA
+
+# Load moments data - CSV if available, fallback to demo
+MOMENTS_DATA = load_csv_moments_data()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
