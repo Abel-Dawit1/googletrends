@@ -1129,6 +1129,9 @@ def load_data(timeframe_key, brand_filter, indication="All"):
     current_timeframe_map = st.session_state.get("custom_timeframe_map", TIMEFRAME_MAP)
     timeframe = current_timeframe_map.get(timeframe_key, "today 3-m")
     
+    # Store timeframe in session state for use in chart rendering
+    st.session_state["current_timeframe"] = timeframe
+    
     # Determine which brands to fetch based on filter
     if brand_filter == "Both":
         keywords = ["Rinvoq", "Skyrizi"]
@@ -1363,9 +1366,10 @@ with tabs[0]:
     # Search Interest Over Time — full width
     # Prepare date info based on timeframe
     trend_display_df = trend_df.copy()
+    current_timeframe = st.session_state.get("current_timeframe", "today 3-m")
     
     # For 5-year and 12-month data, add week range for hover
-    if timeframe in ["today 5-y", "today 12-m"]:
+    if current_timeframe in ["today 5-y", "today 12-m"]:
         trend_display_df['week_start'] = trend_display_df.index
         trend_display_df['week_end'] = trend_display_df.index + pd.Timedelta(days=6)
         trend_display_df['date_range'] = trend_display_df.apply(
@@ -1378,7 +1382,7 @@ with tabs[0]:
         color = RINVOQ if col == "Rinvoq" else SKYRIZI
         
         # Use week range for 5-year and 12-month, standard date for others
-        if timeframe in ["today 5-y", "today 12-m"]:
+        if current_timeframe in ["today 5-y", "today 12-m"]:
             hover_template = "<b>%{fullData.name}</b><br>Week: %{text}<br>Index: <b>%{y:.0f}</b><extra></extra>"
             fig_trend.add_trace(go.Scatter(
                 x=trend_df.index, y=trend_df[col], name=col, mode="lines",
