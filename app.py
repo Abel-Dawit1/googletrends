@@ -1070,6 +1070,14 @@ with st.sidebar:
             st.caption("✓ Real Google Trends data")
         else:
             st.caption("✓ Using demo data")
+    
+    # Debug: Show what data source is actually being used
+    with st.expander("🔍 Data Source Debug", expanded=False):
+        st.write("**Is Live Data Enabled?**", st.session_state.get("live_data_enabled", False))
+        st.write("**Actual Data Source:**", st.session_state.get("data_source", "unknown"))
+        st.write("**Data Error Message:**", st.session_state.get("data_error", "None"))
+        st.write("**Keywords being fetched:**", ["Rinvoq", "Skyrizi"])
+        st.write("**Note:** Demo data shows predictable sine waves. Live data shows real Google Trends patterns.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
