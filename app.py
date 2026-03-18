@@ -1315,6 +1315,190 @@ def load_csv_geomap_data(timeframe):
     except Exception as e:
         return None
 
+def infer_query_type(query, brand):
+    """Infer query type from query text and brand context."""
+    query_l = str(query).lower()
+    brand_l = str(brand).lower()
+
+    safety_terms = ["side effect", "adverse", "safety", "warning", "risk", "infection", "black box"]
+    condition_terms = [
+        "arthritis", "psoriasis", "crohn", "colitis", "dermatitis", "spondylitis", "gca",
+        "eczema", "ulcerative colitis", "ra", "psa", "as"
+    ]
+    generic_terms = ["upadacitinib", "risankizumab", "jak inhibitor", "il-23", "biologic"]
+
+    if " vs " in f" {query_l} " or any(comp.lower() in query_l for comp in COMPETITORS):
+        return "competitive"
+    if any(term in query_l for term in safety_terms):
+        return "safety"
+    if (brand_l and brand_l in query_l) or "rinvoq" in query_l or "skyrizi" in query_l:
+        return "branded"
+    if any(term in query_l for term in generic_terms):
+        return "generic"
+    if any(term in query_l for term in condition_terms):
+        return "condition"
+    return "condition"
+
+def infer_indication(query):
+    """Infer indication label from query text."""
+    query_l = str(query).lower()
+    indication_map = {
+        "RA": ["rheumatoid", " ra "],
+        "Psoriasis": ["psoriasis", "plaque"],
+        "PsA": ["psoriatic", " psa "],
+        "AS": ["ankylosing", "spondylitis", " as "],
+        "AD": ["atopic", "dermatitis", "eczema"],
+        "UC": ["ulcerative colitis", " colitis", " uc "],
+        "Crohn's": ["crohn"],
+        "GCA": ["giant cell", "gca"],
+    }
+
+    padded = f" {query_l} "
+    for indication_name, terms in indication_map.items():
+        if any(term in padded or term in query_l for term in terms):
+            return indication_name
+    return "All"
+
+def _parse_top_queries_csv(file_path, brand):
+    """Parse a candidate top-queries CSV and return standardized columns if valid."""
+    try:
+        df = pd.read_csv(
+            file_path,
+            skiprows=2,
+            header=None,
+            usecols=[0, 1],
+            names=["Query", "Value"],
+            engine="python",
+        )
+    except Exception:
+        return None
+
+    if df is None or df.empty or len(df.columns) < 2:
+        return None
+
+    df = df.dropna(how="all").copy()
+    if df.empty:
+        return None
+
+    df["Query"] = df["Query"].astype(str).str.strip()
+    df["Value"] = df["Value"].astype(str).str.strip()
+
+    # Drop CSV header-like rows if present
+    df = df[~df["Query"].str.lower().isin(["query", "queries"])]
+
+    # Skip known non-query files (time-series or geomap-like headers)
+    non_query_first_values = {"day", "week", "month", "date", "region", "state", "dma", "market"}
+    first_non_empty_query = next((q.lower() for q in df["Query"] if q and q != "nan"), "")
+    if first_non_empty_query in non_query_first_values:
+        return None
+
+    # Reject time-series files where the first column is mostly parseable as dates
+    parsed_dates = pd.to_datetime(df["Query"], errors="coerce")
+    if parsed_dates.notna().mean() > 0.7:
+        return None
+
+    # Google Trends top queries exports may include "TOP" and "RISING" blocks.
+    # Keep only rows in the TOP block when present.
+    top_markers = df["Query"].str.upper() == "TOP"
+    rising_markers = df["Query"].str.upper() == "RISING"
+    if top_markers.any():
+        top_idx = top_markers[top_markers].index[0]
+        rising_idx = rising_markers[rising_markers].index[0] if rising_markers.any() else None
+        if rising_idx is not None and rising_idx > top_idx:
+            section_df = df.loc[(df.index > top_idx) & (df.index < rising_idx), ["Query", "Value"]].copy()
+        else:
+            section_df = df.loc[df.index > top_idx, ["Query", "Value"]].copy()
+    else:
+        section_df = df[["Query", "Value"]].copy()
+
+    section_df["Index"] = pd.to_numeric(
+        section_df["Value"].astype(str).str.replace(",", "", regex=False).str.replace("%", "", regex=False),
+        errors="coerce"
+    )
+
+    # Optional growth column support if present
+    out_df = section_df[["Query", "Index"]].copy()
+    out_df["Growth"] = np.nan
+
+    out_df = out_df.dropna(subset=["Query", "Index"])
+    out_df = out_df[~out_df["Query"].str.upper().isin(["TOP", "RISING"])]
+    out_df = out_df[out_df["Query"].astype(str).str.strip() != ""]
+    if out_df.empty:
+        return None
+
+    out_df["Brand"] = brand
+    return out_df[["Query", "Brand", "Index", "Growth"]]
+
+@st.cache_data(ttl=7200)
+def load_csv_top_queries_data(timeframe, data_signature=None):
+    """Load top queries from CSV files for both brands by timeframe.
+
+    Supports flexible filename patterns to accommodate manually added exports.
+    """
+    timeframe_map = {
+        "now 7-d": "7 days",
+        "today 1-m": "30 days",
+        "today 3-m": "90 days",
+        "today 12-m": "1 year",
+        "today 5-y": "5 year",
+    }
+
+    time_label = timeframe_map.get(timeframe)
+    if not time_label:
+        return None
+
+    data_dir = Path("data")
+    if not data_dir.exists():
+        return None
+
+    query_frames = []
+    for brand in ["Rinvoq", "Skyrizi"]:
+        all_candidates = [
+            p for p in data_dir.iterdir()
+            if p.is_file()
+            and brand.lower() in p.name.lower()
+            and time_label.lower() in p.name.lower()
+            and "geomap" not in p.name.lower()
+        ]
+
+        # Prefer explicitly named top query exports first, then other candidates
+        top_query_candidates = sorted([p for p in all_candidates if "top quer" in p.name.lower()])
+        other_candidates = sorted([p for p in all_candidates if "top quer" not in p.name.lower()])
+        candidates = top_query_candidates + other_candidates
+
+        for file_path in candidates:
+            parsed = _parse_top_queries_csv(file_path, brand)
+            if parsed is not None and not parsed.empty:
+                query_frames.append(parsed)
+                break
+
+    if not query_frames:
+        return None
+
+    combined = pd.concat(query_frames, ignore_index=True)
+    combined = combined.drop_duplicates(subset=["Query", "Brand"], keep="first")
+    return combined if not combined.empty else None
+
+def get_top_queries_data_signature():
+    """Build a lightweight signature so top-query cache refreshes when files change."""
+    data_dir = Path("data")
+    if not data_dir.exists():
+        return ()
+
+    signature = []
+    for path in sorted(data_dir.iterdir()):
+        if not path.is_file():
+            continue
+        name_l = path.name.lower()
+        if "top quer" not in name_l:
+            continue
+        try:
+            stat = path.stat()
+            signature.append((path.name, int(stat.st_mtime), stat.st_size))
+        except Exception:
+            signature.append((path.name, 0, 0))
+    return tuple(signature)
+
 def load_data(timeframe_key, brand_filter, indication="All"):
     """Load trend data with priority: Live API → CSV (as fallback) → Demo."""
     # Convert timeframe key to actual timeframe string
@@ -1426,7 +1610,35 @@ elif state_df is None and st.session_state.get("data_source") == "live":
     pass
 
 # Generate queries from related data or use demo
-DEMO_QUERIES = transform_trends_to_queries(trend_df, related_rinvoq, related_skyrizi)
+base_queries = transform_trends_to_queries(trend_df, related_rinvoq, related_skyrizi)
+csv_queries = load_csv_top_queries_data(
+    st.session_state.get("current_timeframe", "today 3-m"),
+    get_top_queries_data_signature(),
+)
+
+if csv_queries is not None and not csv_queries.empty:
+    # Fill missing metadata from base queries when possible
+    fallback_meta = base_queries.copy()
+    for required_col, default_value in [("Growth", 0), ("Type", "condition"), ("Indication", "All")]:
+        if required_col not in fallback_meta.columns:
+            fallback_meta[required_col] = default_value
+
+    fallback_meta["_query_key"] = fallback_meta["Query"].astype(str).str.lower().str.strip()
+    fallback_meta = fallback_meta[["_query_key", "Growth", "Type", "Indication"]].drop_duplicates("_query_key")
+
+    DEMO_QUERIES = csv_queries.copy()
+    DEMO_QUERIES["_query_key"] = DEMO_QUERIES["Query"].astype(str).str.lower().str.strip()
+    DEMO_QUERIES = DEMO_QUERIES.merge(fallback_meta, on="_query_key", how="left", suffixes=("", "_fallback"))
+
+    DEMO_QUERIES["Growth"] = DEMO_QUERIES["Growth"].fillna(DEMO_QUERIES["Growth_fallback"]).fillna(0)
+    DEMO_QUERIES["Type"] = DEMO_QUERIES["Type"].fillna(
+        DEMO_QUERIES.apply(lambda row: infer_query_type(row["Query"], row["Brand"]), axis=1)
+    )
+    DEMO_QUERIES["Indication"] = DEMO_QUERIES["Indication"].fillna(DEMO_QUERIES["Query"].apply(infer_indication))
+
+    DEMO_QUERIES = DEMO_QUERIES[["Query", "Brand", "Index", "Growth", "Type", "Indication"]]
+else:
+    DEMO_QUERIES = base_queries
 
 # Filter DEMO_QUERIES by brand and indication
 if indication != "All":
@@ -2782,9 +2994,9 @@ with tabs[2]:
         ))
     fig_moment.add_vline(
         x=0, line_dash="dash", line_color="#ccc", line_width=1,
-        annotation_text="<b>Event</b>",
+        annotation_text=f"<b>Event</b><br><sub>{event['Date']}</sub>",
         annotation_position="top right",
-        annotation_font=dict(size=11, color="#666")
+        annotation_font=dict(size=10, color="#666")
     )
     # Extract year from event date for dynamic title
     event_year = event.get("Date", "").split(",")[-1].strip()
