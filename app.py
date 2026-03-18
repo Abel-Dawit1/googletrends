@@ -292,22 +292,21 @@ st.set_page_config(
 # GOOGLE TRENDS DATA LAYER
 # ═══════════════════════════════════════════════════════════════════════════
 
-@st.cache_data(ttl=3600, show_spinner=False)
 @st.cache_data(ttl=7200, show_spinner=False)
 def fetch_trends_data(keywords, timeframe="today 3-m", geo="US"):
     """Fetch interest over time from Google Trends via pytrends with retry logic."""
     if not HAS_PYTRENDS:
         return None
     
-    max_retries = 3
+    max_retries = 2
     for attempt in range(max_retries):
         try:
             import time
-            # Exponential backoff: 3s, 6s, 12s between attempts
-            wait_time = 3 * (2 ** attempt)
+            # Backoff: 1s, 2s between attempts (shorter to avoid timeout)
+            wait_time = 1 * (2 ** attempt)
             time.sleep(wait_time)
             
-            pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=0.5)
+            pytrends = TrendReq(hl="en-US", tz=360, retries=1, backoff_factor=0.1)
             pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
             df = pytrends.interest_over_time()
             if "isPartial" in df.columns:
@@ -315,7 +314,7 @@ def fetch_trends_data(keywords, timeframe="today 3-m", geo="US"):
             return df
         except Exception as e:
             if attempt < max_retries - 1:
-                time.sleep(wait_time * 2)  # Extra wait before retry
+                time.sleep(wait_time)
                 continue
             else:
                 st.session_state["data_error"] = "Google Trends API temporarily restricted (rate limit). Try again in 1-2 minutes."
@@ -333,7 +332,7 @@ def fetch_regional_data(keywords, timeframe="today 3-m", geo="US", resolution="R
             import time
             wait_time = 3 * (2 ** attempt)
             time.sleep(wait_time)
-            pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=0.5)
+            pytrends = TrendReq(hl="en-US", tz=360, retries=1, backoff_factor=0.1)
             pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
             df = pytrends.interest_by_region(resolution=resolution, inc_low_vol=True, inc_geo_code=True)
             return df
@@ -356,7 +355,7 @@ def fetch_related_queries(keyword, timeframe="today 12-m", geo="US"):
             import time
             wait_time = 3 * (2 ** attempt)
             time.sleep(wait_time)
-            pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=0.5)
+            pytrends = TrendReq(hl="en-US", tz=360, retries=1, backoff_factor=0.1)
             pytrends.build_payload([keyword], timeframe=timeframe, geo=geo)
             related = pytrends.related_queries()
             return related.get(keyword, {"top": None, "rising": None})
@@ -1042,7 +1041,7 @@ with st.sidebar:
             st.cache_data.clear()
             st.rerun()
     with col_live:
-        if st.button("🔴 Live Data", use_container_width=True, help="Enable real Google Trends data (may rate limit)"):
+        if st.button("🔴 Live Data", use_container_width=True, help="Enable real Google Trends data (first load may take 10-15s)"):
             st.session_state["live_data_enabled"] = True
             st.session_state["data_source"] = "live"
             st.cache_data.clear()
@@ -1050,18 +1049,27 @@ with st.sidebar:
     
     source = st.session_state.get("data_source", "demo")
     is_live = st.session_state.get("live_data_enabled", False)
-    source_color = SUCCESS if source == "live" and is_live else GOLD
-    status_text = "LIVE DATA" if source == "live" and is_live else "DEMO DATA (reliable)"
-    st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600;margin-top:8px'>● {status_text}</div>", unsafe_allow_html=True)
+    
+    # Show loading status if live data is enabled but not yet fetched
+    if is_live and source != "live":
+        st.markdown(f"<div style='text-align:center;font-size:11px;color:#ff9800;font-weight:600;margin-top:8px'>⏳ Fetching live data...</div>", unsafe_allow_html=True)
+    else:
+        source_color = SUCCESS if source == "live" and is_live else GOLD
+        status_text = "LIVE DATA" if source == "live" and is_live else "DEMO DATA (reliable)"
+        st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600;margin-top:8px'>● {status_text}</div>", unsafe_allow_html=True)
     
     if st.session_state.get("data_error"):
+        # Automatically disable live mode and fall back to demo
+        if st.session_state.get("live_data_enabled"):
+            st.session_state["live_data_enabled"] = False
+            st.session_state["data_source"] = "demo"
         with st.expander("⚠️ API Rate Limited", expanded=False):
-            st.caption("Google Trends API temporarily restricted. Click 'Live Data' again in 1-2 minutes to reconnect. Using reliable demo data in meantime.")
+            st.caption("Google Trends API temporarily restricted. Using demo data. Click 'Live Data' again in 2 minutes to retry.")
     else:
         if is_live and source == "live":
             st.caption("✓ Real Google Trends data")
         else:
-            st.caption("✓ Using realistic demo data")
+            st.caption("✓ Using demo data")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
