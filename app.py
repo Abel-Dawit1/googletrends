@@ -1272,7 +1272,8 @@ if st.session_state.get("live_data_enabled"):
 
 # Fallback to CSV geomap data if live data is not available
 if state_df is None or state_df.empty:
-    geomap_timeframe = "today 12-m"  # Use 1-year timeframe for state-level data
+    # Use the same timeframe that was used for trend data
+    geomap_timeframe = st.session_state.get("current_timeframe", "today 12-m")
     state_df = load_csv_geomap_data(geomap_timeframe)
 
 # Use transformed state data for DMA generation, fallback to demo
