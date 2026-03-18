@@ -1115,21 +1115,50 @@ def load_moment_trend_data(event_date_str):
         window_start = event_date - pd.Timedelta(days=14)
         window_end = event_date + pd.Timedelta(days=28)
         
-        # Load 1-year trend CSVs
-        rinvoq_file = "data/Rinvoq Search Interest 1 year new.csv"
-        skyrizi_file = "data/Skyrizi Search Interest 1 year new.csv"
-        
-        if not os.path.exists(rinvoq_file) or not os.path.exists(skyrizi_file):
+        # Find 1-year trend CSV files dynamically to avoid filename encoding issues
+        try:
+            data_files = os.listdir("data")
+            rinvoq_files = [f for f in data_files if "Rinvoq" in f and "1 year new" in f and f.endswith(".csv")]
+            skyrizi_files = [f for f in data_files if "Skyrizi" in f and "1 year new" in f and f.endswith(".csv")]
+            
+            if not rinvoq_files or not skyrizi_files:
+                return None
+            
+            rinvoq_path = os.path.join("data", rinvoq_files[0])
+            skyrizi_path = os.path.join("data", skyrizi_files[0])
+        except:
             return None
         
+        # Load CSVs with proper skiprows (skip Category and blank lines, keep header)
         try:
-            rinvoq_df = pd.read_csv(rinvoq_file, skiprows=2, names=["date", "value"], dtype={"value": "int"})
-            skyrizi_df = pd.read_csv(skyrizi_file, skiprows=2, names=["date", "value"], dtype={"value": "int"})
+            rinvoq_df = pd.read_csv(rinvoq_path, skiprows=2)
+            skyrizi_df = pd.read_csv(skyrizi_path, skiprows=2)
+            
+            # Rename columns: first column is 'Week', second is the brand value
+            rinvoq_df.columns = ["date", "value"]
+            skyrizi_df.columns = ["date", "value"]
+            
+            # Convert value column to numeric, coercing errors to NaN
+            rinvoq_df["value"] = pd.to_numeric(rinvoq_df["value"], errors="coerce")
+            skyrizi_df["value"] = pd.to_numeric(skyrizi_df["value"], errors="coerce")
+            
+            # Drop rows with NaN values
+            rinvoq_df = rinvoq_df.dropna()
+            skyrizi_df = skyrizi_df.dropna()
+            
+            # Convert to int
+            rinvoq_df["value"] = rinvoq_df["value"].astype(int)
+            skyrizi_df["value"] = skyrizi_df["value"].astype(int)
         except Exception as parse_err:
             return None
         
+        # Parse dates
         rinvoq_df["date"] = pd.to_datetime(rinvoq_df["date"], errors="coerce")
         skyrizi_df["date"] = pd.to_datetime(skyrizi_df["date"], errors="coerce")
+        
+        # Drop rows with invalid dates
+        rinvoq_df = rinvoq_df.dropna(subset=["date"])
+        skyrizi_df = skyrizi_df.dropna(subset=["date"])
         
         # Filter to window
         r_window = rinvoq_df[(rinvoq_df["date"] >= window_start) & (rinvoq_df["date"] <= window_end)].copy()
@@ -1151,8 +1180,8 @@ def load_moment_trend_data(event_date_str):
         merged = merged.merge(s_window[["date", "value"]].rename(columns={"value": "skyrizi"}), on="date", how="left")
         
         # Forward-fill and backward-fill to interpolate missing dates
-        merged["rinvoq"] = merged["rinvoq"].fillna(method="ffill").fillna(method="bfill").fillna(50).astype(int)
-        merged["skyrizi"] = merged["skyrizi"].fillna(method="ffill").fillna(method="bfill").fillna(50).astype(int)
+        merged["rinvoq"] = merged["rinvoq"].ffill().bfill().fillna(50).astype(int)
+        merged["skyrizi"] = merged["skyrizi"].ffill().bfill().fillna(50).astype(int)
         
         r_trend = merged["rinvoq"].tolist()
         s_trend = merged["skyrizi"].tolist()
