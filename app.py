@@ -1419,54 +1419,13 @@ with tabs[0]:
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
     
-    # Filter by query type using tiles/buttons
-    st.write("**Query type:**")
-    type_options = ["All", "Branded keywords", "Condition terms", "Intent-related"]
-    
-    # Initialize session state for query type filter
-    if "query_type_filter" not in st.session_state:
-        st.session_state.query_type_filter = "All"
-    
-    # Create button columns for query type filter
-    t1, t2, t3, t4 = st.columns(4)
-    
-    with t1:
-        if st.button(
-            "All",
-            key="btn_all_types",
-            help="Show all query types",
-            use_container_width=True
-        ):
-            st.session_state.query_type_filter = "All"
-    
-    with t2:
-        if st.button(
-            "💼 Branded",
-            key="btn_branded_types",
-            help="Brand-focused keywords",
-            use_container_width=True
-        ):
-            st.session_state.query_type_filter = "Branded keywords"
-    
-    with t3:
-        if st.button(
-            "🏥 Condition",
-            key="btn_condition_types",
-            help="Medical condition terms",
-            use_container_width=True
-        ):
-            st.session_state.query_type_filter = "Condition terms"
-    
-    with t4:
-        if st.button(
-            "💡 Intent",
-            key="btn_intent_types",
-            help="Patient intent & comparison queries",
-            use_container_width=True
-        ):
-            st.session_state.query_type_filter = "Intent-related"
-    
-    query_type_filter = st.session_state.query_type_filter
+    # Filter by query type
+    query_type_filter = st.selectbox(
+        "Filter by query type:",
+        ["All", "Branded keywords", "Condition terms", "Intent-related"],
+        key="query_type_filter",
+        help="Brand-focused, condition-focused, or patient intent queries"
+    )
     
     # Apply brand filter
     if brand_filter == "Both":
