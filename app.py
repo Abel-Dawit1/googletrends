@@ -969,10 +969,10 @@ YOY_DATA = pd.DataFrame({
 
 # Realistic demo moments data as fallback
 DEMO_MOMENTS_DATA = [
-    {"Event": "Super Bowl LIX", "Category": "Sports", "Date": "Feb 9, 2025", "Rinvoq Lift": "+18%", "Skyrizi Lift": "+22%", "Peak": 82, "Halo": "5d", "Breakout": "Rinvoq commercial", "Insight": "Super Bowl drove a 22% Skyrizi search lift sustained 5 days, strongest in 25–44 demo and Sun Belt DMAs."},
+    {"Event": "Super Bowl LX", "Category": "Sports", "Date": "Feb 9, 2026", "Rinvoq Lift": "+18%", "Skyrizi Lift": "+22%", "Peak": 82, "Halo": "5d", "Breakout": "Rinvoq commercial", "Insight": "Super Bowl drove a 22% Skyrizi search lift sustained 5 days, strongest in 25–44 demo and Sun Belt DMAs."},
     {"Event": "ACR Annual Meeting", "Category": "Conference", "Date": "Nov 2025", "Rinvoq Lift": "+35%", "Skyrizi Lift": "+8%", "Peak": 95, "Halo": "10d", "Breakout": "upadacitinib data", "Insight": "ACR delivers highest Rinvoq lift (+35%) driven by HCP search for clinical data. Single most important event."},
     {"Event": "NFL Playoffs", "Category": "Sports", "Date": "Jan 2025", "Rinvoq Lift": "+14%", "Skyrizi Lift": "+16%", "Peak": 74, "Halo": "6d", "Breakout": "Skyrizi NFL ad", "Insight": "NFL Playoffs provide sustained multi-week exposure. Skyrizi 16% lift exceeded single-event spikes."},
-    {"Event": "Grammy Awards", "Category": "Entertainment", "Date": "Feb 2, 2025", "Rinvoq Lift": "+8%", "Skyrizi Lift": "+15%", "Peak": 65, "Halo": "3d", "Breakout": "psoriasis awareness", "Insight": "Grammy Awards drove targeted lift via celebrity psoriasis awareness moments."},
+    {"Event": "Grammy Awards", "Category": "Entertainment", "Date": "Feb 2, 2026", "Rinvoq Lift": "+8%", "Skyrizi Lift": "+15%", "Peak": 65, "Halo": "3d", "Breakout": "psoriasis awareness", "Insight": "Grammy Awards drove targeted lift via celebrity psoriasis awareness moments."},
     {"Event": "Mother's Day", "Category": "Cultural", "Date": "May 11, 2025", "Rinvoq Lift": "+10%", "Skyrizi Lift": "+14%", "Peak": 68, "Halo": "4d", "Breakout": "caregiver support", "Insight": "Caregiver campaigns drove 14% Skyrizi lift on quality-of-life messaging."},
     {"Event": "Winter Olympics", "Category": "Sports", "Date": "Feb 2026", "Rinvoq Lift": "+12%", "Skyrizi Lift": "+10%", "Peak": 72, "Halo": "14d", "Breakout": "athlete sponsorship", "Insight": "Extended 14-day halo. Joint RA/PsA messaging resonated with active lifestyle narrative."},
 ]
@@ -1009,10 +1009,10 @@ def calculate_moments_from_trends():
         
         # Map natural language dates to ISO dates for matching
         date_map = {
-            "Feb 9, 2025": "2025-02-09",
+            "Feb 9, 2026": "2026-02-09",
+            "Feb 2, 2026": "2026-02-02",
             "Nov 2025": "2025-11-01",  # Approximate
             "Jan 2025": "2025-01-01",   # Approximate (playoffs span weeks)
-            "Feb 2, 2025": "2025-02-02",
             "May 11, 2025": "2025-05-11",
             "Feb 2026": "2026-02-01",   # Approximate
         }
@@ -2786,8 +2786,11 @@ with tabs[2]:
         annotation_position="top right",
         annotation_font=dict(size=11, color="#666")
     )
+    # Extract year from event date for dynamic title
+    event_year = event.get("Date", "").split(",")[-1].strip()
+    
     fig_moment.update_layout(
-        title=f"Search Trend — {selected_event}",
+        title=f"Search Trend — {selected_event} ({event_year} Data)",
         height=350,
         template="plotly_white",
         xaxis_title="Days from Event",
