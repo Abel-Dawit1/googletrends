@@ -1027,12 +1027,6 @@ with st.sidebar:
     brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"], label_visibility="visible")
     timeframe = st.selectbox("Timeframe", list(current_timeframe_map.keys()), index=2, label_visibility="visible")
     
-    ind_options = list(current_ind_names.values())
-    if franchise != "All":
-        ind_keys = current_franchise_map.get(franchise, [])
-        ind_options = [current_ind_names.get(k, k) for k in ind_keys]
-    indication = st.selectbox("Indication", ["All"] + ind_options, label_visibility="visible")
-    
     st.divider()
     
     if st.button("↻ Refresh", type="primary", use_container_width=True):
@@ -1239,6 +1233,8 @@ if brand_filter != "Both":
     # Filter by brand
     DEMO_QUERIES = DEMO_QUERIES[(DEMO_QUERIES["Brand"] == brand_filter) | (DEMO_QUERIES["Brand"] == "Both")]
 
+# Default indication value (will be overridden in tabs that need it)
+indication = "All"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TABS
@@ -1506,9 +1502,24 @@ with tabs[0]:
         column_config=column_config
     )
     
-    # Queries - Filter by brand, indication (sidebar), and type
+    # Queries - Filter by brand, indication, and type
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
+    
+    # Add indication filter at the top
+    dma_current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
+    dma_current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
+    dma_ind_options = list(dma_current_ind_names.values())
+    if franchise != "All":
+        dma_ind_keys = dma_current_franchise_map.get(franchise, [])
+        dma_ind_options = [dma_current_ind_names.get(k, k) for k in dma_ind_keys]
+    
+    dma_indication = st.selectbox(
+        "Indication",
+        ["All"] + dma_ind_options,
+        label_visibility="visible",
+        key="dma_indication_filter"
+    )
     
     # Filter by query type
     query_type_filter = st.selectbox(
@@ -1526,9 +1537,9 @@ with tabs[0]:
     else:  # Skyrizi
         queries_df = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
     
-    # Apply indication filter from sidebar
-    if indication != "All":
-        queries_df = queries_df[(queries_df["Indication"] == indication) | (queries_df["Indication"] == "All")]
+    # Apply indication filter
+    if dma_indication != "All":
+        queries_df = queries_df[(queries_df["Indication"] == dma_indication) | (queries_df["Indication"] == "All")]
     
     # Apply type filter to queries
     if query_type_filter == "Branded keywords":
@@ -2162,6 +2173,65 @@ with tabs[3]:
         st.plotly_chart(fig_radar, use_container_width=True)
     
     st.info("⚔️ **Competitive Insight:** Humira's biosimilar erosion is accelerating — its search index has declined ~45% over 12 months, creating a capture window for both brands. Recommend increasing defensive bidding on competitor comparison queries and allocating Humira displacement budget to top rheumatology DMAs.")
+    
+    # Top Search Queries and Rising Queries for Competitive Tab
+    st.markdown("---")
+    st.subheader("📊 Search Query Insights")
+    
+    # Add indication filter for this section
+    comp_current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
+    comp_current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
+    comp_ind_options = list(comp_current_ind_names.values())
+    if franchise != "All":
+        comp_ind_keys = comp_current_franchise_map.get(franchise, [])
+        comp_ind_options = [comp_current_ind_names.get(k, k) for k in comp_ind_keys]
+    
+    comp_indication = st.selectbox(
+        "Indication",
+        ["All"] + comp_ind_options,
+        label_visibility="visible",
+        key="comp_indication_filter"
+    )
+    
+    # Filter queries by brand and indication
+    comp_queries = DEMO_QUERIES.copy()
+    if brand_filter == "Both":
+        pass  # Keep all
+    elif brand_filter == "Rinvoq":
+        comp_queries = comp_queries[comp_queries["Brand"].isin(["Rinvoq", "Both"])]
+    else:  # Skyrizi
+        comp_queries = comp_queries[comp_queries["Brand"].isin(["Skyrizi", "Both"])]
+    
+    if comp_indication != "All":
+        comp_queries = comp_queries[(comp_queries["Indication"] == comp_indication) | (comp_queries["Indication"] == "All")]
+    
+    # Display tables side by side
+    comp_col1, comp_col2 = st.columns(2)
+    
+    with comp_col1:
+        st.markdown("**📊 Top Search Queries**")
+        st.caption("Ranked by search interest index")
+        comp_top_queries = comp_queries.sort_values("Index", ascending=False)[["Query", "Brand", "Index"]].head(10).reset_index(drop=True)
+        st.dataframe(
+            comp_top_queries,
+            use_container_width=True,
+            hide_index=True,
+            column_config={"Index": st.column_config.NumberColumn("Index", format="%d")}
+        )
+    
+    with comp_col2:
+        st.markdown("**🚀 Rising Queries**")
+        st.caption("Ranked by growth rate")
+        comp_rising_queries = comp_queries[comp_queries["Growth"] > 0].sort_values("Growth", ascending=False)[["Query", "Brand", "Growth"]].head(10).reset_index(drop=True)
+        comp_rising_queries["Status"] = comp_rising_queries.apply(
+            lambda row: "🔥 Breakout" if row["Growth"] >= 500 else "📈 Growing", axis=1
+        )
+        st.dataframe(
+            comp_rising_queries[["Query", "Brand", "Status", "Growth"]],
+            use_container_width=True,
+            hide_index=True,
+            column_config={"Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%")}
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -2174,6 +2244,23 @@ with tabs[4]:
     
     st.subheader("Patient Intent Analysis")
     
+    # Add indication filter at the top
+    current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
+    current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
+    ind_options = list(current_ind_names.values())
+    if franchise != "All":
+        ind_keys = current_franchise_map.get(franchise, [])
+        ind_options = [current_ind_names.get(k, k) for k in ind_keys]
+    
+    intent_indication = st.selectbox(
+        "Indication",
+        ["All"] + ind_options,
+        label_visibility="visible",
+        key="intent_indication_filter"
+    )
+    
+    st.markdown("---")
+    
     # Filter queries by brand
     if brand_filter == "Both":
         intent_queries = DEMO_QUERIES
@@ -2181,6 +2268,10 @@ with tabs[4]:
         intent_queries = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]
     else:  # Skyrizi
         intent_queries = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
+    
+    # Apply indication filter
+    if intent_indication != "All":
+        intent_queries = intent_queries[(intent_queries["Indication"] == intent_indication) | (intent_queries["Indication"] == "All")]
     
     ik1, ik2, ik3, ik4 = st.columns(4)
     ik1.metric(
@@ -2633,6 +2724,65 @@ with tabs[2]:
     st.plotly_chart(fig_mentions, use_container_width=True)
     
     st.info(f"🔍 **Social Media Insight:** Reddit and Facebook conversations spiked {(total_mentions/30):.0f} mentions/hour at peak, with {sentiment_split['Positive']}% positive sentiment. Key topics: patient experiences, treatment comparisons, and clinical efficacy. Monitor ongoing discussions for emerging concerns or brand loyalty signals.")
+    
+    # Top Search Queries and Rising Queries for Key Moments
+    st.markdown("---")
+    st.subheader("📊 Search Query Insights")
+    
+    # Add indication filter for this section
+    km_current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
+    km_current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
+    km_ind_options = list(km_current_ind_names.values())
+    if franchise != "All":
+        km_ind_keys = km_current_franchise_map.get(franchise, [])
+        km_ind_options = [km_current_ind_names.get(k, k) for k in km_ind_keys]
+    
+    km_indication = st.selectbox(
+        "Indication",
+        ["All"] + km_ind_options,
+        label_visibility="visible",
+        key="km_indication_filter"
+    )
+    
+    # Filter queries by brand and indication
+    km_queries = DEMO_QUERIES.copy()
+    if brand_filter == "Both":
+        pass  # Keep all
+    elif brand_filter == "Rinvoq":
+        km_queries = km_queries[km_queries["Brand"].isin(["Rinvoq", "Both"])]
+    else:  # Skyrizi
+        km_queries = km_queries[km_queries["Brand"].isin(["Skyrizi", "Both"])]
+    
+    if km_indication != "All":
+        km_queries = km_queries[(km_queries["Indication"] == km_indication) | (km_queries["Indication"] == "All")]
+    
+    # Display tables side by side
+    km_col1, km_col2 = st.columns(2)
+    
+    with km_col1:
+        st.markdown("**📊 Top Search Queries**")
+        st.caption("Ranked by search interest index")
+        km_top_queries = km_queries.sort_values("Index", ascending=False)[["Query", "Brand", "Index"]].head(10).reset_index(drop=True)
+        st.dataframe(
+            km_top_queries,
+            use_container_width=True,
+            hide_index=True,
+            column_config={"Index": st.column_config.NumberColumn("Index", format="%d")}
+        )
+    
+    with km_col2:
+        st.markdown("**🚀 Rising Queries**")
+        st.caption("Ranked by growth rate")
+        km_rising_queries = km_queries[km_queries["Growth"] > 0].sort_values("Growth", ascending=False)[["Query", "Brand", "Growth"]].head(10).reset_index(drop=True)
+        km_rising_queries["Status"] = km_rising_queries.apply(
+            lambda row: "🔥 Breakout" if row["Growth"] >= 500 else "📈 Growing", axis=1
+        )
+        st.dataframe(
+            km_rising_queries[["Query", "Brand", "Status", "Growth"]],
+            use_container_width=True,
+            hide_index=True,
+            column_config={"Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%")}
+        )
     
     # Summary table - Filter columns by brand
     st.markdown("---")
