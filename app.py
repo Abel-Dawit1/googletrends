@@ -391,27 +391,27 @@ def generate_dma_from_states(states_df):
     if states_df is None or states_df.empty:
         return DEMO_DMA
     
-    # Major city coordinates and their associated states
+    # Major city coordinates and their associated states with population data
     major_dmas = {
-        "New York, NY": (40.71, -74.01, "New York"),
-        "Los Angeles, CA": (34.05, -118.24, "California"),
-        "Chicago, IL": (41.88, -87.63, "Illinois"),
-        "Dallas, TX": (32.78, -96.80, "Texas"),
-        "Houston, TX": (29.76, -95.37, "Texas"),
-        "Philadelphia, PA": (39.95, -75.17, "Pennsylvania"),
-        "Phoenix, AZ": (33.45, -112.07, "Arizona"),
-        "San Antonio, TX": (29.42, -98.49, "Texas"),
-        "San Diego, CA": (32.72, -117.16, "California"),
-        "San Francisco, CA": (37.77, -122.41, "California"),
-        "Boston, MA": (42.36, -71.06, "Massachusetts"),
-        "Miami, FL": (25.76, -80.19, "Florida"),
-        "Atlanta, GA": (33.75, -84.39, "Georgia"),
-        "Seattle, WA": (47.61, -122.33, "Washington"),
-        "Denver, CO": (39.74, -104.99, "Colorado"),
+        "New York, NY": (40.71, -74.01, "New York", 7125000),
+        "Los Angeles, CA": (34.05, -118.24, "California", 3990000),
+        "Chicago, IL": (41.88, -87.63, "Illinois", 2696000),
+        "Dallas, TX": (32.78, -96.80, "Texas", 2635000),
+        "Houston, TX": (29.76, -95.37, "Texas", 2320000),
+        "Philadelphia, PA": (39.95, -75.17, "Pennsylvania", 1584000),
+        "Phoenix, AZ": (33.45, -112.07, "Arizona", 1768000),
+        "San Antonio, TX": (29.42, -98.49, "Texas", 1547000),
+        "San Diego, CA": (32.72, -117.16, "California", 1423000),
+        "San Francisco, CA": (37.77, -122.41, "California", 994000),
+        "Boston, MA": (42.36, -71.06, "Massachusetts", 1505000),
+        "Miami, FL": (25.76, -80.19, "Florida", 2087000),
+        "Atlanta, GA": (33.75, -84.39, "Georgia", 2710000),
+        "Seattle, WA": (47.61, -122.33, "Washington", 1305000),
+        "Denver, CO": (39.74, -104.99, "Colorado", 1445000),
     }
     
     dma_data = []
-    for city, (lat, lng, state) in major_dmas.items():
+    for city, (lat, lng, state, population) in major_dmas.items():
         state_row = states_df[states_df["State"] == state]
         if not state_row.empty:
             rinvoq_val = int(state_row.iloc[0].get("Rinvoq", 65))
@@ -426,7 +426,8 @@ def generate_dma_from_states(states_df):
             "lng": lng,
             "Rinvoq": rinvoq_val,
             "Skyrizi": skyrizi_val,
-            "Trend": trend
+            "Trend": trend,
+            "Population": population
         })
     
     return pd.DataFrame(dma_data)
