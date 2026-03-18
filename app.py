@@ -2422,10 +2422,13 @@ with tabs[5]:
         fig_ch = go.Figure()
         channels = ["Paid Search", "Social", "Display", "TV/CTV", "HCP Digital", "Email"]
         if brand_filter in ["Both", "Rinvoq"]:
-            fig_ch.add_trace(go.Bar(y=channels, x=[35,20,15,18,28,12], name="Rinvoq", marker_color=RINVOQ, orientation="h"))
+            fig_ch.add_trace(go.Bar(y=channels, x=[35,20,15,18,28,12], name="Rinvoq", marker_color=RINVOQ, orientation="h",
+                hovertemplate="<b>Rinvoq</b><br>Channel: %{y}<br>Allocation: <b>%{x}%</b><extra></extra>"))
         if brand_filter in ["Both", "Skyrizi"]:
-            fig_ch.add_trace(go.Bar(y=channels, x=[30,28,20,22,15,10], name="Skyrizi", marker_color=SKYRIZI, orientation="h"))
-        fig_ch.update_layout(title="Channel Budget Allocation (%) — Demo Data", height=350, barmode="group", template="plotly_white")
+            fig_ch.add_trace(go.Bar(y=channels, x=[30,28,20,22,15,10], name="Skyrizi", marker_color=SKYRIZI, orientation="h",
+                hovertemplate="<b>Skyrizi</b><br>Channel: %{y}<br>Allocation: <b>%{x}%</b><extra></extra>"))
+        fig_ch.update_layout(title="Channel Budget Allocation (%) — Demo Data", height=350, barmode="group", template="plotly_white",
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_ch, use_container_width=True)
     with c2:
         # Alignment chart
@@ -2438,9 +2441,12 @@ with tabs[5]:
         
         campaign_spend = [20,35,25,20,30,40,35,25,20,15,30,25]
         fig_align = go.Figure()
-        fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=search_peaks, name="Search Interest", fill="tozeroy", line=dict(color=NAVY)))
-        fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=campaign_spend, name="Campaign Spend", line=dict(color=GOLD, dash="dash")))
-        fig_align.update_layout(title="Search vs Campaign Alignment — Demo Data", height=350, template="plotly_white")
+        fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=search_peaks, name="Search Interest", fill="tozeroy", line=dict(color=NAVY),
+            hovertemplate="<b>Search Interest</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
+        fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=campaign_spend, name="Campaign Spend", line=dict(color=GOLD, dash="dash"),
+            hovertemplate="<b>Campaign Spend</b><br>Month: %{x}<br>Allocation: <b>%{y}%</b><extra></extra>"))
+        fig_align.update_layout(title="Search vs Campaign Alignment — Demo Data", height=350, template="plotly_white",
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_align, use_container_width=True)
     
     st.markdown("---")
