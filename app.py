@@ -1120,12 +1120,27 @@ def load_csv_trend_data(brand):
         return None
 
 def load_data(timeframe_key, brand_filter, indication="All"):
-    """Load trend data based on timeframe, brand filter, and indication."""
+    """Load trend data with priority: Live API → CSV (as fallback) → Demo."""
     # Convert timeframe key to actual timeframe string
     current_timeframe_map = st.session_state.get("custom_timeframe_map", TIMEFRAME_MAP)
     timeframe = current_timeframe_map.get(timeframe_key, "today 3-m")
     
-    # Check if 5-year timeframe is selected and load from CSV
+    # Determine which brands to fetch based on filter
+    if brand_filter == "Both":
+        keywords = ["Rinvoq", "Skyrizi"]
+    elif brand_filter == "Rinvoq":
+        keywords = ["Rinvoq"]
+    else:  # Skyrizi
+        keywords = ["Skyrizi"]
+    
+    # Priority 1: Try to fetch LIVE data (always attempt first)
+    if st.session_state.get("live_data_enabled"):
+        trend_df = fetch_trends_data(keywords, timeframe=timeframe)
+        if trend_df is not None and not trend_df.empty:
+            st.session_state["data_source"] = "live"
+            return trend_df
+    
+    # Priority 2: Fallback to CSV data (if available for the timeframe)
     if timeframe == "today 5-y":
         try:
             dfs = []
@@ -1148,25 +1163,9 @@ def load_data(timeframe_key, brand_filter, indication="All"):
                 st.session_state["data_source"] = "csv"
                 return trend_df
         except Exception as e:
-            st.warning(f"Error loading CSV data: {e}")
+            pass  # Fall through to demo data
     
-    # Standard live data or demo data flow for other timeframes
-    # Determine which brands to fetch based on filter
-    if brand_filter == "Both":
-        keywords = ["Rinvoq", "Skyrizi"]
-    elif brand_filter == "Rinvoq":
-        keywords = ["Rinvoq"]
-    else:  # Skyrizi
-        keywords = ["Skyrizi"]
-    
-    # Try to fetch live data
-    if st.session_state.get("live_data_enabled"):
-        trend_df = fetch_trends_data(keywords, timeframe=timeframe)
-        if trend_df is not None and not trend_df.empty:
-            st.session_state["data_source"] = "live"
-            return trend_df
-    
-    # Fallback to demo data
+    # Priority 3: Fallback to DEMO data (last resort)
     st.session_state["data_source"] = "demo"
     
     # Generate demo data based on brand filter
