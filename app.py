@@ -1035,17 +1035,9 @@ with st.sidebar:
     
     st.divider()
     
-    col_refresh, col_live = st.columns(2)
-    with col_refresh:
-        if st.button("↻ Refresh", type="primary", use_container_width=True):
-            st.cache_data.clear()
-            st.rerun()
-    with col_live:
-        if st.button("🔴 Live Data", use_container_width=True, help="Enable real Google Trends data (first load may take 10-15s)"):
-            st.session_state["live_data_enabled"] = True
-            st.session_state["data_source"] = "live"
-            st.cache_data.clear()
-            st.rerun()
+    if st.button("↻ Refresh", type="primary", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
     
     source = st.session_state.get("data_source", "demo")
     is_live = st.session_state.get("live_data_enabled", False)
