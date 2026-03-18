@@ -2368,76 +2368,11 @@ with tabs[5]:
     
     st.subheader("Campaign Planning")
     
-    now = datetime.now()
-    pk1, pk2, pk3, pk4 = st.columns(4)
-    pk1.metric(
-        "Active Campaigns", 
-        "3" if brand_filter == "Both" else "1", 
-        "Across 2 brands" if brand_filter == "Both" else f"{brand_filter} only",
-        help="Concurrent marketing campaigns currently live. Tracks investment breadth across indications, channels, and brands. Higher count = more market penetration."
-    )
+    st.info("📋 Campaign KPI cards and calendar will be populated once campaign data is ingested.")
     
-    if brand_filter in ["Both", "Rinvoq"]:
-        pk2.metric(
-            "Rinvoq Peak In", 
-            f"{(2 - now.month + 12) % 12 or 12}mo", 
-            "Peak RA: February",
-            help="Months until Rinvoq search interest peaks. February RA peak represents optimal window for awareness campaigns, patient education, and HCP engagement."
-        )
-    
-    if brand_filter in ["Both", "Skyrizi"]:
-        if brand_filter == "Both":
-            pk3.metric(
-                "Skyrizi Peak In", 
-                f"{(8 - now.month + 12) % 12 or 12}mo", 
-                "Peak Psoriasis: August",
-                help="Months until Skyrizi search interest peaks. August psoriasis peak represents optimal window for dermatology campaigns and seasonal condition awareness."
-            )
-            pk4.metric(
-                "Search Alignment", 
-                "Good", 
-                "4/5 peaks covered",
-                help="Campaign timing alignment with natural search seasonality. Good alignment = 30-40% higher search lift, better ROI, and earned media amplification."
-            )
-        else:
-            pk2.metric(
-                "Skyrizi Peak In", 
-                f"{(8 - now.month + 12) % 12 or 12}mo", 
-                "Peak Psoriasis: August",
-                help="Months until Skyrizi search interest peaks. August psoriasis peak represents optimal window for dermatology campaigns and seasonal condition awareness."
-            )
-            pk3.metric(
-                "Search Alignment", 
-                "Good", 
-                "4/5 peaks covered",
-                help="Campaign timing alignment with natural search seasonality. Good alignment = 30-40% higher search lift, better ROI, and earned media amplification."
-            )
-            pk4.metric("Filtered", brand_filter, f"1 brand selected")
-    
-    render_insight_bubble("Peak seasons show 30-40% higher search volume—maximize ROI by aligning budget and content deployment with natural seasonality patterns.", "📅")
-    
-    # Calendar - Filter by brand
-    render_insight_bubble("Align campaigns with natural search seasonality peaks—Q1 for RA, summer for dermatology. Label expansions and clinical data releases create campaign lift opportunities.", "📚")
+    st.markdown("---")
     st.markdown("**Annual Campaign Calendar**")
-    cal_events = [
-        {"Month": m, "Brand": b, "Indication": ind, "Activity": act}
-        for m, b, ind, act in [
-            ("Jan", "Rinvoq", "RA/PsA", "Winter flare ramp-up"),
-            ("Feb", "Rinvoq", "RA", "Peak RA · Super Bowl"),
-            ("Mar", "Skyrizi", "Psoriasis", "Spring derm prep"),
-            ("Apr", "Both", "PsA", "PsA awareness month"),
-            ("May", "Skyrizi", "Pso/AD", "Pre-summer derm launch"),
-            ("Jun", "Skyrizi", "Psoriasis", "Peak psoriasis — Sun Belt"),
-            ("Jul", "Skyrizi", "Pso/AD", "Sustained summer derm"),
-            ("Aug", "Both", "CD/UC", "IBD awareness transition"),
-            ("Sep", "Rinvoq", "AS/GCA", "Rheum conference prep"),
-            ("Oct", "Both", "All", "Competitive defense"),
-            ("Nov", "Rinvoq", "RA", "ACR Annual Meeting"),
-            ("Dec", "Rinvoq", "RA/GCA", "Year-end + Q1 planning"),
-        ]
-        if brand_filter == "Both" or b == brand_filter or b == "Both"
-    ]
-    st.dataframe(pd.DataFrame(cal_events), use_container_width=True, hide_index=True)
+    st.info("📅 Campaign calendar will be available once campaign schedule data is ingested.")
     
     c1, c2 = st.columns(2)
     with c1:
@@ -2447,7 +2382,7 @@ with tabs[5]:
             fig_ch.add_trace(go.Bar(y=channels, x=[35,20,15,18,28,12], name="Rinvoq", marker_color=RINVOQ, orientation="h"))
         if brand_filter in ["Both", "Skyrizi"]:
             fig_ch.add_trace(go.Bar(y=channels, x=[30,28,20,22,15,10], name="Skyrizi", marker_color=SKYRIZI, orientation="h"))
-        fig_ch.update_layout(title="Channel Budget Allocation (%)", height=350, barmode="group", template="plotly_white")
+        fig_ch.update_layout(title="Channel Budget Allocation (%) — Demo Data", height=350, barmode="group", template="plotly_white")
         st.plotly_chart(fig_ch, use_container_width=True)
     with c2:
         # Alignment chart
@@ -2462,15 +2397,12 @@ with tabs[5]:
         fig_align = go.Figure()
         fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=search_peaks, name="Search Interest", fill="tozeroy", line=dict(color=NAVY)))
         fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=campaign_spend, name="Campaign Spend", line=dict(color=GOLD, dash="dash")))
-        fig_align.update_layout(title="Search vs Campaign Alignment", height=350, template="plotly_white")
+        fig_align.update_layout(title="Search vs Campaign Alignment — Demo Data", height=350, template="plotly_white")
         st.plotly_chart(fig_align, use_container_width=True)
     
-    if brand_filter == "Both":
-        st.info("📅 **Campaign Insight:** Focus Skyrizi on psoriasis in Sun Belt DMAs starting May. Pair with Rinvoq defensive RA campaign in the Northeast. Key actions: (1) Increase paid search 30% for psoriasis terms, (2) Launch Rinvoq GCA content in HCP channels, (3) Monitor Humira biosimilar displacement weekly.")
-    elif brand_filter == "Rinvoq":
-        st.info("📅 **Campaign Insight:** Focus Rinvoq defensive RA campaign in the Northeast through Q2. Peak opportunity in February. Key actions: (1) Increase paid search 25% for RA terms, (2) Launch Rinvoq GCA content in HCP channels, (3) Monitor competitive displacement in winter months.")
-    else:  # Skyrizi
-        st.info("📅 **Campaign Insight:** Focus Skyrizi on psoriasis in Sun Belt DMAs starting May through August. Peak season for dermatology. Key actions: (1) Increase paid search 30% for psoriasis terms, (2) Expand AD/Crohn's content in Q3, (3) Monitor regional derm HCP influence.")
+    st.markdown("---")
+    st.markdown("**Campaign Strategy & Insights**")
+    st.info("📊 Campaign recommendations and insights will be generated once campaign data is ingested and analyzed.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
