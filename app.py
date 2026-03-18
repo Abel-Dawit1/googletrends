@@ -1122,6 +1122,58 @@ def load_csv_trend_data(brand, timeframe):
     except Exception as e:
         return None
 
+def load_csv_geomap_data(timeframe):
+    """Load geomap (state-level) data from CSV files for both brands and combine them.
+    
+    Returns a DataFrame with columns: State, Rinvoq, Skyrizi
+    Format: [Brand] Search Intent [Timeframe] geomap.csv
+    """
+    # Map pytrends timeframe to geomap CSV filename pattern
+    # Note: Geomap files use "5 years" not "5 year"
+    timeframe_map = {
+        "now 7-d": "7 days",
+        "today 1-m": "30 days",
+        "today 3-m": "90 days",
+        "today 12-m": "1 year",
+        "today 5-y": "5 years",
+    }
+    
+    time_label = timeframe_map.get(timeframe)
+    if not time_label:
+        return None
+    
+    try:
+        # Load data for both brands
+        dfs = {}
+        for brand in ["Rinvoq", "Skyrizi"]:
+            filename = f"data/{brand} Search Intent {time_label} geomap.csv"
+            if not os.path.exists(filename):
+                return None  # Return None if either file is missing
+            
+            # Read CSV, skip the first 2 rows (Category header and empty row)
+            df = pd.read_csv(filename, skiprows=2)
+            
+            # The CSV has Region as first column and Index as second
+            # Rename columns: "Region" -> "State", second column -> brand name
+            df.columns = ['State', brand]
+            
+            # Clean up and ensure Index is numeric
+            df[brand] = pd.to_numeric(df[brand], errors='coerce')
+            
+            dfs[brand] = df
+        
+        # Merge the two dataframes on State
+        combined_df = dfs["Rinvoq"].merge(dfs["Skyrizi"], on="State", how="outer")
+        combined_df = combined_df.dropna(subset=['Rinvoq', 'Skyrizi'])
+        
+        # Convert to integers
+        combined_df['Rinvoq'] = combined_df['Rinvoq'].astype(int)
+        combined_df['Skyrizi'] = combined_df['Skyrizi'].astype(int)
+        
+        return combined_df if not combined_df.empty else None
+    except Exception as e:
+        return None
+
 def load_data(timeframe_key, brand_filter, indication="All"):
     """Load trend data with priority: Live API → CSV (as fallback) → Demo."""
     # Convert timeframe key to actual timeframe string
@@ -1217,6 +1269,11 @@ raw_state_df = None
 if st.session_state.get("live_data_enabled"):
     raw_state_df = fetch_regional_data(["Rinvoq", "Skyrizi"], timeframe="today 12-m", resolution="REGION")
     state_df = transform_regional_to_states(raw_state_df)
+
+# Fallback to CSV geomap data if live data is not available
+if state_df is None or state_df.empty:
+    geomap_timeframe = "today 12-m"  # Use 1-year timeframe for state-level data
+    state_df = load_csv_geomap_data(geomap_timeframe)
 
 # Use transformed state data for DMA generation, fallback to demo
 if state_df is not None and not state_df.empty:
