@@ -2188,12 +2188,24 @@ with tabs[3]:
         comp_ind_keys = comp_current_franchise_map.get(franchise, [])
         comp_ind_options = [comp_current_ind_names.get(k, k) for k in comp_ind_keys]
     
-    comp_indication = st.selectbox(
-        "Indication",
-        ["All"] + comp_ind_options,
-        label_visibility="visible",
-        key="comp_indication_filter"
-    )
+    # Create two columns for filters
+    comp_filter_col1, comp_filter_col2 = st.columns(2)
+    
+    with comp_filter_col1:
+        comp_indication = st.selectbox(
+            "Indication",
+            ["All"] + comp_ind_options,
+            label_visibility="visible",
+            key="comp_indication_filter"
+        )
+    
+    with comp_filter_col2:
+        comp_competitor = st.selectbox(
+            "Competitor",
+            ["All"] + COMPETITORS,
+            label_visibility="visible",
+            key="comp_competitor_filter"
+        )
     
     # Filter queries by brand and indication
     comp_queries = DEMO_QUERIES.copy()
@@ -2206,6 +2218,10 @@ with tabs[3]:
     
     if comp_indication != "All":
         comp_queries = comp_queries[(comp_queries["Indication"] == comp_indication) | (comp_queries["Indication"] == "All")]
+    
+    # Filter by competitor if selected
+    if comp_competitor != "All":
+        comp_queries = comp_queries[comp_queries["Query"].str.contains(comp_competitor, case=False, na=False)]
     
     # Display tables side by side
     comp_col1, comp_col2 = st.columns(2)
