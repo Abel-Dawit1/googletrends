@@ -580,7 +580,7 @@ def render_insight_bubble(text, icon="💡", bg_color="#e7f3ff", text_color="#0c
     </div>
     """, unsafe_allow_html=True)
 
-def generate_overview_executive_summary(trend_df, dma_df, queries_df, client, brand_filter="Both"):
+def generate_overview_executive_summary(trend_df, dma_df, queries_df, client, brand_filter="Both", indication="All"):
     """Generate executive summary for Overview tab. Returns (callouts, recommendation)."""
     if client is None:
         callouts = [
@@ -625,7 +625,7 @@ Make them specific to search trends patterns and market opportunities."""
         recommendation = "Crohn's disease biologic searches jumped +42%, with 'Rinvoq Crohn's disease' spiking +850% after FDA label expansion (Dec 2023). This is the single highest-growth branded query in the portfolio. Action: Launch Crohn's-specific landing pages and patient testimonials within 2 weeks to capture the demand surge before it plateaus."
         return callouts, recommendation
 
-def generate_dma_executive_summary(dma_df, state_df, queries_df, client, brand_filter="Both"):
+def generate_dma_executive_summary(dma_df, state_df, queries_df, client, brand_filter="Both", indication="All"):
     """Generate executive summary for DMA Deep Dive tab. Returns (callouts, recommendation)."""
     if client is None:
         callouts = [
@@ -704,7 +704,7 @@ Keep each to 1-2 sentences."""
         recommendation = "Top Reddit themes: hair loss on Rinvoq and cost/affordability barriers for Skyrizi. Action: Create 2-3 Reddit AMAs addressing hair loss management on JAK inhibitors and cost reduction strategies—these are the actual friction points driving discussion."
         return callouts, recommendation
 
-def generate_competitive_executive_summary(dma_df, client, brand_filter="Both"):
+def generate_competitive_executive_summary(dma_df, client, brand_filter="Both", indication="All"):
     """Generate executive summary for Competitive tab. Returns (callouts, recommendation)."""
     if client is None:
         callouts = [
@@ -740,7 +740,7 @@ Keep insights to strategic competitive positioning (1-2 sentences each)."""
         recommendation = "'Rinvoq vs Humira' queries grew +120% and 'Skyrizi vs Tremfya' grew +95%—patients are actively comparing. Action: Create comparison charts for these specific matchups and run paid search campaigns targeting 'Rinvoq vs Humira' and 'Skyrizi vs Tremfya' to capture high-intent comparison traffic."
         return callouts, recommendation
 
-def generate_patient_intent_executive_summary(queries_df, client, brand_filter="Both"):
+def generate_patient_intent_executive_summary(queries_df, client, brand_filter="Both", indication="All"):
     """Generate executive summary for Patient Intent tab. Returns (callouts, recommendation)."""
     if client is None:
         callouts = [
@@ -781,7 +781,7 @@ Keep to 1-2 sentences each."""
         recommendation = "Giant cell arteritis (+48%), ankylosing spondylitis (+51%), and Crohn's disease (+42%) show highest growth rates. Action: Prioritize HCP education assets for these 3 conditions in Q2—they're where patients are actively searching and making treatment decisions."
         return callouts, recommendation
 
-def generate_campaign_executive_summary(trend_df, client, brand_filter="Both"):
+def generate_campaign_executive_summary(trend_df, client, brand_filter="Both", indication="All"):
     """Generate executive summary for Campaign tab. Returns (callouts, recommendation)."""
     if client is None:
         callouts = [
@@ -904,22 +904,22 @@ DEMO_STATES = pd.DataFrame([
 ])
 
 DEMO_QUERIES = pd.DataFrame([
-    {"Query": "rheumatoid arthritis treatment", "Brand": "Rinvoq", "Index": 94, "Growth": 12, "Type": "condition"},
-    {"Query": "psoriasis treatment", "Brand": "Skyrizi", "Index": 91, "Growth": 15, "Type": "condition"},
-    {"Query": "upadacitinib", "Brand": "Rinvoq", "Index": 88, "Growth": 28, "Type": "generic"},
-    {"Query": "plaque psoriasis medication", "Brand": "Skyrizi", "Index": 87, "Growth": 22, "Type": "condition"},
-    {"Query": "risankizumab", "Brand": "Skyrizi", "Index": 85, "Growth": 35, "Type": "generic"},
-    {"Query": "JAK inhibitor side effects", "Brand": "Rinvoq", "Index": 82, "Growth": 8, "Type": "safety"},
-    {"Query": "Crohn's disease biologic", "Brand": "Skyrizi", "Index": 78, "Growth": 42, "Type": "condition"},
-    {"Query": "ulcerative colitis treatment", "Brand": "Both", "Index": 80, "Growth": 25, "Type": "condition"},
-    {"Query": "ankylosing spondylitis treatment", "Brand": "Rinvoq", "Index": 74, "Growth": 51, "Type": "condition"},
-    {"Query": "atopic dermatitis biologic", "Brand": "Rinvoq", "Index": 72, "Growth": 38, "Type": "condition"},
-    {"Query": "giant cell arteritis treatment", "Brand": "Rinvoq", "Index": 68, "Growth": 48, "Type": "condition"},
-    {"Query": "Rinvoq Crohn's disease", "Brand": "Rinvoq", "Index": 58, "Growth": 850, "Type": "branded"},
-    {"Query": "Rinvoq vs Humira", "Brand": "Rinvoq", "Index": 65, "Growth": 120, "Type": "competitive"},
-    {"Query": "Skyrizi vs Tremfya", "Brand": "Skyrizi", "Index": 62, "Growth": 95, "Type": "competitive"},
-    {"Query": "Skyrizi cost", "Brand": "Skyrizi", "Index": 70, "Growth": 30, "Type": "branded"},
-    {"Query": "Rinvoq dosing", "Brand": "Rinvoq", "Index": 55, "Growth": 15, "Type": "branded"},
+    {"Query": "rheumatoid arthritis treatment", "Brand": "Rinvoq", "Index": 94, "Growth": 12, "Type": "condition", "Indication": "RA"},
+    {"Query": "psoriasis treatment", "Brand": "Skyrizi", "Index": 91, "Growth": 15, "Type": "condition", "Indication": "Psoriasis"},
+    {"Query": "upadacitinib", "Brand": "Rinvoq", "Index": 88, "Growth": 28, "Type": "generic", "Indication": "RA"},
+    {"Query": "plaque psoriasis medication", "Brand": "Skyrizi", "Index": 87, "Growth": 22, "Type": "condition", "Indication": "Psoriasis"},
+    {"Query": "risankizumab", "Brand": "Skyrizi", "Index": 85, "Growth": 35, "Type": "generic", "Indication": "Psoriasis"},
+    {"Query": "JAK inhibitor side effects", "Brand": "Rinvoq", "Index": 82, "Growth": 8, "Type": "safety", "Indication": "All"},
+    {"Query": "Crohn's disease biologic", "Brand": "Skyrizi", "Index": 78, "Growth": 42, "Type": "condition", "Indication": "Crohn's"},
+    {"Query": "ulcerative colitis treatment", "Brand": "Both", "Index": 80, "Growth": 25, "Type": "condition", "Indication": "UC"},
+    {"Query": "ankylosing spondylitis treatment", "Brand": "Rinvoq", "Index": 74, "Growth": 51, "Type": "condition", "Indication": "AS"},
+    {"Query": "atopic dermatitis biologic", "Brand": "Rinvoq", "Index": 72, "Growth": 38, "Type": "condition", "Indication": "AD"},
+    {"Query": "giant cell arteritis treatment", "Brand": "Rinvoq", "Index": 68, "Growth": 48, "Type": "condition", "Indication": "GCA"},
+    {"Query": "Rinvoq Crohn's disease", "Brand": "Rinvoq", "Index": 58, "Growth": 850, "Type": "branded", "Indication": "Crohn's"},
+    {"Query": "Rinvoq vs Humira", "Brand": "Rinvoq", "Index": 65, "Growth": 120, "Type": "competitive", "Indication": "RA"},
+    {"Query": "Skyrizi vs Tremfya", "Brand": "Skyrizi", "Index": 62, "Growth": 95, "Type": "competitive", "Indication": "Psoriasis"},
+    {"Query": "Skyrizi cost", "Brand": "Skyrizi", "Index": 70, "Growth": 30, "Type": "branded", "Indication": "Psoriasis"},
+    {"Query": "Rinvoq dosing", "Brand": "Rinvoq", "Index": 55, "Growth": 15, "Type": "branded", "Indication": "RA"},
 ])
 
 
@@ -1025,8 +1025,8 @@ with st.sidebar:
 # LOAD DATA
 # ═══════════════════════════════════════════════════════════════════════════
 
-def load_data(timeframe, brand_filter):
-    """Load trend data based on timeframe and brand filter."""
+def load_data(timeframe, brand_filter, indication="All"):
+    """Load trend data based on timeframe, brand filter, and indication."""
     # Determine which brands to fetch based on filter
     if brand_filter == "Both":
         keywords = ["Rinvoq", "Skyrizi"]
@@ -1072,7 +1072,7 @@ def load_data(timeframe, brand_filter):
             "Skyrizi": skyrizi_data
         }).set_index("date")
 
-trend_df = load_data(timeframe, brand_filter)
+trend_df = load_data(timeframe, brand_filter, indication)
 
 # Also try to load competitor data
 comp_df = None
@@ -1100,6 +1100,15 @@ elif state_df is None and st.session_state.get("data_source") == "live":
 
 # Generate queries from related data or use demo
 DEMO_QUERIES = transform_trends_to_queries(trend_df, related_rinvoq, related_skyrizi)
+
+# Filter DEMO_QUERIES by brand and indication
+if indication != "All":
+    # Filter by indication (add "All" queries that apply universally)
+    DEMO_QUERIES = DEMO_QUERIES[(DEMO_QUERIES["Indication"] == indication) | (DEMO_QUERIES["Indication"] == "All")]
+
+if brand_filter != "Both":
+    # Filter by brand
+    DEMO_QUERIES = DEMO_QUERIES[(DEMO_QUERIES["Brand"] == brand_filter) | (DEMO_QUERIES["Brand"] == "Both")]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1133,7 +1142,7 @@ tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "�
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[0]:
     # Executive Summary
-    overview_callouts, overview_recommendation = generate_overview_executive_summary(trend_df, DEMO_DMA, DEMO_QUERIES, client, brand_filter)
+    overview_callouts, overview_recommendation = generate_overview_executive_summary(trend_df, DEMO_DMA, DEMO_QUERIES, client, brand_filter, indication)
     render_executive_summary("Search Trends & Market Opportunity", overview_callouts, NAVY, overview_recommendation)
     
     # KPIs
@@ -1373,7 +1382,7 @@ with tabs[0]:
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[1]:
     # Executive Summary
-    dma_callouts, dma_recommendation = generate_dma_executive_summary(DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client, brand_filter)
+    dma_callouts, dma_recommendation = generate_dma_executive_summary(DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client, brand_filter, indication)
     render_executive_summary("Geographic Market Dynamics", dma_callouts, NAVY, dma_recommendation)
     
     st.subheader("DMA Geographic Analysis")
@@ -1801,7 +1810,7 @@ with tabs[1]:
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[3]:
     # Executive Summary
-    comp_callouts, comp_recommendation = generate_competitive_executive_summary(DEMO_DMA, client, brand_filter)
+    comp_callouts, comp_recommendation = generate_competitive_executive_summary(DEMO_DMA, client, brand_filter, indication)
     render_executive_summary("Competitive Market Position", comp_callouts, NAVY, comp_recommendation)
     
     st.subheader("Competitive Intelligence")
@@ -1911,7 +1920,7 @@ with tabs[3]:
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[4]:
     # Executive Summary
-    intent_callouts, intent_recommendation = generate_patient_intent_executive_summary(DEMO_QUERIES, client, brand_filter)
+    intent_callouts, intent_recommendation = generate_patient_intent_executive_summary(DEMO_QUERIES, client, brand_filter, indication)
     render_executive_summary("Patient Search Behavior & Intent", intent_callouts, NAVY, intent_recommendation)
     
     st.subheader("Patient Intent Analysis")
@@ -1992,7 +2001,7 @@ with tabs[4]:
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[5]:
     # Executive Summary
-    campaign_callouts, campaign_recommendation = generate_campaign_executive_summary(trend_df, client, brand_filter)
+    campaign_callouts, campaign_recommendation = generate_campaign_executive_summary(trend_df, client, brand_filter, indication)
     render_executive_summary("Campaign Strategy & Moment Optimization", campaign_callouts, NAVY, campaign_recommendation)
     
     st.subheader("Campaign Planning")
