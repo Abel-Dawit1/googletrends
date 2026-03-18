@@ -2779,14 +2779,6 @@ with tabs[2]:
 # TAB 7: CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[6]:
-    # Executive Summary
-    config_summary = [
-        "<strong>Customize your dashboard view</strong> with brand filters, date ranges, and competitor tracking preferences",
-        "<strong>Session-level settings:</strong> All customizations apply to your current session only—default settings persist across users",
-        "<strong>Data refresh:</strong> All data syncs with latest Google Trends and Reddit feeds in real-time"
-    ]
-    render_executive_summary("Dashboard Settings & Preferences", config_summary, NAVY, None)
-    
     st.subheader("⚙️ Dashboard Configuration")
     st.markdown("Customize filter categories and data groupings. Changes are applied to your session only.")
     st.markdown("---")
