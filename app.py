@@ -1075,6 +1075,11 @@ with st.sidebar:
         st.write("**Note:** Demo data shows predictable sine waves. Live data shows real Google Trends patterns. CSV data is from uploaded search intent files for all timeframes.")
 
 # ═══════════════════════════════════════════════════════════════════════════
+# INITIALIZE DEFAULT INDICATION VALUE
+# ═══════════════════════════════════════════════════════════════════════════
+indication = "All"
+
+# ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -1232,9 +1237,6 @@ if indication != "All":
 if brand_filter != "Both":
     # Filter by brand
     DEMO_QUERIES = DEMO_QUERIES[(DEMO_QUERIES["Brand"] == brand_filter) | (DEMO_QUERIES["Brand"] == "Both")]
-
-# Default indication value (will be overridden in tabs that need it)
-indication = "All"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TABS
