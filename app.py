@@ -2141,14 +2141,7 @@ with tabs[0]:
                         f"<span style='font-weight:700;color:{color}'>{row['Index']}</span></div>", unsafe_allow_html=True)
     with q2:
         st.subheader("Rising Queries")
-        rising_q = queries_df.sort_values("Growth", ascending=False).head(8)
-        for _, row in rising_q.iterrows():
-            badge_color = "#c0392b" if row["Growth"] >= 500 else SUCCESS
-            badge_bg = "#fdecea" if row["Growth"] >= 500 else "#eaf7f1"
-            brk = " <span style='background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700'>Breakout</span>" if row["Growth"] >= 500 else ""
-            st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
-                        f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
-                        f"<span style='background:{badge_bg};color:{badge_color};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700'>+{row['Growth']}%</span>{brk}</div>", unsafe_allow_html=True)
+        st.info("🚀 Coming soon — Rising queries data will be available after CSV integration is completed.")
     
     # AI Insight
     st.markdown("---")
