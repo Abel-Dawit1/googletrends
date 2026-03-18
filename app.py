@@ -553,12 +553,12 @@ def render_executive_summary(title, key_callouts, summary_color=NAVY):
     """Render an executive summary box at top of a tab with key business callouts."""
     callouts_html = ""
     for callout in key_callouts:
-        callouts_html += f"<li style='margin-bottom:8px;line-height:1.6;color:white'>{callout}</li>"
+        callouts_html += f"<li style='margin-bottom:8px;line-height:1.6;color:#0c3d7a'>{callout}</li>"
     
     st.markdown(f"""
-    <div style='background:linear-gradient(135deg,{summary_color} 0%,#{summary_color[1:]}dd 100%);border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.15)'>
-        <div style='color:white;font-size:14px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px'>✦ Executive Summary: {title}</div>
-        <ul style='color:white;font-size:13px;line-height:1.7;margin:0;padding-left:20px;opacity:0.95'>
+    <div style='background:#e8f1ff;border-left:4px solid {summary_color};border-radius:8px;padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08)'>
+        <div style='color:#0c3d7a;font-size:13px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px'>✦ Executive Summary: {title}</div>
+        <ul style='color:#0c3d7a;font-size:12px;line-height:1.7;margin:0;padding-left:20px'>
             {callouts_html}
         </ul>
     </div>
@@ -1314,9 +1314,9 @@ with tabs[0]:
             
             insight_label = "✦ Key Insight"
             st.markdown(f"""
-            <div style='background:linear-gradient(135deg,{NAVY} 0%,#1a4094 100%);border-radius:10px;padding:16px 20px;color:white'>
-                <div style='font-weight:700;font-size:14px;margin-bottom:12px'>{insight_label}</div>
-                <div style='font-size:13px;line-height:1.8;opacity:0.95'>
+            <div style='background:#e8f1ff;border-left:4px solid {NAVY};border-radius:8px;padding:16px 20px;color:#0c3d7a;box-shadow:0 1px 3px rgba(0,0,0,0.08)'>
+                <div style='font-weight:700;font-size:13px;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px'>{insight_label}</div>
+                <div style='font-size:12px;line-height:1.8'>
                     {insight_html.replace(chr(10), '<br>')}
                 </div>
             </div>
