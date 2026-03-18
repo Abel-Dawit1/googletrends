@@ -2649,15 +2649,14 @@ with tabs[2]:
 
     st.markdown("**Mention Volume Trend (Event Window)**")
     
-    # Generate mention volume trend data
-    event_window_days = 14
+    # Generate mention volume trend data - match search trend date range (-14 to 28 days)
     mention_baseline = 50
     peak_day = 3  # Peak on day 3 of event
-    x_event_days = list(range(-3, event_window_days))
+    x_event_days = list(range(-14, 28))  # Match search trend chart range
     mention_trend = [
         mention_baseline + (
             max(0, (total_mentions/30 - mention_baseline) * np.exp(-(max(0, i - peak_day)) / 4)) if i >= peak_day 
-            else mention_baseline * (0.6 + 0.4 * (i + 3) / 3)
+            else mention_baseline * (0.6 + 0.4 * (i + 14) / 14)  # Adjust pre-event ramp
         ) + np.random.randn() * 10 
         for i in range(len(x_event_days))
     ]
