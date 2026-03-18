@@ -1054,8 +1054,15 @@ with st.sidebar:
     if is_live and source != "live":
         st.markdown(f"<div style='text-align:center;font-size:11px;color:#ff9800;font-weight:600;margin-top:8px'>⏳ Fetching live data...</div>", unsafe_allow_html=True)
     else:
-        source_color = SUCCESS if source == "live" and is_live else GOLD
-        status_text = "LIVE DATA" if source == "live" and is_live else "DEMO DATA (reliable)"
+        if source == "csv":
+            source_color = "#4CAF50"
+            status_text = "5-YEAR CSV DATA"
+        elif source == "live" and is_live:
+            source_color = SUCCESS
+            status_text = "LIVE DATA"
+        else:
+            source_color = GOLD
+            status_text = "DEMO DATA (reliable)"
         st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600;margin-top:8px'>● {status_text}</div>", unsafe_allow_html=True)
     
     if st.session_state.get("data_error"):
@@ -1066,7 +1073,9 @@ with st.sidebar:
         with st.expander("⚠️ API Rate Limited", expanded=False):
             st.caption("Google Trends API temporarily restricted. Using demo data. Click 'Live Data' again in 2 minutes to retry.")
     else:
-        if is_live and source == "live":
+        if source == "csv":
+            st.caption("✓ Using 5-year CSV data")
+        elif is_live and source == "live":
             st.caption("✓ Real Google Trends data")
         else:
             st.caption("✓ Using demo data")
@@ -1077,7 +1086,7 @@ with st.sidebar:
         st.write("**Actual Data Source:**", st.session_state.get("data_source", "unknown"))
         st.write("**Data Error Message:**", st.session_state.get("data_error", "None"))
         st.write("**Keywords being fetched:**", ["Rinvoq", "Skyrizi"])
-        st.write("**Note:** Demo data shows predictable sine waves. Live data shows real Google Trends patterns.")
+        st.write("**Note:** Demo data shows predictable sine waves. Live data shows real Google Trends patterns. CSV data is from uploaded 5-year search intent files.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
@@ -1089,8 +1098,55 @@ if "data_source" not in st.session_state:
 if "live_data_enabled" not in st.session_state:
     st.session_state["live_data_enabled"] = False
 
+@st.cache_data(ttl=7200)
+def load_csv_trend_data(brand):
+    """Load 5-year trend data from CSV files."""
+    try:
+        filename = f"data/{brand.capitalize()} Search Intent 5 year new.csv"
+        if not os.path.exists(filename):
+            return None
+        
+        # Read CSV, skip the header rows
+        df = pd.read_csv(filename, skiprows=2)
+        df.columns = ['date', 'value']
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.sort_values('date')
+        df = df.set_index('date')
+        df.columns = [brand.capitalize()]
+        
+        return df
+    except Exception as e:
+        st.warning(f"Could not load {brand} CSV data: {e}")
+        return None
+
 def load_data(timeframe, brand_filter, indication="All"):
     """Load trend data based on timeframe, brand filter, and indication."""
+    # Check if 5-year timeframe is selected and load from CSV
+    if timeframe == "today 5-y":
+        try:
+            dfs = []
+            if brand_filter == "Both":
+                for brand in ["Rinvoq", "Skyrizi"]:
+                    df = load_csv_trend_data(brand)
+                    if df is not None:
+                        dfs.append(df)
+            elif brand_filter == "Rinvoq":
+                df = load_csv_trend_data("Rinvoq")
+                if df is not None:
+                    dfs.append(df)
+            else:  # Skyrizi
+                df = load_csv_trend_data("Skyrizi")
+                if df is not None:
+                    dfs.append(df)
+            
+            if dfs:
+                trend_df = pd.concat(dfs, axis=1)
+                st.session_state["data_source"] = "csv"
+                return trend_df
+        except Exception as e:
+            st.warning(f"Error loading CSV data: {e}")
+    
+    # Standard live data or demo data flow for other timeframes
     # Determine which brands to fetch based on filter
     if brand_filter == "Both":
         keywords = ["Rinvoq", "Skyrizi"]
