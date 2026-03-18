@@ -1048,7 +1048,7 @@ with st.sidebar:
     else:
         if source == "csv":
             source_color = "#4CAF50"
-            status_text = "5-YEAR CSV DATA"
+            status_text = "CSV DATA"
         elif source == "live" and is_live:
             source_color = SUCCESS
             status_text = "LIVE DATA"
@@ -1066,7 +1066,7 @@ with st.sidebar:
             st.caption("Google Trends API temporarily restricted. Using demo data. Click 'Live Data' again in 2 minutes to retry.")
     else:
         if source == "csv":
-            st.caption("✓ Using 5-year CSV data")
+            st.caption("✓ Using CSV data")
         elif is_live and source == "live":
             st.caption("✓ Real Google Trends data")
         else:
@@ -1078,7 +1078,7 @@ with st.sidebar:
         st.write("**Actual Data Source:**", st.session_state.get("data_source", "unknown"))
         st.write("**Data Error Message:**", st.session_state.get("data_error", "None"))
         st.write("**Keywords being fetched:**", ["Rinvoq", "Skyrizi"])
-        st.write("**Note:** Demo data shows predictable sine waves. Live data shows real Google Trends patterns. CSV data is from uploaded 5-year search intent files.")
+        st.write("**Note:** Demo data shows predictable sine waves. Live data shows real Google Trends patterns. CSV data is from uploaded search intent files for all timeframes.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
@@ -1091,10 +1091,23 @@ if "live_data_enabled" not in st.session_state:
     st.session_state["live_data_enabled"] = False
 
 @st.cache_data(ttl=7200)
-def load_csv_trend_data(brand):
-    """Load 5-year trend data from CSV files."""
+def load_csv_trend_data(brand, timeframe):
+    """Load trend data from CSV files for any timeframe."""
+    # Map pytrends timeframe to CSV filename pattern
+    timeframe_map = {
+        "now 7-d": "7 days",
+        "today 1-m": "30 days",
+        "today 3-m": "90 days",
+        "today 12-m": "1 year",
+        "today 5-y": "5 year",
+    }
+    
+    time_label = timeframe_map.get(timeframe)
+    if not time_label:
+        return None
+    
     try:
-        filename = f"data/{brand.capitalize()} Search Intent 5 year new.csv"
+        filename = f"data/{brand.capitalize()} Search Intent {time_label} new.csv"
         if not os.path.exists(filename):
             return None
         
@@ -1108,7 +1121,6 @@ def load_csv_trend_data(brand):
         
         return df
     except Exception as e:
-        st.warning(f"Could not load {brand} CSV data: {e}")
         return None
 
 def load_data(timeframe_key, brand_filter, indication="All"):
@@ -1133,29 +1145,28 @@ def load_data(timeframe_key, brand_filter, indication="All"):
             return trend_df
     
     # Priority 2: Fallback to CSV data (if available for the timeframe)
-    if timeframe == "today 5-y":
-        try:
-            dfs = []
-            if brand_filter == "Both":
-                for brand in ["Rinvoq", "Skyrizi"]:
-                    df = load_csv_trend_data(brand)
-                    if df is not None:
-                        dfs.append(df)
-            elif brand_filter == "Rinvoq":
-                df = load_csv_trend_data("Rinvoq")
+    try:
+        dfs = []
+        if brand_filter == "Both":
+            for brand in ["Rinvoq", "Skyrizi"]:
+                df = load_csv_trend_data(brand, timeframe)
                 if df is not None:
                     dfs.append(df)
-            else:  # Skyrizi
-                df = load_csv_trend_data("Skyrizi")
-                if df is not None:
-                    dfs.append(df)
-            
-            if dfs:
-                trend_df = pd.concat(dfs, axis=1)
-                st.session_state["data_source"] = "csv"
-                return trend_df
-        except Exception as e:
-            pass  # Fall through to demo data
+        elif brand_filter == "Rinvoq":
+            df = load_csv_trend_data("Rinvoq", timeframe)
+            if df is not None:
+                dfs.append(df)
+        else:  # Skyrizi
+            df = load_csv_trend_data("Skyrizi", timeframe)
+            if df is not None:
+                dfs.append(df)
+        
+        if dfs:
+            trend_df = pd.concat(dfs, axis=1)
+            st.session_state["data_source"] = "csv"
+            return trend_df
+    except Exception as e:
+        pass  # Fall through to demo data
     
     # Priority 3: Fallback to DEMO data (last resort)
     st.session_state["data_source"] = "demo"
