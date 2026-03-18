@@ -1319,6 +1319,17 @@ if brand_filter != "Both":
     DEMO_QUERIES = DEMO_QUERIES[(DEMO_QUERIES["Brand"] == brand_filter) | (DEMO_QUERIES["Brand"] == "Both")]
 
 # ═══════════════════════════════════════════════════════════════════════════
+# UPDATE LAST REFRESH TIMESTAMP
+# ═══════════════════════════════════════════════════════════════════════════
+st.session_state["last_refresh_time"] = datetime.now()
+
+# Display last refresh timestamp
+refresh_time = st.session_state.get("last_refresh_time")
+if refresh_time:
+    formatted_time = refresh_time.strftime("%B %d, %Y at %I:%M %p")
+    st.caption(f"🔄 Last refreshed: {formatted_time}")
+
+# ═══════════════════════════════════════════════════════════════════════════
 # TABS
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -2033,11 +2044,6 @@ with tabs[1]:
     
     queries_df = queries_data.copy()
     
-    # Calculate population-weighted index (index per 1M population)
-    # Using average DMA population as baseline
-    avg_population = dma_data["Population"].mean()
-    queries_df["Per Capita Index"] = (queries_df["Index"] * (avg_population / avg_population)).round(1)  # Baseline normalized
-    
     # Add breakout indicator for Rising Queries (Growth >= 500%)
     queries_df["Breakout"] = queries_df["Growth"] >= 500
     
@@ -2083,7 +2089,7 @@ with tabs[1]:
             }
         )
     
-    st.info("📊 **Per Capita Index:** Normalized by average DMA population. Higher scores = disproportionately high interest relative to market size. Useful for identifying niche or concentrated demand.")
+    st.info("📊 **Index:** Higher scores (0-100 scale) indicate greater search interest. Useful for identifying peak demand periods and relative market strength.")
 
     # Regional comparison
     regions = {
