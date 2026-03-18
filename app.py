@@ -293,50 +293,79 @@ st.set_page_config(
 # ═══════════════════════════════════════════════════════════════════════════
 
 @st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=7200, show_spinner=False)
 def fetch_trends_data(keywords, timeframe="today 3-m", geo="US"):
-    """Fetch interest over time from Google Trends via pytrends."""
+    """Fetch interest over time from Google Trends via pytrends with retry logic."""
     if not HAS_PYTRENDS:
         return None
-    try:
-        import time
-        time.sleep(2)  # Rate limiting
-        pytrends = TrendReq(hl="en-US", tz=360)
-        pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
-        df = pytrends.interest_over_time()
-        if "isPartial" in df.columns:
-            df = df.drop("isPartial", axis=1)
-        return df
-    except Exception as e:
-        st.session_state["data_error"] = f"Google Trends temporarily unavailable: {str(e)}"
-        return None
+    
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            import time
+            # Exponential backoff: 3s, 6s, 12s between attempts
+            wait_time = 3 * (2 ** attempt)
+            time.sleep(wait_time)
+            
+            pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=0.5)
+            pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
+            df = pytrends.interest_over_time()
+            if "isPartial" in df.columns:
+                df = df.drop("isPartial", axis=1)
+            return df
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(wait_time * 2)  # Extra wait before retry
+                continue
+            else:
+                st.session_state["data_error"] = "Google Trends API temporarily restricted (rate limit). Try again in 1-2 minutes."
+                return None
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=7200, show_spinner=False)
 def fetch_regional_data(keywords, timeframe="today 3-m", geo="US", resolution="REGION"):
-    """Fetch interest by region (state or DMA)."""
-    try:
-        import time
-        from pytrends.request import TrendReq
-        time.sleep(2)  # Rate limiting
-        pytrends = TrendReq(hl="en-US", tz=360)
-        pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
-        df = pytrends.interest_by_region(resolution=resolution, inc_low_vol=True, inc_geo_code=True)
-        return df
-    except Exception as e:
+    """Fetch interest by region (state or DMA) with retry logic."""
+    if not HAS_PYTRENDS:
         return None
+    
+    max_retries = 2
+    for attempt in range(max_retries):
+        try:
+            import time
+            wait_time = 3 * (2 ** attempt)
+            time.sleep(wait_time)
+            pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=0.5)
+            pytrends.build_payload(keywords[:5], timeframe=timeframe, geo=geo)
+            df = pytrends.interest_by_region(resolution=resolution, inc_low_vol=True, inc_geo_code=True)
+            return df
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(wait_time * 2)
+                continue
+            else:
+                return None
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=7200, show_spinner=False)
 def fetch_related_queries(keyword, timeframe="today 12-m", geo="US"):
-    """Fetch related and rising queries."""
-    try:
-        import time
-        from pytrends.request import TrendReq
-        time.sleep(2)  # Rate limiting
-        pytrends = TrendReq(hl="en-US", tz=360)
-        pytrends.build_payload([keyword], timeframe=timeframe, geo=geo)
-        related = pytrends.related_queries()
-        return related.get(keyword, {"top": None, "rising": None})
-    except Exception as e:
+    """Fetch related and rising queries with retry logic."""
+    if not HAS_PYTRENDS:
         return {"top": None, "rising": None}
+    
+    max_retries = 2
+    for attempt in range(max_retries):
+        try:
+            import time
+            wait_time = 3 * (2 ** attempt)
+            time.sleep(wait_time)
+            pytrends = TrendReq(hl="en-US", tz=360, retries=2, backoff_factor=0.5)
+            pytrends.build_payload([keyword], timeframe=timeframe, geo=geo)
+            related = pytrends.related_queries()
+            return related.get(keyword, {"top": None, "rising": None})
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(wait_time * 2)
+                continue
+            else:
+                return {"top": None, "rising": None}
 
 # ═══════════════════════════════════════════════════════════════════════════
 # GOOGLE TRENDS DATA TRANSFORMATION
@@ -1007,31 +1036,42 @@ with st.sidebar:
     
     st.divider()
     
-    if st.button("↻ Refresh Data", type="primary", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
+    col_refresh, col_live = st.columns(2)
+    with col_refresh:
+        if st.button("↻ Refresh", type="primary", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
+    with col_live:
+        if st.button("🔴 Live Data", use_container_width=True, help="Enable real Google Trends data (may rate limit)"):
+            st.session_state["live_data_enabled"] = True
+            st.session_state["data_source"] = "live"
+            st.cache_data.clear()
+            st.rerun()
     
-    source = st.session_state.get("data_source", "loading...")
-    source_color = SUCCESS if source == "live" else GOLD
-    st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600;margin-top:8px'>● {source.upper()} DATA</div>", unsafe_allow_html=True)
+    source = st.session_state.get("data_source", "demo")
+    is_live = st.session_state.get("live_data_enabled", False)
+    source_color = SUCCESS if source == "live" and is_live else GOLD
+    status_text = "LIVE DATA" if source == "live" and is_live else "DEMO DATA (reliable)"
+    st.markdown(f"<div style='text-align:center;font-size:11px;color:{source_color};font-weight:600;margin-top:8px'>● {status_text}</div>", unsafe_allow_html=True)
     
     if st.session_state.get("data_error"):
-        with st.expander("⚠️ API Issue", expanded=False):
-            st.caption("Google Trends temporarily restricted. **Solution:** Refresh after 1-2 min or check back later.")
+        with st.expander("⚠️ API Rate Limited", expanded=False):
+            st.caption("Google Trends API temporarily restricted. Click 'Live Data' again in 1-2 minutes to reconnect. Using reliable demo data in meantime.")
     else:
-        st.caption("✓ Using real data")
+        if is_live and source == "live":
+            st.caption("✓ Real Google Trends data")
+        else:
+            st.caption("✓ Using realistic demo data")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LOAD DATA
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Initialize data source - try live first, fallback to demo
+# Initialize data source - use demo by default, users can enable live data
 if "data_source" not in st.session_state:
-    # If pytrends is available, try to use live data
-    if HAS_PYTRENDS:
-        st.session_state["data_source"] = "live"
-    else:
-        st.session_state["data_source"] = "demo"
+    st.session_state["data_source"] = "demo"  # Start with demo, less likely to hit API limits
+if "live_data_enabled" not in st.session_state:
+    st.session_state["live_data_enabled"] = False
 
 def load_data(timeframe, brand_filter, indication="All"):
     """Load trend data based on timeframe, brand filter, and indication."""
@@ -1044,7 +1084,7 @@ def load_data(timeframe, brand_filter, indication="All"):
         keywords = ["Skyrizi"]
     
     # Try to fetch live data
-    if st.session_state.get("data_source") == "live":
+    if st.session_state.get("live_data_enabled"):
         trend_df = fetch_trends_data(keywords, timeframe=timeframe)
         if trend_df is not None and not trend_df.empty:
             st.session_state["data_source"] = "live"
@@ -1084,7 +1124,7 @@ trend_df = load_data(timeframe, brand_filter, indication)
 
 # Also try to load competitor data
 comp_df = None
-if st.session_state.get("data_source") == "live":
+if st.session_state.get("live_data_enabled"):
     comp_df = fetch_trends_data(["Rinvoq", "Skyrizi"] + COMPETITORS[:3], timeframe="today 12-m")
 
 # Related queries
@@ -1094,7 +1134,7 @@ related_skyrizi = fetch_related_queries("Skyrizi") if st.session_state.get("data
 # State-level data - fetch and transform
 state_df = None
 raw_state_df = None
-if st.session_state.get("data_source") == "live":
+if st.session_state.get("live_data_enabled"):
     raw_state_df = fetch_regional_data(["Rinvoq", "Skyrizi"], timeframe="today 12-m", resolution="REGION")
     state_df = transform_regional_to_states(raw_state_df)
 
