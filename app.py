@@ -1025,6 +1025,14 @@ with st.sidebar:
 # LOAD DATA
 # ═══════════════════════════════════════════════════════════════════════════
 
+# Initialize data source - try live first, fallback to demo
+if "data_source" not in st.session_state:
+    # If pytrends is available, try to use live data
+    if HAS_PYTRENDS:
+        st.session_state["data_source"] = "live"
+    else:
+        st.session_state["data_source"] = "demo"
+
 def load_data(timeframe, brand_filter, indication="All"):
     """Load trend data based on timeframe, brand filter, and indication."""
     # Determine which brands to fetch based on filter
