@@ -1361,15 +1361,39 @@ with tabs[0]:
     st.markdown("---")
     
     # Search Interest Over Time — full width
+    # Prepare date info based on timeframe
+    trend_display_df = trend_df.copy()
+    
+    # For 5-year and 12-month data, add week range for hover
+    if timeframe in ["today 5-y", "today 12-m"]:
+        trend_display_df['week_start'] = trend_display_df.index
+        trend_display_df['week_end'] = trend_display_df.index + pd.Timedelta(days=6)
+        trend_display_df['date_range'] = trend_display_df.apply(
+            lambda row: f"{row['week_start'].strftime('%b %d')} - {row['week_end'].strftime('%b %d, %Y')}", 
+            axis=1
+        )
+    
     fig_trend = go.Figure()
     for col in trend_df.columns:
         color = RINVOQ if col == "Rinvoq" else SKYRIZI
-        fig_trend.add_trace(go.Scatter(
-            x=trend_df.index, y=trend_df[col], name=col, mode="lines",
-            line=dict(color=color, width=2.5),
-            fill="tozeroy", fillcolor=f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)",
-            hovertemplate="<b>%{fullData.name}</b><br>Date: %{x|%b %d, %Y}<br>Index: <b>%{y:.0f}</b><extra></extra>"
-        ))
+        
+        # Use week range for 5-year and 12-month, standard date for others
+        if timeframe in ["today 5-y", "today 12-m"]:
+            hover_template = "<b>%{fullData.name}</b><br>Week: %{text}<br>Index: <b>%{y:.0f}</b><extra></extra>"
+            fig_trend.add_trace(go.Scatter(
+                x=trend_df.index, y=trend_df[col], name=col, mode="lines",
+                line=dict(color=color, width=2.5),
+                fill="tozeroy", fillcolor=f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)",
+                text=trend_display_df['date_range'],
+                hovertemplate=hover_template
+            ))
+        else:
+            fig_trend.add_trace(go.Scatter(
+                x=trend_df.index, y=trend_df[col], name=col, mode="lines",
+                line=dict(color=color, width=2.5),
+                fill="tozeroy", fillcolor=f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)",
+                hovertemplate="<b>%{fullData.name}</b><br>Date: %{x|%b %d, %Y}<br>Index: <b>%{y:.0f}</b><extra></extra>"
+            ))
     
     fig_trend.update_layout(
         title="Search Interest Over Time", height=350,
