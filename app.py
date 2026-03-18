@@ -1696,12 +1696,6 @@ with tabs[1]:
     
     st.subheader("DMA Geographic Analysis")
     
-    # DEBUG: Show data source
-    if state_df is not None and not state_df.empty:
-        st.caption(f"✓ Using geomap data: {len(state_df)} states | Columns: {state_df.columns.tolist()}")
-    else:
-        st.caption("⚠️ Using demo data (geomap not loaded)")
-    
     import folium
     from streamlit_folium import st_folium
     import requests
@@ -1914,12 +1908,6 @@ with tabs[1]:
             state_values["interest"] = state_values["Skyrizi"].round().astype(int)
             legend = "Skyrizi Search Interest Index"
             columns = ["State", "interest"]
-
-        # DEBUG: Show choropleth data
-        geojson_states = set(feature["properties"]["name"] for feature in geo_data["features"])
-        data_states = set(state_values["State"].values)
-        matches = geojson_states & data_states
-        st.caption(f"🗺️ Choropleth: {len(matches)}/{len(geojson_states)} states matching | Sample data: {list(state_values['State'].values[:3])}")
 
         # Add choropleth layer with brand-specific color
         if brand_filter == "Rinvoq":
