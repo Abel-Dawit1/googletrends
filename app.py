@@ -549,18 +549,26 @@ Be specific with data points and actionable in recommendations. If asked about s
 # EXECUTIVE SUMMARY & AI INSIGHT RENDERING
 # ═══════════════════════════════════════════════════════════════════════════
 
-def render_executive_summary(title, key_callouts, summary_color=NAVY):
+def render_executive_summary(title, key_callouts, summary_color=NAVY, recommendation=None):
     """Render an executive summary box at top of a tab with key business callouts."""
     callouts_html = ""
     for callout in key_callouts:
         callouts_html += f"<li style='margin-bottom:8px;line-height:1.6;color:#0c3d7a'>{callout}</li>"
+    
+    recommendation_html = ""
+    if recommendation:
+        recommendation_html = f"""
+        <div style='margin-top:14px;padding-top:14px;border-top:1px solid #d4e4f0;color:#2a8fa3;font-size:12px;line-height:1.7'>
+            <span style='font-weight:700;margin-right:6px'>🎯 Strategy Opportunity:</span>{recommendation}
+        </div>
+        """
     
     st.markdown(f"""
     <div style='background:#e8f1ff;border-left:4px solid {summary_color};border-radius:8px;padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08)'>
         <div style='color:#0c3d7a;font-size:13px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px'>✦ Executive Summary: {title}</div>
         <ul style='color:#0c3d7a;font-size:12px;line-height:1.7;margin:0;padding-left:20px'>
             {callouts_html}
-        </ul>
+        </ul>{recommendation_html}
     </div>
     """, unsafe_allow_html=True)
 
@@ -573,14 +581,15 @@ def render_insight_bubble(text, icon="💡", bg_color="#e7f3ff", text_color="#0c
     """, unsafe_allow_html=True)
 
 def generate_overview_executive_summary(trend_df, dma_df, queries_df, client, brand_filter="Both"):
-    """Generate executive summary for Overview tab."""
+    """Generate executive summary for Overview tab. Returns (callouts, recommendation)."""
     if client is None:
-        return [
+        callouts = [
             "<strong>Skyrizi gaining momentum</strong> across new indications with +45% YoY growth, while Rinvoq maintains dominance in core RA market",
             "<strong>Northeast markets lead</strong>: NYC, Boston, Philadelphia show 15-25 pts above national average for both brands combined",
-            "<strong>Urgent action:</strong> Crohn's disease searches driving +42% spike for Skyrizi—capitalization opportunity in underserved GI market",
-            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Develop Crohn's disease patient education content and HCP clinical data assets. Capitalize on rising awareness by positioning efficacy/safety in GI communities."
+            "<strong>Urgent action:</strong> Crohn's disease searches driving +42% spike for Skyrizi—capitalization opportunity in underserved GI market"
         ]
+        recommendation = "With Crohn's disease searches spiking +42% for Skyrizi, develop comprehensive patient education content and HCP clinical data assets to capitalize on rising awareness in the GI market."
+        return callouts, recommendation
     
     try:
         trend_summary = "↑ Uptrend" if len(trend_df) > 1 and trend_df.iloc[-1].mean() > trend_df.iloc[0].mean() else "→ Stable"
@@ -605,23 +614,27 @@ Make them specific to search trends patterns and market opportunities."""
         )
         
         insights = response.content[0].text.split("\n")
-        return [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        callouts = [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        return callouts, None
     except:
-        return [
+        callouts = [
             "<strong>Skyrizi gaining momentum</strong> across new indications with +45% YoY growth",
             "<strong>Northeast markets lead</strong>: NYC, Boston, Philadelphia show highest combined index",
             "<strong>Urgent:</strong> Crohn's disease searches driving +42% spike for Skyrizi"
         ]
+        recommendation = "With Crohn's disease searches spiking +42%, develop patient education content about Skyrizi in GI indications and create HCP clinical assets emphasizing efficacy in this expanding indication."
+        return callouts, recommendation
 
 def generate_dma_executive_summary(dma_df, state_df, queries_df, client, brand_filter="Both"):
-    """Generate executive summary for DMA Deep Dive tab."""
+    """Generate executive summary for DMA Deep Dive tab. Returns (callouts, recommendation)."""
     if client is None:
-        return [
+        callouts = [
             "<strong>Leading markets:</strong> New York (Rinvoq 91), Chicago (84), Los Angeles (82) show highest search intensity",
             "<strong>Geographic opportunity:</strong> Texas and Florida remain underindexed despite large populations—expansion potential",
-            "<strong>State competition:</strong> Skyrizi outperforming in West Coast (CA, WA), Rinvoq stronger in Northeast (NY, MA, PA)",
-            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Create region-specific patient testimonial and HCP case study content for TX/FL. Emphasize indication-specific value propositions aligned with regional disease prevalence."
+            "<strong>State competition:</strong> Skyrizi outperforming in West Coast (CA, WA), Rinvoq stronger in Northeast (NY, MA, PA)"
         ]
+        recommendation = "Texas and Florida populations show 10-15 points below national average despite large patient bases. Create region-specific patient testimonial and HCP case study content emphasizing indication-fit for these high-potential markets."
+        return callouts, recommendation
     
     try:
         top_dma = dma_df.iloc[0]["Market"] if not dma_df.empty else "N/A"
@@ -641,23 +654,27 @@ Keep each insight to 1-2 sentences max."""
         )
         
         insights = response.content[0].text.split("\n")
-        return [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        callouts = [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        return callouts, None
     except:
-        return [
+        callouts = [
             "<strong>Leading markets</strong> concentrated in Northeast and Midwest DMAs",
             "<strong>Geographic expansion:</strong> Texas and Florida show growth potential",
             "<strong>Regional dynamics:</strong> Clear West vs East regional preferences emerging"
         ]
+        recommendation = "Texas and Florida populations are underindexed relative to their size. Develop region-specific patient testimonials and case studies emphasizing local market advantages."
+        return callouts, recommendation
 
 def generate_key_moments_executive_summary(reddit_posts, sentiment_data, client):
-    """Generate executive summary for Key Moments tab."""
+    """Generate executive summary for Key Moments tab. Returns (callouts, recommendation)."""
     if client is None:
-        return [
+        callouts = [
             "<strong>Real Reddit engagement</strong> shows patient concerns around treatment side effects and efficacy validation",
             "<strong>Positive sentiment score:</strong> Both brands maintain 70%+ favorable mentions across healthcare subreddits",
-            "<strong>Emerging topics:</strong> Cost/affordability and dosing convenience driving patient search behavior",
-            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Create comprehensive side effect management guides and affordability/dosing FAQs. Seed content in healthcare communities where patients actively discuss treatment decisions."
+            "<strong>Emerging topics:</strong> Cost/affordability and dosing convenience driving patient search behavior"
         ]
+        recommendation = "Patient discussions highlight side effects and cost as primary decision barriers. Develop detailed side effect management guides and affordability FAQs, then actively seed this content in healthcare subreddits where patients discuss treatment decisions."
+        return callouts, recommendation
     
     try:
         post_count = len(reddit_posts) if isinstance(reddit_posts, list) else 0
@@ -676,23 +693,27 @@ Keep each to 1-2 sentences."""
         )
         
         insights = response.content[0].text.split("\n")
-        return [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        callouts = [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        return callouts, None
     except:
-        return [
+        callouts = [
             "<strong>Patient sentiment</strong> reflects efficacy optimization and side effect management priorities",
             "<strong>Engagement surge</strong> in treatment decision discussions on r/rheumatoidarthritis and r/Psoriasis",
             "<strong>Cost discussions</strong> emerging as key friction point in patient communities"
         ]
+        recommendation = "Patient discussions highlight side effects and affordability as key decision drivers. Develop comprehensive guides addressing these concerns and seed content in communities where treatment decisions are actively discussed."
+        return callouts, recommendation
 
 def generate_competitive_executive_summary(dma_df, client, brand_filter="Both"):
-    """Generate executive summary for Competitive tab."""
+    """Generate executive summary for Competitive tab. Returns (callouts, recommendation)."""
     if client is None:
-        return [
+        callouts = [
             "<strong>Duopoly dynamics:</strong> Rinvoq and Skyrizi combined control 70%+ mindshare in immunology search",
             "<strong>Competitive threat:</strong> Humira and Tremfya still active but declining—consolidation opportunity",
-            "<strong>Market positioning:</strong> JAK vs biologic mechanism preference drives regional competition patterns",
-            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Create 'Mechanism Comparison' content addressing JAK vs biologic tradeoffs. Develop HCP and patient education emphasizing your mechanism's unique value in key indications."
+            "<strong>Market positioning:</strong> JAK vs biologic mechanism preference drives regional competition patterns"
         ]
+        recommendation = "With Humira declining in search interest, develop comprehensive 'JAK vs Biologic' mechanism comparison content that addresses clinical efficacy, safety, and durability. Target HCP and patient communities with mechanistic education assets."
+        return callouts, recommendation
     
     try:
         prompt = f"""Generate 3 competitive intelligence insights:
@@ -708,23 +729,27 @@ Keep insights to strategic competitive positioning (1-2 sentences each)."""
         )
         
         insights = response.content[0].text.split("\n")
-        return [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        callouts = [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        return callouts, None
     except:
-        return [
+        callouts = [
             "<strong>Market consolidation:</strong> Two brands dominating search mindshare vs competitors",
             "<strong>Competitive advantage:</strong> JAK vs biologic mechanism creates distinct market segmentation",
             "<strong>Threat watch:</strong> Monitor emerging alternatives in patient search behavior"
         ]
+        recommendation = "With competitors declining in search volume, create mechanism comparison content educating both HCPs and patients on JAK vs biologic tradeoffs and unique clinical value."
+        return callouts, recommendation
 
 def generate_patient_intent_executive_summary(queries_df, client, brand_filter="Both"):
-    """Generate executive summary for Patient Intent tab."""
+    """Generate executive summary for Patient Intent tab. Returns (callouts, recommendation)."""
     if client is None:
-        return [
+        callouts = [
             "<strong>Breakout queries:</strong> Crohn's disease (+42% growth), atopic dermatitis (+38%) signal indication expansion success",
             "<strong>Patient decision stage:</strong> Safety profile searches +82%—patients in active evaluation seeking evidence",
-            "<strong>Branded momentum:</strong> 'Rinvoq Crohn's' queries spiking +850%—urgent label decision impact",
-            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Develop transparent safety comparison content with clinical data for new indications. Create HCP clinical briefings addressing common patient safety questions during evaluation phase."
+            "<strong>Branded momentum:</strong> 'Rinvoq Crohn's' queries spiking +850%—urgent label decision impact"
         ]
+        recommendation = "Safety profile searches spiking +82% indicates patients in evaluation phase seeking clinical evidence. Develop transparent safety comparison content benchmarking against competitors, plus HCP clinical briefing materials addressing the top patient safety questions."
+        return callouts, recommendation
     
     try:
         top_query = queries_df.iloc[0]["Query"] if not queries_df.empty else "N/A"
@@ -745,23 +770,27 @@ Keep to 1-2 sentences each."""
         )
         
         insights = response.content[0].text.split("\n")
-        return [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        callouts = [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        return callouts, None
     except:
-        return [
+        callouts = [
             "<strong>Search intent evolution:</strong> Patients moving from condition research to treatment decision phase",
             "<strong>Safety due diligence:</strong> JAK inhibitor safety concerns driving significant search volume (+82%)",
             "<strong>Indication expansion:</strong> Crohn's and atopic dermatitis breakout signals real clinical demand"
         ]
+        recommendation = "Safety profile searches are spiking as patients evaluate options. Create transparent safety benchmarking content and HCP clinical briefing materials addressing the top patient safety questions during their evaluation phase."
+        return callouts, recommendation
 
 def generate_campaign_executive_summary(trend_df, client, brand_filter="Both"):
-    """Generate executive summary for Campaign tab."""
+    """Generate executive summary for Campaign tab. Returns (callouts, recommendation)."""
     if client is None:
-        return [
+        callouts = [
             "<strong>Campaign performance:</strong> Recent Crohn's approval for Rinvoq (Dec 2023) showing +850% branded search spike",
             "<strong>Seasonal peaks:</strong> Winter/spring demonstrate higher engagement for condition searches across indications",
-            "<strong>Moment optimization:</strong> Label expansions and clinical data releases drive 120%+ competitive comparison search",
-            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Develop content calendar aligned with seasonal peak interest in RA (Q1) and dermatology (August). Prepare clinical data and comparative assets in advance of label expansion announcements."
+            "<strong>Moment optimization:</strong> Label expansions and clinical data releases drive 120%+ competitive comparison search"
         ]
+        recommendation = "Seasonal peaks show Q1 drives RA searches and August drives dermatology searches. Build content calendar with major clinical assets prepared 4-6 weeks before seasonal peaks and label expansion announcements for maximum media lift."
+        return callouts, recommendation
     
     try:
         prompt = f"""Generate 3 campaign strategy insights:
@@ -777,13 +806,16 @@ Keep to 1-2 sentences each, focused on timing and opportunity."""
         )
         
         insights = response.content[0].text.split("\n")
-        return [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        callouts = [i.strip().lstrip("-•").strip() for i in insights if i.strip()][:3]
+        return callouts, None
     except:
-        return [
+        callouts = [
             "<strong>Label expansion momentum:</strong> Crohn's approval driving sustained search spikes—capitalize with targeted campaigns",
             "<strong>Seasonality insight:</strong> Q1 shows consistent search peaks—optimize media spend seasonally",
             "<strong>Moment tracking:</strong> Clinical data releases and competitive comparisons driving search surges"
         ]
+        recommendation = "Seasonal peaks show Q1 drives RA searches and August drives dermatology searches. Align content calendar with these seasonal periods and prepare clinical assets 4-6 weeks before label expansion announcements for maximum impact."
+        return callouts, recommendation
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1101,8 +1133,8 @@ tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "�
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[0]:
     # Executive Summary
-    overview_summary = generate_overview_executive_summary(trend_df, DEMO_DMA, DEMO_QUERIES, client, brand_filter)
-    render_executive_summary("Search Trends & Market Opportunity", overview_summary, NAVY)
+    overview_callouts, overview_recommendation = generate_overview_executive_summary(trend_df, DEMO_DMA, DEMO_QUERIES, client, brand_filter)
+    render_executive_summary("Search Trends & Market Opportunity", overview_callouts, NAVY, overview_recommendation)
     
     # KPIs
     r_vals = trend_df["Rinvoq"].values if "Rinvoq" in trend_df.columns else [0]
@@ -1341,8 +1373,8 @@ with tabs[0]:
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[1]:
     # Executive Summary
-    dma_summary = generate_dma_executive_summary(DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client, brand_filter)
-    render_executive_summary("Geographic Market Dynamics", dma_summary, NAVY)
+    dma_callouts, dma_recommendation = generate_dma_executive_summary(DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client, brand_filter)
+    render_executive_summary("Geographic Market Dynamics", dma_callouts, NAVY, dma_recommendation)
     
     st.subheader("DMA Geographic Analysis")
     
@@ -1769,8 +1801,8 @@ with tabs[1]:
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[3]:
     # Executive Summary
-    comp_summary = generate_competitive_executive_summary(DEMO_DMA, client, brand_filter)
-    render_executive_summary("Competitive Market Position", comp_summary, NAVY)
+    comp_callouts, comp_recommendation = generate_competitive_executive_summary(DEMO_DMA, client, brand_filter)
+    render_executive_summary("Competitive Market Position", comp_callouts, NAVY, comp_recommendation)
     
     st.subheader("Competitive Intelligence")
     
@@ -1879,8 +1911,8 @@ with tabs[3]:
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[4]:
     # Executive Summary
-    intent_summary = generate_patient_intent_executive_summary(DEMO_QUERIES, client, brand_filter)
-    render_executive_summary("Patient Search Behavior & Intent", intent_summary, NAVY)
+    intent_callouts, intent_recommendation = generate_patient_intent_executive_summary(DEMO_QUERIES, client, brand_filter)
+    render_executive_summary("Patient Search Behavior & Intent", intent_callouts, NAVY, intent_recommendation)
     
     st.subheader("Patient Intent Analysis")
     
@@ -1960,8 +1992,8 @@ with tabs[4]:
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[5]:
     # Executive Summary
-    campaign_summary = generate_campaign_executive_summary(trend_df, client, brand_filter)
-    render_executive_summary("Campaign Strategy & Moment Optimization", campaign_summary, NAVY)
+    campaign_callouts, campaign_recommendation = generate_campaign_executive_summary(trend_df, client, brand_filter)
+    render_executive_summary("Campaign Strategy & Moment Optimization", campaign_callouts, NAVY, campaign_recommendation)
     
     st.subheader("Campaign Planning")
     
@@ -2074,8 +2106,8 @@ with tabs[5]:
 with tabs[2]:
     # Executive Summary
     reddit_posts = reddit_posts_data if 'reddit_posts_data' in dir() and reddit_posts_data else []
-    moments_summary = generate_key_moments_executive_summary(reddit_posts, {}, client)
-    render_executive_summary("Social Signals & Patient Sentiment", moments_summary, NAVY)
+    moments_callouts, moments_recommendation = generate_key_moments_executive_summary(reddit_posts, {}, client)
+    render_executive_summary("Social Signals & Patient Sentiment", moments_callouts, NAVY, moments_recommendation)
     
     st.subheader("Key Cultural Moments")
     
@@ -2347,7 +2379,7 @@ with tabs[6]:
         "<strong>Session-level settings:</strong> All customizations apply to your current session only—default settings persist across users",
         "<strong>Data refresh:</strong> All data syncs with latest Google Trends and Reddit feeds in real-time"
     ]
-    render_executive_summary("Dashboard Settings & Preferences", config_summary, NAVY)
+    render_executive_summary("Dashboard Settings & Preferences", config_summary, NAVY, None)
     
     st.subheader("⚙️ Dashboard Configuration")
     st.markdown("Customize filter categories and data groupings. Changes are applied to your session only.")
