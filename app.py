@@ -579,7 +579,7 @@ def generate_overview_executive_summary(trend_df, dma_df, queries_df, client, br
             "<strong>Skyrizi gaining momentum</strong> across new indications with +45% YoY growth, while Rinvoq maintains dominance in core RA market",
             "<strong>Northeast markets lead</strong>: NYC, Boston, Philadelphia show 15-25 pts above national average for both brands combined",
             "<strong>Urgent action:</strong> Crohn's disease searches driving +42% spike for Skyrizi—capitalization opportunity in underserved GI market",
-            "<strong style='color:#d97a0b'>🎯 Recommendation:</strong> Allocate 30% of budget to Crohn's indication marketing in Q2-Q3. Monitor Skyrizi momentum closely as primary growth driver."
+            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Develop Crohn's disease patient education content and HCP clinical data assets. Capitalize on rising awareness by positioning efficacy/safety in GI communities."
         ]
     
     try:
@@ -620,7 +620,7 @@ def generate_dma_executive_summary(dma_df, state_df, queries_df, client, brand_f
             "<strong>Leading markets:</strong> New York (Rinvoq 91), Chicago (84), Los Angeles (82) show highest search intensity",
             "<strong>Geographic opportunity:</strong> Texas and Florida remain underindexed despite large populations—expansion potential",
             "<strong>State competition:</strong> Skyrizi outperforming in West Coast (CA, WA), Rinvoq stronger in Northeast (NY, MA, PA)",
-            "<strong style='color:#d97a0b'>🎯 Recommendation:</strong> Increase sales force investment in TX/FL markets. Reallocate 15-20% of Northeast budget to high-growth regions."
+            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Create region-specific patient testimonial and HCP case study content for TX/FL. Emphasize indication-specific value propositions aligned with regional disease prevalence."
         ]
     
     try:
@@ -656,7 +656,7 @@ def generate_key_moments_executive_summary(reddit_posts, sentiment_data, client)
             "<strong>Real Reddit engagement</strong> shows patient concerns around treatment side effects and efficacy validation",
             "<strong>Positive sentiment score:</strong> Both brands maintain 70%+ favorable mentions across healthcare subreddits",
             "<strong>Emerging topics:</strong> Cost/affordability and dosing convenience driving patient search behavior",
-            "<strong style='color:#d97a0b'>🎯 Recommendation:</strong> Create FAQ content addressing top 3 side effect concerns and cost-saving programs. Amplify on healthcare Reddit communities."
+            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Create comprehensive side effect management guides and affordability/dosing FAQs. Seed content in healthcare communities where patients actively discuss treatment decisions."
         ]
     
     try:
@@ -691,7 +691,7 @@ def generate_competitive_executive_summary(dma_df, client, brand_filter="Both"):
             "<strong>Duopoly dynamics:</strong> Rinvoq and Skyrizi combined control 70%+ mindshare in immunology search",
             "<strong>Competitive threat:</strong> Humira and Tremfya still active but declining—consolidation opportunity",
             "<strong>Market positioning:</strong> JAK vs biologic mechanism preference drives regional competition patterns",
-            "<strong style='color:#d97a0b'>🎯 Recommendation:</strong> Develop 'JAK vs Biologic' comparison messaging. Target Humira patients with efficacy and safety positioning in declining markets."
+            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Create 'Mechanism Comparison' content addressing JAK vs biologic tradeoffs. Develop HCP and patient education emphasizing your mechanism's unique value in key indications."
         ]
     
     try:
@@ -723,7 +723,7 @@ def generate_patient_intent_executive_summary(queries_df, client, brand_filter="
             "<strong>Breakout queries:</strong> Crohn's disease (+42% growth), atopic dermatitis (+38%) signal indication expansion success",
             "<strong>Patient decision stage:</strong> Safety profile searches +82%—patients in active evaluation seeking evidence",
             "<strong>Branded momentum:</strong> 'Rinvoq Crohn's' queries spiking +850%—urgent label decision impact",
-            "<strong style='color:#d97a0b'>🎯 Recommendation:</strong> Launch patient safety guides for expanding indications. Invest in HCP education programs to address safety concerns during evaluation phase."
+            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Develop transparent safety comparison content with clinical data for new indications. Create HCP clinical briefings addressing common patient safety questions during evaluation phase."
         ]
     
     try:
@@ -760,7 +760,7 @@ def generate_campaign_executive_summary(trend_df, client, brand_filter="Both"):
             "<strong>Campaign performance:</strong> Recent Crohn's approval for Rinvoq (Dec 2023) showing +850% branded search spike",
             "<strong>Seasonal peaks:</strong> Winter/spring demonstrate higher engagement for condition searches across indications",
             "<strong>Moment optimization:</strong> Label expansions and clinical data releases drive 120%+ competitive comparison search",
-            "<strong style='color:#d97a0b'>🎯 Recommendation:</strong> Schedule major media buys Q1 (RA peak) and August (dermatology peak). Build campaign calendar around label expansion announcement windows."
+            "<strong style='color:#d97a0b'>🎯 Strategy:</strong> Develop content calendar aligned with seasonal peak interest in RA (Q1) and dermatology (August). Prepare clinical data and comparative assets in advance of label expansion announcements."
         ]
     
     try:
