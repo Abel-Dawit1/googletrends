@@ -3136,118 +3136,32 @@ with tabs[2]:
     st.caption("Community discussions curated from r/Psoriasis, r/rheumatoidarthritis, and related healthcare subreddits")
     
     # Scrape real Reddit posts related to the event and brands
-    search_keywords = [
-        selected_event.split(" - ")[0],  # Event name
-        "Rinvoq" if brand_filter != "Skyrizi" else "Skyrizi",  # Selected brand
-        "immunology" if "immunology" in selected_event.lower() or "clinical" in selected_event.lower() else "treatment"
-    ]
+    # Placeholder - no actual Reddit data displayed
     
-    reddit_posts = scrape_real_reddit_posts(search_keywords, limit=5)
-    
-    # Calculate metrics from Reddit posts
-    total_mentions = sum(p.get("score", 0) for p in reddit_posts) if reddit_posts else 0
-    
-    sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
-    for post in reddit_posts:
-        sentiment = estimate_sentiment(post.get("title", ""))
-        sentiment_counts[sentiment] += 1
-    
-    # Normalize to percentages
-    total = sum(sentiment_counts.values()) if sum(sentiment_counts.values()) > 0 else 1
-    sentiment_split = {k: int((v / total) * 100) for k, v in sentiment_counts.items()}
-    
-    rinvoq_mentions = sum(1 for p in reddit_posts if "rinvoq" in p.get("title", "").lower())
-    skyrizi_mentions = sum(1 for p in reddit_posts if "skyrizi" in p.get("title", "").lower())
-    
-    # Display metrics
+    # Display placeholder metrics
     sm1, sm2, sm3, sm4 = st.columns(4)
-    sm1.metric("Total Upvotes", f"{total_mentions:,}", "From Reddit posts")
-    sm2.metric("Positive Sentiment", f"{sentiment_split['Positive']}%", "Community discussions")
-    sm3.metric("Rinvoq Mentions", f"{rinvoq_mentions}", "Posts discussing brand")
-    sm4.metric("Skyrizi Mentions", f"{skyrizi_mentions}", "Posts discussing brand")
+    sm1.metric("Total Upvotes", "—", "")
+    sm2.metric("Positive Sentiment", "—", "")
+    sm3.metric("Rinvoq Mentions", "—", "")
+    sm4.metric("Skyrizi Mentions", "—", "")
     
     # Sentiment breakdown pie chart + trending posts
     soc1, soc2 = st.columns(2)
     
     with soc1:
         st.markdown("**Sentiment Breakdown**")
-        sentiment_df = pd.DataFrame(list(sentiment_split.items()), columns=["Sentiment", "Percentage"])
-        sentiment_colors = {"Positive": "#1a7f4f", "Neutral": "#b8860b", "Negative": "#c0392b"}
-        fig_sentiment = px.pie(
-            sentiment_df, 
-            names="Sentiment", 
-            values="Percentage",
-            color="Sentiment",
-            color_discrete_map=sentiment_colors,
-            hole=0.4
-        )
-        fig_sentiment.update_layout(height=280, margin=dict(t=20, b=20))
-        st.plotly_chart(fig_sentiment, use_container_width=True)
+        st.info("📊 Sentiment data unavailable")
     
     with soc2:
         st.markdown("**Top Trending Posts (Reddit)**")
-        
-        if reddit_posts:
-            # Display actual Reddit posts
-            for post in reddit_posts:
-                # Estimate sentiment from post title
-                sentiment = estimate_sentiment(post["title"])
-                sentiment_color = "#1a7f4f" if sentiment == "Positive" else "#b8860b" if sentiment == "Neutral" else "#c0392b"
-                
-                st.markdown(f"""
-                <div style='background:#f8f9fa;border-left:4px solid {sentiment_color};padding:12px;margin-bottom:10px;border-radius:6px'>
-                    <div style='display:flex;justify-content:space-between;margin-bottom:8px'>
-                        <span style='font-weight:600;font-size:12px'>r/{post["subreddit"]}</span>
-                        <span style='color:{sentiment_color};font-weight:600;font-size:11px'>{sentiment.upper()}</span>
-                    </div>
-                    <div style='font-size:13px;color:#333;margin-bottom:8px;line-height:1.6'>{post["title"]}</div>
-                    <div style='font-size:11px;color:#999'>👍 {post["score"]:,} upvotes</div>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("� Using curated Reddit discussions relevant to this event. These are selected from active healthcare communities.")
+        st.info("📝 Reddit posts data unavailable")
     
-    # Mention volume trend during event
+    # Mention volume trend placeholder
     st.markdown("---")
     render_insight_bubble("Reddit sentiment and engagement patterns reveal authentic patient concerns. Focus messaging on most discussed aspects: efficacy, side effects, cost, and dosing convenience.", "💬")
 
     st.markdown("**Mention Volume Trend (Event Window)**")
-    
-    # Generate mention volume trend data - match search trend date range (-14 to 28 days)
-    mention_baseline = 50
-    peak_day = 3  # Peak on day 3 of event
-    x_event_days = list(range(-14, 28))  # Match search trend chart range
-    mention_trend = [
-        mention_baseline + (
-            max(0, (total_mentions/30 - mention_baseline) * np.exp(-(max(0, i - peak_day)) / 4)) if i >= peak_day 
-            else mention_baseline * (0.6 + 0.4 * (i + 14) / 14)  # Adjust pre-event ramp
-        ) + np.random.randn() * 10 
-        for i in range(len(x_event_days))
-    ]
-    
-    fig_mentions = go.Figure()
-    fig_mentions.add_trace(go.Scatter(
-        x=x_event_days, y=mention_trend, 
-        fill="tozeroy", fillcolor="rgba(77,184,255,0.1)",
-        line=dict(color=SKYRIZI, width=2.5),
-        hovertemplate="<b>Day %{x}</b><br>Mentions/hour: <b>%{y:.0f}</b><extra></extra>"
-    ))
-    fig_mentions.add_vline(
-        x=0, line_dash="dash", line_color="#999", line_width=1,
-        annotation_text="Event Start",
-        annotation_position="top right"
-    )
-    fig_mentions.update_layout(
-        height=280,
-        template="plotly_white",
-        xaxis_title="Days from Event Start",
-        yaxis_title="Mentions per Hour",
-        margin=dict(t=20, b=20),
-        hoverlabel=dict(bgcolor="white", font_size=12)
-    )
-    st.plotly_chart(fig_mentions, use_container_width=True)
-    
-    st.info(f"🔍 **Social Media Insight:** Reddit and Facebook conversations spiked {(total_mentions/30):.0f} mentions/hour at peak, with {sentiment_split['Positive']}% positive sentiment. Key topics: patient experiences, treatment comparisons, and clinical efficacy. Monitor ongoing discussions for emerging concerns or brand loyalty signals.")
+    st.info("📈 Mention volume trend unavailable")
     
     # Top Search Queries and Rising Queries for Key Moments
     st.markdown("---")
