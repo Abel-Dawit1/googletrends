@@ -1088,6 +1088,79 @@ def calculate_moments_from_trends():
     except Exception as e:
         return DEMO_MOMENTS_DATA
 
+
+def load_moment_trend_data(event_date_str):
+    """Load actual trend data from CSV for a date range around an event (-14 to +28 days).
+    
+    Args:
+        event_date_str: Date string like "Feb 9, 2026" or "Nov 2025"
+    
+    Returns:
+        Tuple (x_days, r_trend, s_trend) with indices and trend values aligned to date window.
+        Returns None if event date cannot be parsed or CSV files unavailable.
+    """
+    try:
+        # Parse event date - try multiple formats
+        event_date = None
+        for fmt in ["%b %d, %Y", "%b %Y", "%B %d, %Y", "%Y-%m-%d"]:
+            try:
+                event_date = pd.to_datetime(event_date_str, format=fmt)
+                break
+            except:
+                continue
+        
+        if event_date is None:
+            return None
+        
+        window_start = event_date - pd.Timedelta(days=14)
+        window_end = event_date + pd.Timedelta(days=28)
+        
+        # Load 1-year trend CSVs
+        rinvoq_file = "data/Rinvoq Search Interest 1 year new.csv"
+        skyrizi_file = "data/Skyrizi Search Interest 1 year new.csv"
+        
+        if not os.path.exists(rinvoq_file) or not os.path.exists(skyrizi_file):
+            return None
+        
+        try:
+            rinvoq_df = pd.read_csv(rinvoq_file, skiprows=2, names=["date", "value"], dtype={"value": "int"})
+            skyrizi_df = pd.read_csv(skyrizi_file, skiprows=2, names=["date", "value"], dtype={"value": "int"})
+        except Exception as parse_err:
+            return None
+        
+        rinvoq_df["date"] = pd.to_datetime(rinvoq_df["date"], errors="coerce")
+        skyrizi_df["date"] = pd.to_datetime(skyrizi_df["date"], errors="coerce")
+        
+        # Filter to window
+        r_window = rinvoq_df[(rinvoq_df["date"] >= window_start) & (rinvoq_df["date"] <= window_end)].copy()
+        s_window = skyrizi_df[(skyrizi_df["date"] >= window_start) & (skyrizi_df["date"] <= window_end)].copy()
+        
+        if r_window.empty or s_window.empty or len(r_window) < 3:
+            return None
+        
+        r_window = r_window.sort_values("date").reset_index(drop=True)
+        s_window = s_window.sort_values("date").reset_index(drop=True)
+        
+        # Create aligned date range for x-axis (days from event)
+        date_range = pd.date_range(window_start, window_end, freq="D")
+        x_days = [(d - event_date).days for d in date_range]
+        
+        # Merge and interpolate to daily granularity
+        merged = pd.DataFrame({"date": date_range})
+        merged = merged.merge(r_window[["date", "value"]].rename(columns={"value": "rinvoq"}), on="date", how="left")
+        merged = merged.merge(s_window[["date", "value"]].rename(columns={"value": "skyrizi"}), on="date", how="left")
+        
+        # Forward-fill and backward-fill to interpolate missing dates
+        merged["rinvoq"] = merged["rinvoq"].fillna(method="ffill").fillna(method="bfill").fillna(50).astype(int)
+        merged["skyrizi"] = merged["skyrizi"].fillna(method="ffill").fillna(method="bfill").fillna(50).astype(int)
+        
+        r_trend = merged["rinvoq"].tolist()
+        s_trend = merged["skyrizi"].tolist()
+        
+        return (x_days, r_trend, s_trend)
+    except Exception as e:
+        return None
+
 # Load moments data - calculated from real trend CSV data with demo fallback
 MOMENTS_DATA = calculate_moments_from_trends()
 
@@ -2965,13 +3038,20 @@ with tabs[2]:
     # Event trend chart - Filter by brand
     r_lift = int(event["Rinvoq Lift"].replace("+", "").replace("%", ""))
     s_lift = int(event["Skyrizi Lift"].replace("+", "").replace("%", ""))
-    days = 42
-    baseline = 45
-    event_day = 14
-    np.random.seed(hash(selected_event) % 2**31)
-    x_days = list(range(-14, 28))
-    r_trend = [baseline + (max(0, (event["Peak"] - baseline) * np.exp(-(max(0, i - event_day)) / int(event["Halo"].replace("d", "")))) * r_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
-    s_trend = [baseline + (max(0, (event["Peak"] - baseline) * np.exp(-(max(0, i - event_day)) / int(event["Halo"].replace("d", "")))) * s_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
+    
+    # Try to load actual trend data from CSV
+    csv_data = load_moment_trend_data(event["Date"])
+    if csv_data is not None:
+        x_days, r_trend, s_trend = csv_data
+    else:
+        # Fallback to synthetic demo data if CSV unavailable
+        days = 42
+        baseline = 45
+        event_day = 14
+        np.random.seed(hash(selected_event) % 2**31)
+        x_days = list(range(-14, 28))
+        r_trend = [baseline + (max(0, (event["Peak"] - baseline) * np.exp(-(max(0, i - event_day)) / int(event["Halo"].replace("d", "")))) * r_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
+        s_trend = [baseline + (max(0, (event["Peak"] - baseline) * np.exp(-(max(0, i - event_day)) / int(event["Halo"].replace("d", "")))) * s_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
     
     fig_moment = go.Figure()
     if brand_filter in ["Both", "Rinvoq"]:
