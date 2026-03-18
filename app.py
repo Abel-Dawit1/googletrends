@@ -853,7 +853,7 @@ except Exception as e:
     st.session_state["api_error"] = str(e)
     client = None
 
-tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "💬 AI Chat", "⚙️ Configuration"])
+tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "⚙️ Configuration"])
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 1: OVERVIEW
@@ -2062,116 +2062,9 @@ with tabs[2]:
         summary = summary.sort_values("Skyrizi Lift", key=lambda x: x.str.replace("+","").str.replace("%","").astype(int), ascending=False)
     
     st.dataframe(summary, use_container_width=True, hide_index=True)
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 7: AI CHAT
+# TAB 7: CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[6]:
-    st.subheader("💬 AI Chat — Ask Questions About Your Data")
-    st.caption("Ask Claude anything about the search trends, geographic performance, or competitive insights. Questions are answered based on your current dashboard data.")
-    
-    if not client:
-        st.error("� Claude API key not configured", icon="⚠️")
-        st.info("**To enable AI chat:**\n"
-               "1. Get your API key from [console.anthropic.com](https://console.anthropic.com/keys)\n"
-               "2. Add to Streamlit secrets: `~/.streamlit/secrets.toml`\n"
-               "```\nANTHROPIC_API_KEY = \"your-api-key-here\"\n```\n"
-               "3. Restart the app or click 'Refresh Data' in sidebar")
-        st.stop()
-        # Chat interface
-        chat_container = st.container()
-        
-        # Display chat history
-        with chat_container:
-            for i, message in enumerate(st.session_state.chat_history):
-                if message["role"] == "user":
-                    with st.chat_message("user"):
-                        st.markdown(message["content"])
-                else:
-                    with st.chat_message("assistant"):
-                        st.markdown(message["content"])
-        
-        # Input area
-        st.divider()
-        
-        user_input = st.chat_input("Ask about trends, markets, queries, or strategy...", key="chat_input")
-        
-        if user_input:
-            # Add user message to history
-            st.session_state.chat_history.append({
-                "role": "user",
-                "content": user_input
-            })
-            
-            # Display user message
-            with st.chat_message("user"):
-                st.markdown(user_input)
-            
-            # Get Claude response
-            with st.chat_message("assistant"):
-                with st.spinner("Claude is thinking..."):
-                    # Prepare messages for Claude (exclude system message)
-                    messages_for_claude = [
-                        {"role": msg["role"], "content": msg["content"]}
-                        for msg in st.session_state.chat_history
-                    ]
-                    
-                    response = chat_with_claude(
-                        client, 
-                        messages_for_claude,
-                        trend_df, 
-                        DEMO_DMA, 
-                        DEMO_STATES, 
-                        DEMO_QUERIES
-                    )
-                    st.markdown(response)
-                    
-                    # Add assistant response to history
-                    st.session_state.chat_history.append({
-                        "role": "assistant",
-                        "content": response
-                    })
-            
-            # Auto-rerun to update chat
-            st.rerun()
-        
-        # Quick prompt suggestions
-        st.divider()
-        st.markdown("**Quick Questions:**")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("📍 Which markets are strongest?"):
-                st.session_state.chat_history.append({
-                    "role": "user",
-                    "content": "Which markets are strongest for Rinvoq vs Skyrizi?"
-                })
-                st.rerun()
-            if st.button("📈 What's the growth trend?"):
-                st.session_state.chat_history.append({
-                    "role": "user",
-                    "content": "What's the growth trend for Rinvoq and Skyrizi?"
-                })
-                st.rerun()
-        with col2:
-            if st.button("🎯 Where should we allocate budget?"):
-                st.session_state.chat_history.append({
-                    "role": "user",
-                    "content": "Where should we allocate marketing budget based on this data?"
-                })
-                st.rerun()
-            if st.button("🔍 What patient intents matter most?"):
-                st.session_state.chat_history.append({
-                    "role": "user",
-                    "content": "What patient search intents should we focus on?"
-                })
-                st.rerun()
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 8: CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════
-with tabs[7]:
     st.subheader("⚙️ Dashboard Configuration")
     st.markdown("Customize filter categories and data groupings. Changes are applied to your session only.")
     st.markdown("---")
