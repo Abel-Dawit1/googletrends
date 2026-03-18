@@ -1152,9 +1152,13 @@ with tabs[0]:
     r_avg, s_avg = int(np.mean(r_vals)), int(np.mean(s_vals))
     
     # Helper function for professional metric cards
-    def metric_card(col, icon, title, value, subtitle, color):
+    def metric_card(col, icon, title, value, subtitle, color, info_text=None):
+        info_html = ""
+        if info_text:
+            info_html = f"""<span style='position:absolute;top:8px;right:8px;width:18px;height:18px;background:#e3f2fd;border:1px solid #90caf9;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:#1976d2;cursor:help;' title='{info_text}'>ℹ</span>"""
         col.markdown(f"""
-        <div style='background:linear-gradient(135deg,#f8f9fa 0%,#ffffff 100%);border-left:4px solid {color};border-radius:8px;padding:16px;margin-bottom:4px'>
+        <div style='position:relative;background:linear-gradient(135deg,#f8f9fa 0%,#ffffff 100%);border-left:4px solid {color};border-radius:8px;padding:16px;margin-bottom:4px'>
+            {info_html}
             <div style='display:flex;align-items:baseline;gap:8px;margin-bottom:8px'>
                 <span style='font-size:20px'>{icon}</span>
                 <span style='font-size:12px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.5px'>{title}</span>
@@ -1167,25 +1171,22 @@ with tabs[0]:
     # KPIs - Show only selected brand(s)
     if brand_filter == "Both":
         k1, k2, k3, k4 = st.columns(4)
-        metric_card(k1, "📊", "Rinvoq Peak", r_peak, f"Avg: {r_avg}", RINVOQ)
-        metric_card(k2, "📈", "Skyrizi Peak", s_peak, f"Avg: {s_avg}", SKYRIZI)
-        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index {DEMO_DMA.iloc[0]['Rinvoq']}", NAVY)
-        metric_card(k4, "⚡", "Breakout Terms", str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), "500%+ growth", GOLD)
-        render_insight_bubble("Peak index represents seasonal highs—use as benchmark for campaign target reach. Breakout terms indicate emerging search intent in new indications.", "📊")
+        metric_card(k1, "📊", "Rinvoq Peak", r_peak, f"Avg: {r_avg}", RINVOQ, "Annual peak index—use as benchmark for campaign reach targets and seasonal planning")
+        metric_card(k2, "📈", "Skyrizi Peak", s_peak, f"Avg: {s_avg}", SKYRIZI, "Annual peak index—use as benchmark for campaign reach targets and seasonal planning")
+        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index {DEMO_DMA.iloc[0]['Rinvoq']}", NAVY, "Leading geographic market—focus 40% of budget here for maximum efficiency")
+        metric_card(k4, "⚡", "Breakout Terms", str(len(DEMO_QUERIES[DEMO_QUERIES["Growth"] >= 500])), "500%+ growth", GOLD, "Emerging search intent—indicates new indication opportunities and untapped markets")
     elif brand_filter == "Rinvoq":
         k1, k2, k3, k4 = st.columns(4)
-        metric_card(k1, "📊", "Peak Index", r_peak, f"Avg: {r_avg}", RINVOQ)
-        metric_card(k2, "📉", "Avg Index", r_avg, "Period average", RINVOQ)
-        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index: {DEMO_DMA.iloc[0]['Rinvoq']}", NAVY)
-        metric_card(k4, "🔍", "Search Queries", len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]), "Brand mentions", RINVOQ)
-        render_insight_bubble("Average index stability indicates consistent demand. Focus on geographic markets with highest index scores for maximum ROI.", "📊")
+        metric_card(k1, "📊", "Peak Index", r_peak, f"Avg: {r_avg}", RINVOQ, "Annual peak index—use as benchmark for campaign reach targets and seasonal planning")
+        metric_card(k2, "📉", "Avg Index", r_avg, "Period average", RINVOQ, "Baseline demand level—stable index indicates consistent brand awareness and market interest")
+        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index: {DEMO_DMA.iloc[0]['Rinvoq']}", NAVY, "Leading geographic market—focus 40% of budget here for maximum efficiency")
+        metric_card(k4, "🔍", "Search Queries", len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]), "Brand mentions", RINVOQ, "Total branded search volume—higher volume = stronger brand recall and market penetration")
     elif brand_filter == "Skyrizi":
         k1, k2, k3, k4 = st.columns(4)
-        metric_card(k1, "📈", "Peak Index", s_peak, f"Avg: {s_avg}", SKYRIZI)
-        metric_card(k2, "📉", "Avg Index", s_avg, "Period average", SKYRIZI)
-        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index: {DEMO_DMA.iloc[0]['Skyrizi']}", NAVY)
-        metric_card(k4, "🔍", "Search Queries", len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]), "Brand mentions", SKYRIZI)
-        render_insight_bubble("Average index stability indicates consistent demand. Focus on geographic markets with highest index scores for maximum ROI.", "📊")
+        metric_card(k1, "📈", "Peak Index", s_peak, f"Avg: {s_avg}", SKYRIZI, "Annual peak index—use as benchmark for campaign reach targets and seasonal planning")
+        metric_card(k2, "📉", "Avg Index", s_avg, "Period average", SKYRIZI, "Baseline demand level—stable index indicates consistent brand awareness and market interest")
+        metric_card(k3, "🗺️", "Top DMA", DEMO_DMA.iloc[0]["Market"].split(",")[0], f"Index: {DEMO_DMA.iloc[0]['Skyrizi']}", NAVY, "Leading geographic market—focus 40% of budget here for maximum efficiency")
+        metric_card(k4, "🔍", "Search Queries", len(DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]), "Brand mentions", SKYRIZI, "Total branded search volume—higher volume = stronger brand recall and market penetration")
     
     st.markdown("---")
     
@@ -1828,10 +1829,10 @@ with tabs[3]:
     sky_rank = brand_df[brand_df["Brand"] == "Skyrizi"].index[0] + 1
     rin_rank = brand_df[brand_df["Brand"] == "Rinvoq"].index[0] + 1
     top_comp = brand_df[~brand_df["Brand"].isin(["Rinvoq", "Skyrizi"])].iloc[0]
-    ck1.metric("Skyrizi Rank", f"#{sky_rank}", f"of {len(brand_df)} brands")
-    ck2.metric("Rinvoq Rank", f"#{rin_rank}", f"of {len(brand_df)} brands")
-    ck3.metric("Top Competitor", top_comp["Brand"], f"Index {top_comp['Index']}")
-    ck4.metric("Brands Tracked", len(brand_df), f"{len(COMPETITORS)} competitors")
+    ck1.metric("Skyrizi Rank", f"#{sky_rank}", f"of {len(brand_df)} brands", help="Market ranking based on search index. Lower rank = stronger market position.")
+    ck2.metric("Rinvoq Rank", f"#{rin_rank}", f"of {len(brand_df)} brands", help="Market ranking based on search index. Lower rank = stronger market position.")
+    ck3.metric("Top Competitor", top_comp["Brand"], f"Index {top_comp['Index']}", help="Highest-ranked competitor brand outside our portfolio. Monitor for strategic threats.")
+    ck4.metric("Brands Tracked", len(brand_df), f"{len(COMPETITORS)} competitors", help="Total brands monitored in competitive set. Broader tracking = more comprehensive market intelligence.")
     
     render_insight_bubble("Monitor competitive index rankings monthly. Widening gaps indicate market consolidation and first-mover advantage in new indications.", "⚔️")
     
@@ -1939,12 +1940,10 @@ with tabs[4]:
         intent_queries = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
     
     ik1, ik2, ik3, ik4 = st.columns(4)
-    ik1.metric("Awareness Queries", len(intent_queries[intent_queries["Type"] == "condition"]), "Condition-level")
-    ik2.metric("HCP Intent", len(intent_queries[intent_queries["Type"].isin(["generic", "safety"])]), "Clinical terms")
-    ik3.metric("Branded Queries", len(intent_queries[intent_queries["Type"].isin(["branded", "competitive"])]), "Brand-specific")
-    ik4.metric("Breakout Terms", len(intent_queries[intent_queries["Growth"] >= 500]), "Explosive growth")
-    
-    render_insight_bubble("Strong patient intent across all funnel stages. Safety/efficacy validation queries dominate—develop evidence-based content to convert awareness to action.", "🔍")
+    ik1.metric("Awareness Queries", len(intent_queries[intent_queries["Type"] == "condition"]), "Condition-level", help="Patient searches for condition symptoms & diagnosis. Higher volume = stronger market awareness.")
+    ik2.metric("HCP Intent", len(intent_queries[intent_queries["Type"].isin(["generic", "safety"])]), "Clinical terms", help="Healthcare provider or clinically-focused searches. Indicates professional educational needs.")
+    ik3.metric("Branded Queries", len(intent_queries[intent_queries["Type"].isin(["branded", "competitive"])]), "Brand-specific", help="Brand name searches. Higher volume = stronger brand recall & market share.")
+    ik4.metric("Breakout Terms", len(intent_queries[intent_queries["Growth"] >= 500]), "Explosive growth", help="Terms with 500%+ surge. These represent emerging opportunities and new patient segments.")
     
     render_insight_bubble("Patients show strong intent for safety and efficacy validation—+82% spike in safety/side effect searches. Develop content addressing JAK inhibitor concerns to improve conversion.", "🔍")
     # Use live related queries if available
