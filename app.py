@@ -1284,15 +1284,15 @@ with tabs[0]:
         k1, k2, k3, k4 = st.columns(4)
         k1.metric(
             "Rinvoq Peak", 
-            r_peak, 
-            f"Avg: {r_avg}",
-            help="Annual peak search index (0-100 scale). Use as benchmark for campaign reach targets, ROI expectations, and seasonal planning windows."
+            r_avg, 
+            f"Peak: {r_peak}",
+            help="Annual average search index (0-100 scale). Baseline demand level for campaign targeting and budget planning."
         )
         k2.metric(
             "Skyrizi Peak", 
-            s_peak, 
-            f"Avg: {s_avg}",
-            help="Annual peak search index (0-100 scale). Use as benchmark for campaign reach targets, ROI expectations, and seasonal planning windows."
+            s_avg, 
+            f"Peak: {s_peak}",
+            help="Annual average search index (0-100 scale). Baseline demand level for campaign targeting and budget planning."
         )
         k3.metric(
             "Top DMA", 
@@ -1309,16 +1309,16 @@ with tabs[0]:
     elif brand_filter == "Rinvoq":
         k1, k2, k3, k4 = st.columns(4)
         k1.metric(
-            "Peak Index", 
-            r_peak, 
-            f"Avg: {r_avg}",
-            help="Annual peak search index (0-100 scale). Use as benchmark for campaign reach targets, ROI expectations, and seasonal planning windows."
-        )
-        k2.metric(
             "Avg Index", 
             r_avg, 
-            "Period average",
-            help="Baseline demand level. Stable index indicates consistent brand awareness and sustained market interest throughout the year."
+            f"Peak: {r_peak}",
+            help="Annual average search index (0-100 scale). Baseline demand level. Stable index indicates consistent brand awareness and sustained market interest throughout the year."
+        )
+        k2.metric(
+            "Peak Index", 
+            r_peak, 
+            "Annual peak",
+            help="Annual peak search index (0-100 scale). Use as benchmark for campaign reach targets, ROI expectations, and seasonal planning windows."
         )
         k3.metric(
             "Top DMA", 
@@ -1335,16 +1335,16 @@ with tabs[0]:
     elif brand_filter == "Skyrizi":
         k1, k2, k3, k4 = st.columns(4)
         k1.metric(
-            "Peak Index", 
-            s_peak, 
-            f"Avg: {s_avg}",
-            help="Annual peak search index (0-100 scale). Use as benchmark for campaign reach targets, ROI expectations, and seasonal planning windows."
-        )
-        k2.metric(
             "Avg Index", 
             s_avg, 
-            "Period average",
-            help="Baseline demand level. Stable index indicates consistent brand awareness and sustained market interest throughout the year."
+            f"Peak: {s_peak}",
+            help="Annual average search index (0-100 scale). Baseline demand level. Stable index indicates consistent brand awareness and sustained market interest throughout the year."
+        )
+        k2.metric(
+            "Peak Index", 
+            s_peak, 
+            "Annual peak",
+            help="Annual peak search index (0-100 scale). Use as benchmark for campaign reach targets, ROI expectations, and seasonal planning windows."
         )
         k3.metric(
             "Top DMA", 
