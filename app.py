@@ -2368,11 +2368,38 @@ with tabs[5]:
     
     st.subheader("Campaign Planning")
     
-    st.info("📋 Campaign KPI cards and calendar will be populated once campaign data is ingested.")
+    # KPI Cards - Empty until data is ingested
+    pk1, pk2, pk3, pk4 = st.columns(4)
+    pk1.metric(
+        "Active Campaigns", 
+        "—",
+        help="Concurrent marketing campaigns currently live. Tracks investment breadth across indications, channels, and brands."
+    )
+    pk2.metric(
+        "Peak Timing", 
+        "—",
+        help="Next major search interest peak for primary brand."
+    )
+    pk3.metric(
+        "Budget Allocation", 
+        "—",
+        help="Total budget planning and channel distribution."
+    )
+    pk4.metric(
+        "Search Alignment", 
+        "—",
+        help="Campaign timing alignment with natural search seasonality."
+    )
     
     st.markdown("---")
     st.markdown("**Annual Campaign Calendar**")
-    st.info("📅 Campaign calendar will be available once campaign schedule data is ingested.")
+    st.info("📅 Campaign calendar will populate once campaign schedule data is ingested.")
+    
+    # Empty calendar table structure
+    empty_calendar = pd.DataFrame(columns=["Month", "Brand", "Indication", "Activity"])
+    st.dataframe(empty_calendar, use_container_width=True, hide_index=True)
+    
+    st.markdown("---")
     
     c1, c2 = st.columns(2)
     with c1:
