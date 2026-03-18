@@ -995,15 +995,15 @@ with st.sidebar:
     current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
     current_timeframe_map = st.session_state.get("custom_timeframe_map", TIMEFRAME_MAP)
     
-    franchise = st.selectbox("Franchise", ["All"] + list(current_franchise_map.keys()), label_visibility="collapsed")
-    brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"], label_visibility="collapsed")
-    timeframe = st.selectbox("Timeframe", list(current_timeframe_map.keys()), index=2, label_visibility="collapsed")
+    franchise = st.selectbox("Franchise", ["All"] + list(current_franchise_map.keys()), label_visibility="visible")
+    brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"], label_visibility="visible")
+    timeframe = st.selectbox("Timeframe", list(current_timeframe_map.keys()), index=2, label_visibility="visible")
     
     ind_options = list(current_ind_names.values())
     if franchise != "All":
         ind_keys = current_franchise_map.get(franchise, [])
         ind_options = [current_ind_names.get(k, k) for k in ind_keys]
-    indication = st.selectbox("Indication", ["All"] + ind_options, label_visibility="collapsed")
+    indication = st.selectbox("Indication", ["All"] + ind_options, label_visibility="visible")
     
     st.divider()
     
