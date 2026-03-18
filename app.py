@@ -1127,6 +1127,9 @@ def load_csv_geomap_data(timeframe):
     
     Returns a DataFrame with columns: State, Rinvoq, Skyrizi
     Format: [Brand] Search Intent [Timeframe] geomap.csv
+    
+    Note: Not all timeframes have state-level geomap data available.
+    30-day data is time-series only, so falls back to demo data.
     """
     # Map pytrends timeframe to geomap CSV filename pattern
     # Note: Geomap files use "5 years" not "5 year"
@@ -1152,6 +1155,14 @@ def load_csv_geomap_data(timeframe):
             
             # Read CSV, skip the first 2 rows (Category header and empty row)
             df = pd.read_csv(filename, skiprows=2)
+            
+            # Check if this is regional data (state-based) or time-series data
+            first_col = df.columns[0]
+            
+            # If first column is "Day", it's time-series data (like 30-day geomap)
+            # We can't use time-series data for state-based map, so return None
+            if first_col.lower() == "day":
+                return None
             
             # The CSV has Region as first column and Index as second
             # Rename columns: "Region" -> "State", second column -> brand name
