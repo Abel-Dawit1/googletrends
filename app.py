@@ -3,6 +3,8 @@ AbbVie Immunology — Search Intelligence Dashboard (Streamlit)
 ==============================================================
 Pulls real Google Trends data via pytrends with graceful demo fallback.
 
+Version: 2.1.1 (Fixed: Population column handling)
+
 Usage:
     pip install -r requirements.txt
     streamlit run app.py
