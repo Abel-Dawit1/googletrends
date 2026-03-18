@@ -564,11 +564,11 @@ def render_executive_summary(title, key_callouts, summary_color=NAVY):
     </div>
     """, unsafe_allow_html=True)
 
-def render_insight_bubble(text, icon="💡", bg_color="#f0f4ff", text_color="#1a3a52"):
+def render_insight_bubble(text, icon="💡", bg_color="#e7f3ff", text_color="#0c3d7a"):
     """Render a smaller AI insight callout bubble within a section."""
     st.markdown(f"""
-    <div style='background:{bg_color};border-left:4px solid {NAVY};border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12px;line-height:1.6;color:{text_color}'>
-        <span style='font-size:14px;margin-right:6px'>{icon}</span>{text}
+    <div style='background:{bg_color};border:1px solid #b8d4e8;border-radius:8px;padding:14px 16px;margin-top:12px;margin-bottom:12px;font-size:12px;line-height:1.6;color:{text_color}'>
+        <span style='font-size:13px;margin-right:8px;font-weight:500'>{icon}</span><span style='font-weight:500'>{text}</span>
     </div>
     """, unsafe_allow_html=True)
 
