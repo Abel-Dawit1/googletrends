@@ -1415,32 +1415,17 @@ with tabs[0]:
         column_config=column_config
     )
     
-    # Queries - Filter by brand, indication, and type
-    # Add indication filter for top/rising queries
+    # Queries - Filter by brand, indication (sidebar), and type
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
     
-    # Create filter columns
-    f1, f2 = st.columns(2)
-    
-    with f1:
-        # Filter by indication for top/rising queries
-        indication_options = ["All"] + sorted([ind for ind in DEMO_QUERIES["Indication"].unique() if ind != "All"])
-        query_indication_filter = st.selectbox(
-            "Filter by indication:",
-            indication_options,
-            key="query_indication_filter",
-            help="Show top and rising queries for specific medical conditions"
-        )
-    
-    with f2:
-        # Filter by query type (Branded, Condition, Intent)
-        query_type_filter = st.selectbox(
-            "Filter by query type:",
-            ["All", "Branded keywords", "Condition terms", "Intent-related"],
-            key="query_type_filter",
-            help="Brand-focused, condition-focused, or patient intent queries"
-        )
+    # Filter by query type (Branded, Condition, Intent)
+    query_type_filter = st.selectbox(
+        "Filter by query type:",
+        ["All", "Branded keywords", "Condition terms", "Intent-related"],
+        key="query_type_filter",
+        help="Brand-focused, condition-focused, or patient intent queries"
+    )
     
     # Apply brand filter
     if brand_filter == "Both":
@@ -1450,9 +1435,9 @@ with tabs[0]:
     else:  # Skyrizi
         queries_df = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
     
-    # Apply indication filter to queries
-    if query_indication_filter != "All":
-        queries_df = queries_df[(queries_df["Indication"] == query_indication_filter) | (queries_df["Indication"] == "All")]
+    # Apply indication filter from sidebar
+    if indication != "All":
+        queries_df = queries_df[(queries_df["Indication"] == indication) | (queries_df["Indication"] == "All")]
     
     # Apply type filter to queries
     if query_type_filter == "Branded keywords":
