@@ -1119,8 +1119,12 @@ def load_csv_trend_data(brand):
         st.warning(f"Could not load {brand} CSV data: {e}")
         return None
 
-def load_data(timeframe, brand_filter, indication="All"):
+def load_data(timeframe_key, brand_filter, indication="All"):
     """Load trend data based on timeframe, brand filter, and indication."""
+    # Convert timeframe key to actual timeframe string
+    current_timeframe_map = st.session_state.get("custom_timeframe_map", TIMEFRAME_MAP)
+    timeframe = current_timeframe_map.get(timeframe_key, "today 3-m")
+    
     # Check if 5-year timeframe is selected and load from CSV
     if timeframe == "today 5-y":
         try:
