@@ -3074,24 +3074,24 @@ with tabs[2]:
             "Rinvoq Lift", 
             display_rinvoq_lift, 
             "vs baseline",
-            help="Percent increase in Rinvoq search interest during the event period. Measures brand awareness lift driven by cultural moment exposure."
+            help="Percent increase from pre-event baseline. Calculated as (Peak Value - Baseline) / Baseline × 100, where Baseline is the average search interest from the 14 days before the event. Peak Value is the highest search index during the event window (day 0 to +28)."
         )
         mk2.metric(
             "Skyrizi Lift", 
             display_skyrizi_lift, 
             "vs baseline",
-            help="Percent increase in Skyrizi search interest during the event period. Indicates effectiveness of event sponsorship or partnerships."
+            help="Percent increase from pre-event baseline. Calculated as (Peak Value - Baseline) / Baseline × 100, where Baseline is the average search interest from the 14 days before the event. Peak Value is the highest search index during the event window (day 0 to +28)."
         )
         mk3.metric(
             "Peak Day Index", 
             display_peak,
-            help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
+            help="Highest search interest value (0-100 scale) recorded during the event window. Represents maximum market attention achieved at any point during the event period and ±28 days after."
         )
         mk4.metric(
             "Halo Duration", 
             display_halo, 
             "post-event",
-            help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
+            help="Number of days after the event window when search interest remains elevated above the pre-event baseline. Indicates how long the brand momentum from the event persists."
         )
     elif brand_filter == "Rinvoq":
         mk1, mk2, mk3, mk4 = st.columns(4)
@@ -3099,18 +3099,18 @@ with tabs[2]:
             "Rinvoq Lift", 
             display_rinvoq_lift, 
             "vs baseline",
-            help="Percent increase in Rinvoq search interest during the event period. Measures brand awareness lift driven by cultural moment exposure."
+            help="Percent increase from pre-event baseline. Calculated as (Peak Value - Baseline) / Baseline × 100, where Baseline is the average search interest from the 14 days before the event. Peak Value is the highest search index during the event window (day 0 to +28)."
         )
         mk2.metric(
             "Peak Day Index", 
             display_peak,
-            help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
+            help="Highest search interest value (0-100 scale) recorded during the event window. Represents maximum market attention achieved at any point during the event period and ±28 days after."
         )
         mk3.metric(
             "Halo Duration", 
             display_halo, 
             "post-event",
-            help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
+            help="Number of days after the event window when search interest remains elevated above the pre-event baseline. Indicates how long the brand momentum from the event persists."
         )
         mk4.metric("Brand Filter", "Rinvoq", "Only selected brand")
     else:  # Skyrizi
@@ -3119,18 +3119,18 @@ with tabs[2]:
             "Skyrizi Lift", 
             display_skyrizi_lift, 
             "vs baseline",
-            help="Percent increase in Skyrizi search interest during the event period. Indicates effectiveness of event sponsorship or partnerships."
+            help="Percent increase from pre-event baseline. Calculated as (Peak Value - Baseline) / Baseline × 100, where Baseline is the average search interest from the 14 days before the event. Peak Value is the highest search index during the event window (day 0 to +28)."
         )
         mk2.metric(
             "Peak Day Index", 
             display_peak,
-            help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
+            help="Highest search interest value (0-100 scale) recorded during the event window. Represents maximum market attention achieved at any point during the event period and ±28 days after."
         )
         mk3.metric(
             "Halo Duration", 
             display_halo, 
             "post-event",
-            help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
+            help="Number of days after the event window when search interest remains elevated above the pre-event baseline. Indicates how long the brand momentum from the event persists."
         )
         mk4.metric("Brand Filter", "Skyrizi", "Only selected brand")
     
