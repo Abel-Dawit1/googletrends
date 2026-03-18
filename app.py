@@ -1089,11 +1089,12 @@ def calculate_moments_from_trends():
         return DEMO_MOMENTS_DATA
 
 
-def load_moment_trend_data(event_date_str):
+def load_moment_trend_data(event_date_str, timeframe="1 year"):
     """Load actual trend data from CSV for a date range around an event (-14 to +28 days).
     
     Args:
         event_date_str: Date string like "Feb 9, 2026" or "Nov 2025"
+        timeframe: CSV timeframe to use - "90 days", "1 year", "5 year", etc.
     
     Returns:
         Tuple (x_days, r_trend, s_trend) with indices and trend values aligned to date window.
@@ -1115,11 +1116,11 @@ def load_moment_trend_data(event_date_str):
         window_start = event_date - pd.Timedelta(days=14)
         window_end = event_date + pd.Timedelta(days=28)
         
-        # Find 1-year trend CSV files dynamically to avoid filename encoding issues
+        # Find CSV files matching the specified timeframe
         try:
             data_files = os.listdir("data")
-            rinvoq_files = [f for f in data_files if "Rinvoq" in f and "1 year new" in f and f.endswith(".csv")]
-            skyrizi_files = [f for f in data_files if "Skyrizi" in f and "1 year new" in f and f.endswith(".csv")]
+            rinvoq_files = [f for f in data_files if "Rinvoq" in f and timeframe in f and "new" in f and f.endswith(".csv")]
+            skyrizi_files = [f for f in data_files if "Skyrizi" in f and timeframe in f and "new" in f and f.endswith(".csv")]
             
             if not rinvoq_files or not skyrizi_files:
                 return None
@@ -1129,7 +1130,7 @@ def load_moment_trend_data(event_date_str):
         except:
             return None
         
-        # Load CSVs with proper skiprows (skip Category and blank lines, keep header)
+        # Load CSVs with proper skiprows (skip Category and blank line headers)
         try:
             rinvoq_df = pd.read_csv(rinvoq_path, skiprows=2)
             skyrizi_df = pd.read_csv(skyrizi_path, skiprows=2)
@@ -3068,8 +3069,11 @@ with tabs[2]:
     r_lift = int(event["Rinvoq Lift"].replace("+", "").replace("%", ""))
     s_lift = int(event["Skyrizi Lift"].replace("+", "").replace("%", ""))
     
+    # Determine which CSV timeframe to use (90 days for Super Bowl & Grammy, 1 year for others)
+    csv_timeframe = "90 days" if selected_event in ["Super Bowl", "Grammy Awards"] else "1 year"
+    
     # Try to load actual trend data from CSV
-    csv_data = load_moment_trend_data(event["Date"])
+    csv_data = load_moment_trend_data(event["Date"], timeframe=csv_timeframe)
     if csv_data is not None:
         x_days, r_trend, s_trend = csv_data
     else:
