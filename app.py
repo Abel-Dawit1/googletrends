@@ -1283,13 +1283,13 @@ with tabs[0]:
     if brand_filter == "Both":
         k1, k2, k3, k4 = st.columns(4)
         k1.metric(
-            "Rinvoq Avg. Search Interest (Index)", 
+            "Rinvoq Avg.\nSearch Interest (Index)", 
             r_avg, 
             f"Peak: {r_peak}",
             help="Annual average search index (0-100 scale). Baseline demand level for campaign targeting and budget planning."
         )
         k2.metric(
-            "Skyrizi Avg. Search Interest (Index)", 
+            "Skyrizi Avg.\nSearch Interest (Index)", 
             s_avg, 
             f"Peak: {s_peak}",
             help="Annual average search index (0-100 scale). Baseline demand level for campaign targeting and budget planning."
