@@ -1721,18 +1721,18 @@ with tabs[1]:
         "WA": {"center": [47.7511, -120.7401], "zoom": 6},
     }
     
-    # Map state names to abbreviations for DMA filtering
+    # Complete mapping of state names to abbreviations (all 50 states + DC)
     STATE_NAME_TO_ABBR = {
-        "New York": "NY",
-        "Pennsylvania": "PA",
-        "Massachusetts": "MA",
-        "Illinois": "IL",
-        "Minnesota": "MN",
-        "California": "CA",
-        "Texas": "TX",
-        "Florida": "FL",
-        "Georgia": "GA",
-        "Washington": "WA",
+        "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA",
+        "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "District of Columbia": "DC", "Florida": "FL",
+        "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN",
+        "Iowa": "IA", "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME",
+        "Maryland": "MD", "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+        "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH",
+        "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND",
+        "Ohio": "OH", "Oklahoma": "OK", "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI",
+        "South Carolina": "SC", "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+        "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
     }
     
     # Define regions and state mappings for filters
@@ -1751,6 +1751,15 @@ with tabs[1]:
         if "," in market:
             state_abbr = market.split(",")[1].strip()
             dma_states[market] = state_abbr
+    
+    # Also add states from display_states (geomap data) to ensure all states are available for filtering
+    for state_name in display_states["State"].unique():
+        if state_name in STATE_NAME_TO_ABBR:
+            state_abbr = STATE_NAME_TO_ABBR[state_name]
+            # Add to dma_states if not already from DMA data
+            if state_abbr not in dma_states.values():
+                # Create a placeholder entry so state abbr exists in the mapping
+                dma_states[f"{state_name}, {state_abbr}"] = state_abbr
     
     # Initialize session state for filters
     if "selected_region" not in st.session_state:
