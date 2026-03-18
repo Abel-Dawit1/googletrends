@@ -1191,6 +1191,59 @@ def load_moment_trend_data(event_date_str, timeframe="1 year"):
     except Exception as e:
         return None
 
+def calculate_moment_kpis_from_csv(event_date_str, timeframe="1 year"):
+    """Calculate KPIs from CSV trend data for an event."""
+    try:
+        csv_data = load_moment_trend_data(event_date_str, timeframe)
+        if csv_data is None:
+            return None
+        
+        x_days, r_trend, s_trend = csv_data
+        
+        # Calculate baseline (average of pre-event period: days -14 to -1)
+        pre_event_indices = [i for i, d in enumerate(x_days) if -14 <= d < 0]
+        if not pre_event_indices:
+            pre_event_indices = [i for i, d in enumerate(x_days) if d < 0]
+        
+        if pre_event_indices:
+            r_baseline = sum(r_trend[i] for i in pre_event_indices) / len(pre_event_indices)
+            s_baseline = sum(s_trend[i] for i in pre_event_indices) / len(pre_event_indices)
+        else:
+            r_baseline = sum(r_trend[:len(r_trend)//4]) / max(1, len(r_trend)//4)
+            s_baseline = sum(s_trend[:len(s_trend)//4]) / max(1, len(s_trend)//4)
+        
+        # Calculate peak during event window (days 0 to +28)
+        event_indices = [i for i, d in enumerate(x_days) if 0 <= d <= 28]
+        if not event_indices:
+            event_indices = [i for i, d in enumerate(x_days) if d >= 0]
+        
+        r_peak = max((r_trend[i] for i in event_indices), default=max(r_trend))
+        s_peak = max((s_trend[i] for i in event_indices), default=max(s_trend))
+        peak_day_index = max(r_peak, s_peak)
+        
+        # Calculate lifts
+        r_lift_pct = ((r_peak - r_baseline) / max(1, r_baseline)) * 100 if r_baseline > 0 else 0
+        s_lift_pct = ((s_peak - s_baseline) / max(1, s_baseline)) * 100 if s_baseline > 0 else 0
+        
+        # Calculate halo duration (days after event where trend > baseline)
+        post_event_indices = [i for i, d in enumerate(x_days) if d > 28]
+        halo_days = 0
+        if post_event_indices:
+            for idx in post_event_indices:
+                if r_trend[idx] > r_baseline or s_trend[idx] > s_baseline:
+                    halo_days += 1
+                else:
+                    break
+        
+        return {
+            "rinvoq_lift": f"+{int(round(r_lift_pct))}%",
+            "skyrizi_lift": f"+{int(round(s_lift_pct))}%",
+            "peak": int(round(peak_day_index)),
+            "halo": f"{halo_days}d"
+        }
+    except Exception as e:
+        return None
+
 # Load moments data - calculated from real trend CSV data with demo fallback
 MOMENTS_DATA = calculate_moments_from_trends()
 
@@ -2998,29 +3051,45 @@ with tabs[2]:
     selected_event = st.selectbox("Select Event", moments_df["Event"].tolist())
     event = moments_df[moments_df["Event"] == selected_event].iloc[0]
     
+    # Calculate KPIs dynamically from CSV data
+    csv_timeframe = "90 days" if selected_event in ["Super Bowl LX", "Grammy Awards"] else "1 year"
+    computed_kpis = calculate_moment_kpis_from_csv(event["Date"], timeframe=csv_timeframe)
+    
+    # Use computed KPIs if available, otherwise fall back to event data
+    if computed_kpis:
+        display_rinvoq_lift = computed_kpis["rinvoq_lift"]
+        display_skyrizi_lift = computed_kpis["skyrizi_lift"]
+        display_peak = computed_kpis["peak"]
+        display_halo = computed_kpis["halo"]
+    else:
+        display_rinvoq_lift = event["Rinvoq Lift"]
+        display_skyrizi_lift = event["Skyrizi Lift"]
+        display_peak = event["Peak"]
+        display_halo = event["Halo"]
+    
     # Filter metrics by brand
     if brand_filter == "Both":
         mk1, mk2, mk3, mk4 = st.columns(4)
         mk1.metric(
             "Rinvoq Lift", 
-            event["Rinvoq Lift"], 
+            display_rinvoq_lift, 
             "vs baseline",
             help="Percent increase in Rinvoq search interest during the event period. Measures brand awareness lift driven by cultural moment exposure."
         )
         mk2.metric(
             "Skyrizi Lift", 
-            event["Skyrizi Lift"], 
+            display_skyrizi_lift, 
             "vs baseline",
             help="Percent increase in Skyrizi search interest during the event period. Indicates effectiveness of event sponsorship or partnerships."
         )
         mk3.metric(
             "Peak Day Index", 
-            event["Peak"],
+            display_peak,
             help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
         )
         mk4.metric(
             "Halo Duration", 
-            event["Halo"], 
+            display_halo, 
             "post-event",
             help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
         )
@@ -3028,18 +3097,18 @@ with tabs[2]:
         mk1, mk2, mk3, mk4 = st.columns(4)
         mk1.metric(
             "Rinvoq Lift", 
-            event["Rinvoq Lift"], 
+            display_rinvoq_lift, 
             "vs baseline",
             help="Percent increase in Rinvoq search interest during the event period. Measures brand awareness lift driven by cultural moment exposure."
         )
         mk2.metric(
             "Peak Day Index", 
-            event["Peak"],
+            display_peak,
             help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
         )
         mk3.metric(
             "Halo Duration", 
-            event["Halo"], 
+            display_halo, 
             "post-event",
             help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
         )
@@ -3048,26 +3117,26 @@ with tabs[2]:
         mk1, mk2, mk3, mk4 = st.columns(4)
         mk1.metric(
             "Skyrizi Lift", 
-            event["Skyrizi Lift"], 
+            display_skyrizi_lift, 
             "vs baseline",
             help="Percent increase in Skyrizi search interest during the event period. Indicates effectiveness of event sponsorship or partnerships."
         )
         mk2.metric(
             "Peak Day Index", 
-            event["Peak"],
+            display_peak,
             help="Highest search interest value recorded during the event window (0-100 scale). Represents maximum market attention achieved."
         )
         mk3.metric(
             "Halo Duration", 
-            event["Halo"], 
+            display_halo, 
             "post-event",
             help="Number of days the search interest lift persists after the event concludes. Longer haloes indicate sustained brand consideration."
         )
         mk4.metric("Brand Filter", "Skyrizi", "Only selected brand")
     
     # Event trend chart - Filter by brand
-    r_lift = int(event["Rinvoq Lift"].replace("+", "").replace("%", ""))
-    s_lift = int(event["Skyrizi Lift"].replace("+", "").replace("%", ""))
+    r_lift = int(display_rinvoq_lift.replace("+", "").replace("%", ""))
+    s_lift = int(display_skyrizi_lift.replace("+", "").replace("%", ""))
     
     # Determine which CSV timeframe to use (90 days for Super Bowl & Grammy, 1 year for others)
     csv_timeframe = "90 days" if selected_event in ["Super Bowl LX", "Grammy Awards"] else "1 year"
@@ -3081,10 +3150,12 @@ with tabs[2]:
         days = 42
         baseline = 45
         event_day = 14
+        halo_days = int(display_halo.replace("d", ""))
+        peak_val = int(display_peak)
         np.random.seed(hash(selected_event) % 2**31)
         x_days = list(range(-14, 28))
-        r_trend = [baseline + (max(0, (event["Peak"] - baseline) * np.exp(-(max(0, i - event_day)) / int(event["Halo"].replace("d", "")))) * r_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
-        s_trend = [baseline + (max(0, (event["Peak"] - baseline) * np.exp(-(max(0, i - event_day)) / int(event["Halo"].replace("d", "")))) * s_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
+        r_trend = [baseline + (max(0, (peak_val - baseline) * np.exp(-(max(0, i - event_day)) / max(1, halo_days))) * r_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
+        s_trend = [baseline + (max(0, (peak_val - baseline) * np.exp(-(max(0, i - event_day)) / max(1, halo_days))) * s_lift / 100 if i >= event_day else 0) + np.random.randn() * 4 for i in range(days)]
     
     fig_moment = go.Figure()
     if brand_filter in ["Both", "Rinvoq"]:
