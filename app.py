@@ -55,6 +55,52 @@ from config import (
     DEMO_AI_INSIGHTS
 )
 
+# ═══════════════════════════════════════════════════════════════════════════
+# PAGE CONFIG (MUST BE FIRST STREAMLIT CALL)
+# ═══════════════════════════════════════════════════════════════════════════
+st.set_page_config(
+    page_title="AbbVie Immunology — Search Intelligence",
+    page_icon="💊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# AUTHENTICATION - CHECK IMMEDIATELY AFTER PAGE CONFIG
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Initialize session state for authentication
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# If not authenticated, show login screen and stop
+if not st.session_state.authenticated:
+    st.title("🔒 Access Required")
+    st.markdown("Please enter the access code to continue.")
+    
+    access_code = st.text_input(
+        "Access Code",
+        type="password",
+        placeholder="Enter access code",
+        key="access_code_input"
+    )
+    
+    if st.button("Login", use_container_width=True):
+        correct_code = st.secrets.get("ACCESS_CODE", "AbbVie2026")
+        
+        if access_code == correct_code:
+            st.session_state.authenticated = True
+            st.success("✓ Access granted!")
+            st.rerun()
+        else:
+            st.error("❌ Incorrect access code. Please try again.")
+    
+    st.stop()
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CLAUDE INITIALIZATION
+# ═══════════════════════════════════════════════════════════════════════════
+
 # Initialize Claude client
 @st.cache_resource
 def init_claude():
@@ -280,16 +326,6 @@ def estimate_sentiment(text):
         return "Negative"
     else:
         return "Neutral"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# PAGE CONFIG
-# ═══════════════════════════════════════════════════════════════════════════
-st.set_page_config(
-    page_title="AbbVie Immunology — Search Intelligence",
-    page_icon="💊",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # GOOGLE TRENDS DATA LAYER
@@ -1348,6 +1384,13 @@ with st.sidebar:
         st.write("**Data Error Message:**", st.session_state.get("data_error", "None"))
         st.write("**Keywords being fetched:**", ["Rinvoq", "Skyrizi"])
         st.write("**Note:** Demo data shows predictable sine waves. Live data shows real Google Trends patterns. CSV data is from uploaded search intent files for all timeframes.")
+    
+    st.divider()
+    
+    if st.button("🔐 Logout", use_container_width=True):
+        st.session_state.authenticated = False
+        st.success("Logged out successfully")
+        st.rerun()
 
 # ═══════════════════════════════════════════════════════════════════════════
 # INITIALIZE DEFAULT INDICATION VALUE

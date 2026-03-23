@@ -14,9 +14,13 @@ maxUploadSize = 200
 
 [client]
 toolbarMode = "minimal"
+theme = "light"
 
 [browser]
 gatherUsageStats = false
 
 [logger]
 level = "info"
+
+[secrets]
+ACCESS_CODE = "AbbVie2026"
