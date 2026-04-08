@@ -2227,14 +2227,6 @@ with tabs[0]:
     c1, c2 = st.columns(2)
     
     with c1:
-        # Add info tooltip about seasonality calculation
-        st.markdown("""
-        <div style='display: flex; align-items: center; gap: 8px; margin-bottom: 8px;'>
-            <span style='font-size: 14px; font-weight: 500;'>Seasonality</span>
-            <span title='For 5-year timeframe: average of each month across all years. For 1-year and shorter: data from the recent period.' style='cursor: help; font-size: 14px; color: #0c7fd4; font-weight: bold;'>ⓘ</span>
-        </div>
-        """, unsafe_allow_html=True)
-        
         # Generate seasonality data based on actual trend data and current timeframe
         seasonality_data = generate_seasonality_data(trend_df, current_timeframe)
         
@@ -2245,7 +2237,7 @@ with tabs[0]:
         if brand_filter != "Rinvoq" and "Skyrizi" in seasonality_data.columns:
             fig_season.add_trace(go.Bar(x=seasonality_data["Month"], y=seasonality_data["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI, opacity=0.8,
                 hovertemplate="<b>Skyrizi</b><br>Month: %{x}<br>Index: <b>%{y:.1f}</b><extra></extra>"))
-        fig_season.update_layout(title="", height=300, barmode="group", yaxis=dict(range=[0, 100]), template="plotly_white", margin=dict(t=20, b=20),
+        fig_season.update_layout(title="Seasonality", height=350, barmode="group", yaxis=dict(range=[0, 100]), template="plotly_white", margin=dict(t=30, b=20),
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_season, use_container_width=True)
     
@@ -2260,9 +2252,12 @@ with tabs[0]:
         if brand_filter != "Rinvoq":
             fig_yoy.add_trace(go.Bar(x=interest_data["period"], y=interest_data["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
                 hovertemplate="<b>Skyrizi</b><br>%{x}<br>Avg Interest: <b>%{y:.1f}</b><extra></extra>"))
-        fig_yoy.update_layout(title="Average Search Interest Over Time", height=300, barmode="group", template="plotly_white", margin=dict(t=40, b=20),
+        fig_yoy.update_layout(title="Average Search Interest Over Time", height=350, barmode="group", template="plotly_white", margin=dict(t=30, b=20),
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_yoy, use_container_width=True)
+    
+    # Info note about seasonality calculation
+    st.caption("ℹ️ Seasonality averages across all years for 5-year view, or shows recent period for shorter timeframes")
     
     render_insight_bubble("Average search interest trends reveal market demand patterns and seasonal peaks—allocate budget to periods showing sustained +30% above baseline for maximum campaign effectiveness.", "📊")
     
