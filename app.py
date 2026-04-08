@@ -2344,20 +2344,11 @@ with tabs[0]:
     else:  # Skyrizi
         queries_df = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
     
-    # Google Trends Query Explanation
-    with st.expander("ℹ️ About these metrics", expanded=False):
-        st.markdown("""
-        **Users searching for your term also searched for these queries.**
-        
-        - **Top** — The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
-        
-        - **Rising** — Queries with the biggest increase in search frequency since the last time period. Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
-        """)
-    
     q1, q2 = st.columns(2)
     
     with q1:
         st.subheader("Top Search Queries")
+        st.info("The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.", icon="ℹ️")
         top_q = queries_df.sort_values("Index", ascending=False).head(8)
         if not top_q.empty:
             for _, row in top_q.iterrows():
@@ -2370,6 +2361,7 @@ with tabs[0]:
     
     with q2:
         st.subheader("Rising Queries")
+        st.info("Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.", icon="ℹ️")
         if not DEMO_RISING_QUERIES.empty:
             rising_q = DEMO_RISING_QUERIES.head(8)
             for _, row in rising_q.iterrows():
@@ -2772,21 +2764,12 @@ with tabs[1]:
     
     st.markdown("---")
     
-    # Google Trends Query Explanation
-    with st.expander("ℹ️ About these metrics", expanded=False):
-        st.markdown("""
-        **Users searching for your term also searched for these queries.**
-        
-        - **Top** — The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
-        
-        - **Rising** — Queries with the biggest increase in search frequency since the last time period. Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
-        """)
-    
     # Top Search Queries and Rising Queries Table - Side by Side
     col1, col2 = st.columns(2)
     
     with col1:
         st.subheader("Top Search Queries")
+        st.info("The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.", icon="ℹ️")
         top_queries_display = filtered_queries.sort_values("Index", ascending=False).head(8)
         if not top_queries_display.empty:
             for _, row in top_queries_display.iterrows():
@@ -2799,7 +2782,7 @@ with tabs[1]:
     
     with col2:
         st.subheader("Rising Queries")
-        # Filter rising queries by brand
+        st.info("Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.", icon="ℹ️")
         rising_display = DEMO_RISING_QUERIES.copy()
         if brand_filter == "Rinvoq":
             rising_display = rising_display[rising_display["Brand"].isin(["Rinvoq", "Both"])]
@@ -3036,6 +3019,7 @@ with tabs[3]:
     
     with comp_col1:
         st.subheader("Top Search Queries")
+        st.info("The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.", icon="ℹ️")
         comp_top_queries = comp_queries.sort_values("Index", ascending=False).head(8)
         if not comp_top_queries.empty:
             for _, row in comp_top_queries.iterrows():
@@ -3048,6 +3032,7 @@ with tabs[3]:
     
     with comp_col2:
         st.subheader("Rising Queries")
+        st.info("Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.", icon="ℹ️")
         comp_rising_queries = comp_rising.head(8)
         if not comp_rising_queries.empty:
             for _, row in comp_rising_queries.iterrows():
@@ -3464,16 +3449,6 @@ with tabs[2]:
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
     
-    # Google Trends Query Explanation
-    with st.expander("ℹ️ About these metrics", expanded=False):
-        st.markdown("""
-        **Users searching for your term also searched for these queries.**
-        
-        - **Top** — The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
-        
-        - **Rising** — Queries with the biggest increase in search frequency since the last time period. Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
-        """)
-    
     # Filter queries by brand only (no additional filters)
     km_queries = DEMO_QUERIES.copy()
     if brand_filter == "Both":
@@ -3497,6 +3472,7 @@ with tabs[2]:
     
     with km_col1:
         st.subheader("Top Search Queries")
+        st.info("The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.", icon="ℹ️")
         km_top_queries = km_queries.sort_values("Index", ascending=False).head(8)
         if not km_top_queries.empty:
             for _, row in km_top_queries.iterrows():
@@ -3509,7 +3485,7 @@ with tabs[2]:
     
     with km_col2:
         st.subheader("Rising Queries")
-        km_rising_queries = km_rising.head(8)
+        st.info("Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.", icon="ℹ️")
         if not km_rising_queries.empty:
             for _, row in km_rising_queries.iterrows():
                 color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
