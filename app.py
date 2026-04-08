@@ -1849,10 +1849,23 @@ if brand_filter != "Both":
     DEMO_QUERIES = DEMO_QUERIES[(DEMO_QUERIES["Brand"] == brand_filter) | (DEMO_QUERIES["Brand"] == "Both")]
 
 # ═══════════════════════════════════════════════════════════════════════════
-# UPDATE LAST REFRESH TIMESTAMP
+# UPDATE LAST REFRESH TIMESTAMP (AUTO-DETECT FROM DATA FILES)
 # ═══════════════════════════════════════════════════════════════════════════
-# Data last updated: March 18, 2026
-last_data_update = datetime(2026, 3, 18)
+def get_latest_data_update():
+    """Get the modification timestamp of the most recent CSV file in the data directory."""
+    data_dir = Path("data")
+    if not data_dir.exists():
+        return datetime(2026, 3, 18)  # Fallback date
+    
+    csv_files = list(data_dir.glob("*.csv"))
+    if not csv_files:
+        return datetime(2026, 3, 18)  # Fallback date
+    
+    # Get the file with the most recent modification time
+    latest_file = max(csv_files, key=lambda p: p.stat().st_mtime)
+    return datetime.fromtimestamp(latest_file.stat().st_mtime)
+
+last_data_update = get_latest_data_update()
 
 # Display last data refresh date
 formatted_time = last_data_update.strftime("%B %d, %Y")
