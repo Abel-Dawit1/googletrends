@@ -1851,13 +1851,12 @@ if brand_filter != "Both":
 # ═══════════════════════════════════════════════════════════════════════════
 # UPDATE LAST REFRESH TIMESTAMP
 # ═══════════════════════════════════════════════════════════════════════════
-st.session_state["last_refresh_time"] = datetime.now()
+# Data last updated: March 18, 2026
+last_data_update = datetime(2026, 3, 18)
 
-# Display last refresh timestamp
-refresh_time = st.session_state.get("last_refresh_time")
-if refresh_time:
-    formatted_time = refresh_time.strftime("%B %d, %Y at %I:%M %p")
-    st.caption(f"🔄 Last refreshed: {formatted_time}")
+# Display last data refresh date
+formatted_time = last_data_update.strftime("%B %d, %Y")
+st.caption(f"📊 Data last updated: {formatted_time}")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TABS
