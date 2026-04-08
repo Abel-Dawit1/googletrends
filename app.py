@@ -2202,35 +2202,38 @@ with tabs[0]:
     
     # Top Markets - Show only selected brand(s)
     st.subheader("Top Markets")
-    dma_display = DEMO_DMA.copy()
+    states_display = DEMO_STATES.copy() if not DEMO_STATES.empty else pd.DataFrame()
 
-    if brand_filter == "Both":
-        dma_display["Avg"] = ((dma_display["Rinvoq"] + dma_display["Skyrizi"]) / 2).round().astype(int)
-        dma_display["Lead"] = dma_display.apply(lambda r: "Rinvoq" if r["Rinvoq"] > r["Skyrizi"] else "Skyrizi", axis=1)
-        columns_to_show = ["Market", "Rinvoq", "Skyrizi", "Avg", "Lead", "Trend"]
-        column_config = {
-            "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
-            "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
-        }
-        sort_column = "Avg"
-    elif brand_filter == "Rinvoq":
-        columns_to_show = ["Market", "Rinvoq", "Trend"]
-        column_config = {
-            "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
-        }
-        sort_column = "Rinvoq"
-    elif brand_filter == "Skyrizi":
-        columns_to_show = ["Market", "Skyrizi", "Trend"]
-        column_config = {
-            "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
-        }
-        sort_column = "Skyrizi"
+    if not states_display.empty:
+        if brand_filter == "Both":
+            states_display["Avg"] = ((states_display["Rinvoq"] + states_display["Skyrizi"]) / 2).round().astype(int)
+            states_display["Lead"] = states_display.apply(lambda r: "Rinvoq" if r["Rinvoq"] > r["Skyrizi"] else "Skyrizi", axis=1)
+            columns_to_show = ["State", "Rinvoq", "Skyrizi", "Avg", "Lead"]
+            column_config = {
+                "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
+                "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
+            }
+            sort_column = "Avg"
+        elif brand_filter == "Rinvoq":
+            columns_to_show = ["State", "Rinvoq"]
+            column_config = {
+                "Rinvoq": st.column_config.ProgressColumn("Rinvoq", min_value=0, max_value=100, format="%d"),
+            }
+            sort_column = "Rinvoq"
+        elif brand_filter == "Skyrizi":
+            columns_to_show = ["State", "Skyrizi"]
+            column_config = {
+                "Skyrizi": st.column_config.ProgressColumn("Skyrizi", min_value=0, max_value=100, format="%d"),
+            }
+            sort_column = "Skyrizi"
 
-    st.dataframe(
-        dma_display[columns_to_show].sort_values(sort_column, ascending=False),
-        use_container_width=True, hide_index=True,
-        column_config=column_config
-    )
+        st.dataframe(
+            states_display[columns_to_show].sort_values(sort_column, ascending=False),
+            use_container_width=True, hide_index=True,
+            column_config=column_config
+        )
+    else:
+        st.caption("No state data available for this timeframe")
     
     # Queries - Filter by brand only
     st.markdown("---")
