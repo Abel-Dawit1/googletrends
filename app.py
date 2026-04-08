@@ -1008,6 +1008,10 @@ def generate_seasonality_data(trend_df, timeframe):
     
     df = trend_df.copy()
     
+    # Ensure index is datetime
+    if not isinstance(df.index, pd.DatetimeIndex):
+        return SEASON_DATA
+    
     if timeframe == "today 5-y":
         # Average each month across all years
         df["month"] = df.index.month
@@ -1024,16 +1028,19 @@ def generate_seasonality_data(trend_df, timeframe):
     else:
         # For periods <= 1 year, just show the data as is (monthly from recent period)
         # First, resample to get monthly data
-        monthly = df.resample('M').mean()
-        monthly["month_name"] = monthly.index.strftime("%b")
-        result = pd.DataFrame({
-            "Month": monthly["month_name"],
-        })
-        if "Rinvoq" in monthly.columns:
-            result["Rinvoq"] = monthly["Rinvoq"].round(1)
-        if "Skyrizi" in monthly.columns:
-            result["Skyrizi"] = monthly["Skyrizi"].round(1)
-        return result.tail(12)  # Return last 12 months
+        try:
+            monthly = df.resample('ME').mean()
+            monthly["month_name"] = monthly.index.strftime("%b")
+            result = pd.DataFrame({
+                "Month": monthly["month_name"],
+            })
+            if "Rinvoq" in monthly.columns:
+                result["Rinvoq"] = monthly["Rinvoq"].round(1)
+            if "Skyrizi" in monthly.columns:
+                result["Skyrizi"] = monthly["Skyrizi"].round(1)
+            return result.tail(12)  # Return last 12 months
+        except Exception:
+            return SEASON_DATA
 
 def generate_interest_over_time_data(trend_df, timeframe):
     """Generate average search interest aggregated by year, month, or day based on timeframe."""
