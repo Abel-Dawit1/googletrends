@@ -2284,11 +2284,15 @@ with tabs[0]:
     with q1:
         st.subheader("Top Search Queries")
         top_q = queries_df.sort_values("Index", ascending=False).head(8)
-        for _, row in top_q.iterrows():
-            color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
-            st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
-                        f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
-                        f"<span style='font-weight:700;color:{color}'>{row['Index']}</span></div>", unsafe_allow_html=True)
+        if not top_q.empty:
+            for _, row in top_q.iterrows():
+                color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+                st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                            f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                            f"<span style='font-weight:700;color:{color};font-size:12px'>{int(row['Index'])}</span></div>", unsafe_allow_html=True)
+        else:
+            st.caption("No data available")
+    
     with q2:
         st.subheader("Rising Queries")
         if not DEMO_RISING_QUERIES.empty:
@@ -2298,9 +2302,9 @@ with tabs[0]:
                 growth_label = str(row["Growth"]) if row["Growth"] and row["Growth"] != "nan" else "Breakout"
                 st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
                             f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
-                            f"<span style='font-weight:700;color:{color};font-size:11px'>{growth_label}</span></div>", unsafe_allow_html=True)
+                            f"<span style='font-weight:700;color:{color};font-size:12px'>{growth_label}</span></div>", unsafe_allow_html=True)
         else:
-            st.info("🚀 No rising queries data available for this timeframe.")
+            st.caption("No data available")
     
     # AI Insight
     st.markdown("---")
