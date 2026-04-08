@@ -997,6 +997,44 @@ SEASON_DATA = pd.DataFrame({
     "Skyrizi": [72,68,62,70,80,90,95,88,75,68,70,78],
 })
 
+def generate_seasonality_data(trend_df, timeframe):
+    """Generate seasonality data by averaging by month.
+    
+    For 5-year timeframe: average each month across ALL years
+    For 1-year and under: average each month from just the recent period
+    """
+    if trend_df is None or trend_df.empty:
+        return SEASON_DATA
+    
+    df = trend_df.copy()
+    
+    if timeframe == "today 5-y":
+        # Average each month across all years
+        df["month"] = df.index.month
+        df["month_name"] = df.index.strftime("%b")
+        seasonality = df.groupby(["month", "month_name"]).mean().reset_index().sort_values("month")
+        result = pd.DataFrame({
+            "Month": seasonality["month_name"],
+        })
+        if "Rinvoq" in seasonality.columns:
+            result["Rinvoq"] = seasonality["Rinvoq"].round(1)
+        if "Skyrizi" in seasonality.columns:
+            result["Skyrizi"] = seasonality["Skyrizi"].round(1)
+        return result
+    else:
+        # For periods <= 1 year, just show the data as is (monthly from recent period)
+        # First, resample to get monthly data
+        monthly = df.resample('M').mean()
+        monthly["month_name"] = monthly.index.strftime("%b")
+        result = pd.DataFrame({
+            "Month": monthly["month_name"],
+        })
+        if "Rinvoq" in monthly.columns:
+            result["Rinvoq"] = monthly["Rinvoq"].round(1)
+        if "Skyrizi" in monthly.columns:
+            result["Skyrizi"] = monthly["Skyrizi"].round(1)
+        return result.tail(12)  # Return last 12 months
+
 def generate_interest_over_time_data(trend_df, timeframe):
     """Generate average search interest aggregated by year, month, or day based on timeframe."""
     if trend_df is None or trend_df.empty:
@@ -2182,13 +2220,16 @@ with tabs[0]:
     c1, c2 = st.columns(2)
     
     with c1:
+        # Generate seasonality data based on actual trend data and current timeframe
+        seasonality_data = generate_seasonality_data(trend_df, current_timeframe)
+        
         fig_season = go.Figure()
-        if brand_filter != "Skyrizi":
-            fig_season.add_trace(go.Bar(x=SEASON_DATA["Month"], y=SEASON_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ, opacity=0.8,
-                hovertemplate="<b>Rinvoq</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
-        if brand_filter != "Rinvoq":
-            fig_season.add_trace(go.Bar(x=SEASON_DATA["Month"], y=SEASON_DATA["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI, opacity=0.8,
-                hovertemplate="<b>Skyrizi</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
+        if brand_filter != "Skyrizi" and "Rinvoq" in seasonality_data.columns:
+            fig_season.add_trace(go.Bar(x=seasonality_data["Month"], y=seasonality_data["Rinvoq"], name="Rinvoq", marker_color=RINVOQ, opacity=0.8,
+                hovertemplate="<b>Rinvoq</b><br>Month: %{x}<br>Index: <b>%{y:.1f}</b><extra></extra>"))
+        if brand_filter != "Rinvoq" and "Skyrizi" in seasonality_data.columns:
+            fig_season.add_trace(go.Bar(x=seasonality_data["Month"], y=seasonality_data["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI, opacity=0.8,
+                hovertemplate="<b>Skyrizi</b><br>Month: %{x}<br>Index: <b>%{y:.1f}</b><extra></extra>"))
         fig_season.update_layout(title="Seasonality", height=300, barmode="group", yaxis=dict(range=[0, 100]), template="plotly_white", margin=dict(t=40, b=20),
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_season, use_container_width=True)
