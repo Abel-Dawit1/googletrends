@@ -2766,36 +2766,29 @@ with tabs[1]:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("📊 Top Search Queries")
-        st.caption("Ranked by search interest index")
-        top_queries_display = filtered_queries.sort_values("Index", ascending=False)[["Query", "Brand", "Index"]].head(10).reset_index(drop=True)
-        st.dataframe(
-            top_queries_display,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Index": st.column_config.NumberColumn("Index", format="%d"),
-            }
-        )
+        st.subheader("Top Search Queries")
+        top_queries_display = filtered_queries.sort_values("Index", ascending=False).head(8)
+        if not top_queries_display.empty:
+            for _, row in top_queries_display.iterrows():
+                color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+                st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                            f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                            f"<span style='font-weight:700;color:{color};font-size:12px'>{int(row['Index'])}</span></div>", unsafe_allow_html=True)
+        else:
+            st.caption("No data available")
     
     with col2:
-        st.subheader("🚀 Rising Queries")
-        st.caption("Ranked by growth rate")
-        rising_queries_display = filtered_queries[filtered_queries["Growth"] > 0].sort_values("Growth", ascending=False)[["Query", "Brand", "Growth"]].head(10).reset_index(drop=True)
-        
-        # Add breakout indicator
-        rising_queries_display["Status"] = rising_queries_display.apply(
-            lambda row: "🔥 Breakout" if row["Growth"] >= 500 else "📈 Growing", axis=1
-        )
-        
-        st.dataframe(
-            rising_queries_display[["Query", "Brand", "Status", "Growth"]],
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%"),
-            }
-        )
+        st.subheader("Rising Queries")
+        rising_queries_display = filtered_queries[filtered_queries["Growth"] > 0].sort_values("Growth", ascending=False).head(8)
+        if not rising_queries_display.empty:
+            for _, row in rising_queries_display.iterrows():
+                color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+                growth_label = str(row["Growth"]) if row["Growth"] and row["Growth"] != "nan" else "Breakout"
+                st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                            f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                            f"<span style='font-weight:700;color:{color};font-size:12px'>{growth_label}</span></div>", unsafe_allow_html=True)
+        else:
+            st.caption("No data available")
     
     st.info("📊 **Index:** Higher scores (0-100 scale) indicate greater search interest. Useful for identifying peak demand periods and relative market strength.")
 
@@ -2983,34 +2976,7 @@ with tabs[3]:
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
     
-    # Add indication filter for this section
-    comp_current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
-    comp_current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
-    comp_ind_options = list(comp_current_ind_names.values())
-    if franchise != "All":
-        comp_ind_keys = comp_current_franchise_map.get(franchise, [])
-        comp_ind_options = [comp_current_ind_names.get(k, k) for k in comp_ind_keys]
-    
-    # Create two columns for filters
-    comp_filter_col1, comp_filter_col2 = st.columns(2)
-    
-    with comp_filter_col1:
-        comp_indication = st.selectbox(
-            "Indication",
-            ["All"] + comp_ind_options,
-            label_visibility="visible",
-            key="comp_indication_filter"
-        )
-    
-    with comp_filter_col2:
-        comp_competitor = st.selectbox(
-            "Competitor",
-            ["All"] + COMPETITORS,
-            label_visibility="visible",
-            key="comp_competitor_filter"
-        )
-    
-    # Filter queries by brand and indication
+    # Filter queries by brand only (no additional filters)
     comp_queries = DEMO_QUERIES.copy()
     if brand_filter == "Both":
         pass  # Keep all
@@ -3019,40 +2985,33 @@ with tabs[3]:
     else:  # Skyrizi
         comp_queries = comp_queries[comp_queries["Brand"].isin(["Skyrizi", "Both"])]
     
-    if comp_indication != "All":
-        comp_queries = comp_queries[(comp_queries["Indication"] == comp_indication) | (comp_queries["Indication"] == "All")]
-    
-    # Filter by competitor if selected
-    if comp_competitor != "All":
-        comp_queries = comp_queries[comp_queries["Query"].str.contains(comp_competitor, case=False, na=False)]
-    
     # Display tables side by side
     comp_col1, comp_col2 = st.columns(2)
     
     with comp_col1:
-        st.markdown("**📊 Top Search Queries**")
-        st.caption("Ranked by search interest index")
-        comp_top_queries = comp_queries.sort_values("Index", ascending=False)[["Query", "Brand", "Index"]].head(10).reset_index(drop=True)
-        st.dataframe(
-            comp_top_queries,
-            use_container_width=True,
-            hide_index=True,
-            column_config={"Index": st.column_config.NumberColumn("Index", format="%d")}
-        )
+        st.subheader("Top Search Queries")
+        comp_top_queries = comp_queries.sort_values("Index", ascending=False).head(8)
+        if not comp_top_queries.empty:
+            for _, row in comp_top_queries.iterrows():
+                color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+                st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                            f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                            f"<span style='font-weight:700;color:{color};font-size:12px'>{int(row['Index'])}</span></div>", unsafe_allow_html=True)
+        else:
+            st.caption("No data available")
     
     with comp_col2:
-        st.markdown("**🚀 Rising Queries**")
-        st.caption("Ranked by growth rate")
-        comp_rising_queries = comp_queries[comp_queries["Growth"] > 0].sort_values("Growth", ascending=False)[["Query", "Brand", "Growth"]].head(10).reset_index(drop=True)
-        comp_rising_queries["Status"] = comp_rising_queries.apply(
-            lambda row: "🔥 Breakout" if row["Growth"] >= 500 else "📈 Growing", axis=1
-        )
-        st.dataframe(
-            comp_rising_queries[["Query", "Brand", "Status", "Growth"]],
-            use_container_width=True,
-            hide_index=True,
-            column_config={"Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%")}
-        )
+        st.subheader("Rising Queries")
+        comp_rising_queries = comp_queries[comp_queries["Growth"] > 0].sort_values("Growth", ascending=False).head(8)
+        if not comp_rising_queries.empty:
+            for _, row in comp_rising_queries.iterrows():
+                color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+                growth_label = str(row["Growth"]) if row["Growth"] and row["Growth"] != "nan" else "Breakout"
+                st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                            f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                            f"<span style='font-weight:700;color:{color};font-size:12px'>{growth_label}</span></div>", unsafe_allow_html=True)
+        else:
+            st.caption("No data available")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -3459,22 +3418,7 @@ with tabs[2]:
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
     
-    # Add indication filter for this section
-    km_current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
-    km_current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
-    km_ind_options = list(km_current_ind_names.values())
-    if franchise != "All":
-        km_ind_keys = km_current_franchise_map.get(franchise, [])
-        km_ind_options = [km_current_ind_names.get(k, k) for k in km_ind_keys]
-    
-    km_indication = st.selectbox(
-        "Indication",
-        ["All"] + km_ind_options,
-        label_visibility="visible",
-        key="km_indication_filter"
-    )
-    
-    # Filter queries by brand and indication
+    # Filter queries by brand only (no additional filters)
     km_queries = DEMO_QUERIES.copy()
     if brand_filter == "Both":
         pass  # Keep all
@@ -3483,36 +3427,33 @@ with tabs[2]:
     else:  # Skyrizi
         km_queries = km_queries[km_queries["Brand"].isin(["Skyrizi", "Both"])]
     
-    if km_indication != "All":
-        km_queries = km_queries[(km_queries["Indication"] == km_indication) | (km_queries["Indication"] == "All")]
-    
     # Display tables side by side
     km_col1, km_col2 = st.columns(2)
     
     with km_col1:
-        st.markdown("**📊 Top Search Queries**")
-        st.caption("Ranked by search interest index")
-        km_top_queries = km_queries.sort_values("Index", ascending=False)[["Query", "Brand", "Index"]].head(10).reset_index(drop=True)
-        st.dataframe(
-            km_top_queries,
-            use_container_width=True,
-            hide_index=True,
-            column_config={"Index": st.column_config.NumberColumn("Index", format="%d")}
-        )
+        st.subheader("Top Search Queries")
+        km_top_queries = km_queries.sort_values("Index", ascending=False).head(8)
+        if not km_top_queries.empty:
+            for _, row in km_top_queries.iterrows():
+                color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+                st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                            f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                            f"<span style='font-weight:700;color:{color};font-size:12px'>{int(row['Index'])}</span></div>", unsafe_allow_html=True)
+        else:
+            st.caption("No data available")
     
     with km_col2:
-        st.markdown("**🚀 Rising Queries**")
-        st.caption("Ranked by growth rate")
-        km_rising_queries = km_queries[km_queries["Growth"] > 0].sort_values("Growth", ascending=False)[["Query", "Brand", "Growth"]].head(10).reset_index(drop=True)
-        km_rising_queries["Status"] = km_rising_queries.apply(
-            lambda row: "🔥 Breakout" if row["Growth"] >= 500 else "📈 Growing", axis=1
-        )
-        st.dataframe(
-            km_rising_queries[["Query", "Brand", "Status", "Growth"]],
-            use_container_width=True,
-            hide_index=True,
-            column_config={"Growth": st.column_config.NumberColumn("Growth %", format="%.0f%%")}
-        )
+        st.subheader("Rising Queries")
+        km_rising_queries = km_queries[km_queries["Growth"] > 0].sort_values("Growth", ascending=False).head(8)
+        if not km_rising_queries.empty:
+            for _, row in km_rising_queries.iterrows():
+                color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+                growth_label = str(row["Growth"]) if row["Growth"] and row["Growth"] != "nan" else "Breakout"
+                st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                            f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                            f"<span style='font-weight:700;color:{color};font-size:12px'>{growth_label}</span></div>", unsafe_allow_html=True)
+        else:
+            st.caption("No data available")
     
     # Summary table - Filter columns by brand
     st.markdown("---")
