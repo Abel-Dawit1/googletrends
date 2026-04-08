@@ -857,7 +857,7 @@ def generate_campaign_executive_summary(trend_df, client, brand_filter="Both", i
             "<strong>Seasonal peaks:</strong> Winter/spring demonstrate higher engagement for condition searches across indications",
             "<strong>Moment optimization:</strong> Label expansions and clinical data releases drive 120%+ competitive comparison search"
         ]
-        recommendation = "ACR Annual Meeting (Nov) drove +35% Rinvoq lift and is the single highest-performing moment. Super Bowl drove +22% Skyrizi lift over 5 days. NFL Playoffs sustained 16% Skyrizi lift over 6 days. Action: Allocate 40% of annual budget to ACR week + Q1 (Jan-Mar) when RA searches peak AND couple with Super Bowl/Olympics for additional 10-15% lift. These are proven moments—don't miss them."
+        recommendation = "Super Bowl drove +22% Skyrizi lift over 5 days. Winter Olympics showed 14-day halo effect. Grammy Awards drove +15% Skyrizi lift with psoriasis awareness messaging. Action: Couple entertainment and sports moments with clinical milestone campaigns for maximum lift. These are proven moments—don't miss them."
         return callouts, recommendation
     
     try:
@@ -882,7 +882,7 @@ Keep to 1-2 sentences each, focused on timing and opportunity."""
             "<strong>Seasonality insight:</strong> Q1 shows consistent search peaks—optimize media spend seasonally",
             "<strong>Moment tracking:</strong> Clinical data releases and competitive comparisons driving search surges"
         ]
-        recommendation = "ACR Annual Meeting drove +35% Rinvoq lift (highest moment). Super Bowl drove +22% Skyrizi (5 days), NFL Playoffs +16% (6 days). Action: Allocate 40% of annual budget to ACR week + Q1 (Jan-Mar) when RA searches peak. Couple with Super Bowl/Olympics for additional 10-15% lift. These are proven moments."
+        recommendation = "Super Bowl drove +22% Skyrizi lift (5 days). Winter Olympics showed 14-day halo. Grammy Awards drove +15% lift with psoriasis awareness. Couple entertainment and sports moments with clinical messaging for maximum impact. These are proven moments."
         return callouts, recommendation
 
 
@@ -1094,10 +1094,7 @@ YOY_DATA = pd.DataFrame({
 # Realistic demo moments data as fallback
 DEMO_MOMENTS_DATA = [
     {"Event": "Super Bowl LX", "Category": "Sports", "Date": "Feb 9, 2026", "Rinvoq Lift": "+18%", "Skyrizi Lift": "+22%", "Peak": 82, "Halo": "5d", "Breakout": "Rinvoq commercial", "Insight": "Super Bowl drove a 22% Skyrizi search lift sustained 5 days, strongest in 25–44 demo and Sun Belt DMAs."},
-    {"Event": "ACR Annual Meeting", "Category": "Conference", "Date": "Nov 2025", "Rinvoq Lift": "+35%", "Skyrizi Lift": "+8%", "Peak": 95, "Halo": "10d", "Breakout": "upadacitinib data", "Insight": "ACR delivers highest Rinvoq lift (+35%) driven by HCP search for clinical data. Single most important event."},
-    {"Event": "NFL Playoffs", "Category": "Sports", "Date": "Jan 2025", "Rinvoq Lift": "+14%", "Skyrizi Lift": "+16%", "Peak": 74, "Halo": "6d", "Breakout": "Skyrizi NFL ad", "Insight": "NFL Playoffs provide sustained multi-week exposure. Skyrizi 16% lift exceeded single-event spikes."},
     {"Event": "Grammy Awards", "Category": "Entertainment", "Date": "Feb 2, 2026", "Rinvoq Lift": "+8%", "Skyrizi Lift": "+15%", "Peak": 65, "Halo": "3d", "Breakout": "psoriasis awareness", "Insight": "Grammy Awards drove targeted lift via celebrity psoriasis awareness moments."},
-    {"Event": "Mother's Day", "Category": "Cultural", "Date": "May 11, 2025", "Rinvoq Lift": "+10%", "Skyrizi Lift": "+14%", "Peak": 68, "Halo": "4d", "Breakout": "caregiver support", "Insight": "Caregiver campaigns drove 14% Skyrizi lift on quality-of-life messaging."},
     {"Event": "Winter Olympics", "Category": "Sports", "Date": "Feb 2026", "Rinvoq Lift": "+12%", "Skyrizi Lift": "+10%", "Peak": 72, "Halo": "14d", "Breakout": "athlete sponsorship", "Insight": "Extended 14-day halo. Joint RA/PsA messaging resonated with active lifestyle narrative."},
 ]
 
