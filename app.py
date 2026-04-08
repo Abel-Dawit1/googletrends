@@ -997,6 +997,49 @@ SEASON_DATA = pd.DataFrame({
     "Skyrizi": [72,68,62,70,80,90,95,88,75,68,70,78],
 })
 
+def generate_interest_over_time_data(trend_df, timeframe):
+    """Generate average search interest aggregated by year, month, or day based on timeframe."""
+    if trend_df is None or trend_df.empty:
+        # Return default data
+        return pd.DataFrame({
+            "period": ["2022", "2023", "2024", "2025"],
+            "Rinvoq": [12, 28, 33, 38],
+            "Skyrizi": [20, 35, 40, 45],
+        })
+    
+    df = trend_df.copy()
+    
+    # Determine aggregation level based on timeframe
+    if timeframe == "today 5-y":
+        # Aggregate by year
+        df["year"] = df.index.year
+        aggregated = df.groupby("year").mean().reset_index()
+        aggregated["period"] = aggregated["year"].astype(str)
+    elif timeframe in ["today 12-m", "today 3-m"]:
+        # Aggregate by month
+        df["year_month"] = df.index.strftime("%b %y")
+        aggregated = df.groupby("year_month", sort=False).mean().reset_index()
+        aggregated["period"] = aggregated["year_month"]
+    elif timeframe in ["today 1-m", "now 7-d"]:
+        # Aggregate by day
+        df["date"] = df.index.strftime("%b %d")
+        aggregated = df.groupby("date", sort=False).mean().reset_index()
+        aggregated["period"] = aggregated["date"]
+    else:
+        # Default to month
+        df["year_month"] = df.index.strftime("%b %y")
+        aggregated = df.groupby("year_month", sort=False).mean().reset_index()
+        aggregated["period"] = aggregated["year_month"]
+    
+    # Rename columns to match the original structure and round values
+    result = aggregated[["period"]].copy()
+    if "Rinvoq" in aggregated.columns:
+        result["Rinvoq"] = aggregated["Rinvoq"].round(1)
+    if "Skyrizi" in aggregated.columns:
+        result["Skyrizi"] = aggregated["Skyrizi"].round(1)
+    
+    return result
+
 YOY_DATA = pd.DataFrame({
     "Year": ["2022","2023","2024","2025"],
     "Rinvoq": [12,28,33,38],
@@ -2151,18 +2194,21 @@ with tabs[0]:
         st.plotly_chart(fig_season, use_container_width=True)
     
     with c2:
+        # Generate interest data based on current timeframe
+        interest_data = generate_interest_over_time_data(trend_df, current_timeframe)
+        
         fig_yoy = go.Figure()
         if brand_filter != "Skyrizi":
-            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Year"], y=YOY_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ,
-                hovertemplate="<b>Rinvoq</b><br>Year: %{x}<br>Growth: <b>%{y:.0f}%</b><extra></extra>"))
+            fig_yoy.add_trace(go.Bar(x=interest_data["period"], y=interest_data["Rinvoq"], name="Rinvoq", marker_color=RINVOQ,
+                hovertemplate="<b>Rinvoq</b><br>%{x}<br>Avg Interest: <b>%{y:.1f}</b><extra></extra>"))
         if brand_filter != "Rinvoq":
-            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Year"], y=YOY_DATA["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
-                hovertemplate="<b>Skyrizi</b><br>Year: %{x}<br>Growth: <b>%{y:.0f}%</b><extra></extra>"))
-        fig_yoy.update_layout(title="Year-over-Year Growth (%)", height=300, barmode="group", template="plotly_white", margin=dict(t=40, b=20),
+            fig_yoy.add_trace(go.Bar(x=interest_data["period"], y=interest_data["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
+                hovertemplate="<b>Skyrizi</b><br>%{x}<br>Avg Interest: <b>%{y:.1f}</b><extra></extra>"))
+        fig_yoy.update_layout(title="Average Search Interest Over Time", height=300, barmode="group", template="plotly_white", margin=dict(t=40, b=20),
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_yoy, use_container_width=True)
     
-    render_insight_bubble("YoY growth trends indicate market momentum and competitive positioning—prioritize indications and regions showing sustained +30%+ growth for campaign focus.", "📊")
+    render_insight_bubble("Average search interest trends reveal market demand patterns and seasonal peaks—allocate budget to periods showing sustained +30% above baseline for maximum campaign effectiveness.", "📊")
     
     # Indication Pies - Show only selected brand(s)
     if brand_filter == "Both":
