@@ -2252,7 +2252,7 @@ with tabs[0]:
         if brand_filter != "Rinvoq":
             fig_yoy.add_trace(go.Bar(x=interest_data["period"], y=interest_data["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
                 hovertemplate="<b>Skyrizi</b><br>%{x}<br>Avg Interest: <b>%{y:.1f}</b><extra></extra>"))
-        fig_yoy.update_layout(title="Average Search Interest Over Time", height=350, barmode="group", template="plotly_white", margin=dict(t=30, b=20),
+        fig_yoy.update_layout(title="Average Search Interest Over Time", height=350, barmode="group", yaxis=dict(range=[0, 100]), template="plotly_white", margin=dict(t=30, b=20),
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_yoy, use_container_width=True)
     
