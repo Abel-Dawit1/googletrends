@@ -2779,7 +2779,14 @@ with tabs[1]:
     
     with col2:
         st.subheader("Rising Queries")
-        rising_queries_display = filtered_queries[filtered_queries["Growth"] > 0].sort_values("Growth", ascending=False).head(8)
+        # Filter rising queries by brand
+        rising_display = DEMO_RISING_QUERIES.copy()
+        if brand_filter == "Rinvoq":
+            rising_display = rising_display[rising_display["Brand"].isin(["Rinvoq", "Both"])]
+        elif brand_filter == "Skyrizi":
+            rising_display = rising_display[rising_display["Brand"].isin(["Skyrizi", "Both"])]
+        
+        rising_queries_display = rising_display.head(8)
         if not rising_queries_display.empty:
             for _, row in rising_queries_display.iterrows():
                 color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
@@ -2985,6 +2992,15 @@ with tabs[3]:
     else:  # Skyrizi
         comp_queries = comp_queries[comp_queries["Brand"].isin(["Skyrizi", "Both"])]
     
+    # Filter rising queries by brand
+    comp_rising = DEMO_RISING_QUERIES.copy()
+    if brand_filter == "Both":
+        pass  # Keep all
+    elif brand_filter == "Rinvoq":
+        comp_rising = comp_rising[comp_rising["Brand"].isin(["Rinvoq", "Both"])]
+    else:  # Skyrizi
+        comp_rising = comp_rising[comp_rising["Brand"].isin(["Skyrizi", "Both"])]
+    
     # Display tables side by side
     comp_col1, comp_col2 = st.columns(2)
     
@@ -3002,7 +3018,7 @@ with tabs[3]:
     
     with comp_col2:
         st.subheader("Rising Queries")
-        comp_rising_queries = comp_queries[comp_queries["Growth"] > 0].sort_values("Growth", ascending=False).head(8)
+        comp_rising_queries = comp_rising.head(8)
         if not comp_rising_queries.empty:
             for _, row in comp_rising_queries.iterrows():
                 color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
@@ -3427,6 +3443,15 @@ with tabs[2]:
     else:  # Skyrizi
         km_queries = km_queries[km_queries["Brand"].isin(["Skyrizi", "Both"])]
     
+    # Filter rising queries by brand
+    km_rising = DEMO_RISING_QUERIES.copy()
+    if brand_filter == "Both":
+        pass  # Keep all
+    elif brand_filter == "Rinvoq":
+        km_rising = km_rising[km_rising["Brand"].isin(["Rinvoq", "Both"])]
+    else:  # Skyrizi
+        km_rising = km_rising[km_rising["Brand"].isin(["Skyrizi", "Both"])]
+    
     # Display tables side by side
     km_col1, km_col2 = st.columns(2)
     
@@ -3444,7 +3469,7 @@ with tabs[2]:
     
     with km_col2:
         st.subheader("Rising Queries")
-        km_rising_queries = km_queries[km_queries["Growth"] > 0].sort_values("Growth", ascending=False).head(8)
+        km_rising_queries = km_rising.head(8)
         if not km_rising_queries.empty:
             for _, row in km_rising_queries.iterrows():
                 color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
