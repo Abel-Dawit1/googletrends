@@ -3483,6 +3483,7 @@ with tabs[2]:
     with km_col2:
         st.subheader("Rising Queries")
         st.info("Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.", icon="ℹ️")
+        km_rising_queries = km_rising.head(8)
         if not km_rising_queries.empty:
             for _, row in km_rising_queries.iterrows():
                 color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
