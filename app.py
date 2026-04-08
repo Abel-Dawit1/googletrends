@@ -2356,7 +2356,7 @@ with tabs[0]:
             st.caption("No data available")
     
     with q2:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked \\"Breakout\\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked &quot;Breakout&quot; had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
         if not DEMO_RISING_QUERIES.empty:
             rising_q = DEMO_RISING_QUERIES.head(8)
             for _, row in rising_q.iterrows():
@@ -2775,7 +2775,7 @@ with tabs[1]:
             st.caption("No data available")
     
     with col2:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked \\"Breakout\\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked &quot;Breakout&quot; had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
         rising_display = DEMO_RISING_QUERIES.copy()
         if brand_filter == "Rinvoq":
             rising_display = rising_display[rising_display["Brand"].isin(["Rinvoq", "Both"])]
@@ -3023,7 +3023,7 @@ with tabs[3]:
             st.caption("No data available")
     
     with comp_col2:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked \\"Breakout\\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked &quot;Breakout&quot; had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
         comp_rising_queries = comp_rising.head(8)
         if not comp_rising_queries.empty:
             for _, row in comp_rising_queries.iterrows():
@@ -3474,7 +3474,7 @@ with tabs[2]:
             st.caption("No data available")
     
     with km_col2:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked \\"Breakout\\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked &quot;Breakout&quot; had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
         km_rising_queries = km_rising.head(8)
         if not km_rising_queries.empty:
             for _, row in km_rising_queries.iterrows():
