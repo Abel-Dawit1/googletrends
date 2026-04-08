@@ -2344,7 +2344,7 @@ with tabs[0]:
     q1, q2 = st.columns(2)
     
     with q1:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Top Search Queries</span><span title="The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.write("### Top Search Queries", help="The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.")
         top_q = queries_df.sort_values("Index", ascending=False).head(8)
         if not top_q.empty:
             for _, row in top_q.iterrows():
@@ -2356,7 +2356,7 @@ with tabs[0]:
             st.caption("No data available")
     
     with q2:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked &quot;Breakout&quot; had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.write("### Rising Queries", help="Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.")
         if not DEMO_RISING_QUERIES.empty:
             rising_q = DEMO_RISING_QUERIES.head(8)
             for _, row in rising_q.iterrows():
@@ -2763,7 +2763,7 @@ with tabs[1]:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Top Search Queries</span><span title="The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.write("### Top Search Queries", help="The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.")
         top_queries_display = filtered_queries.sort_values("Index", ascending=False).head(8)
         if not top_queries_display.empty:
             for _, row in top_queries_display.iterrows():
@@ -2775,7 +2775,7 @@ with tabs[1]:
             st.caption("No data available")
     
     with col2:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked &quot;Breakout&quot; had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.write("### Rising Queries", help="Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.")
         rising_display = DEMO_RISING_QUERIES.copy()
         if brand_filter == "Rinvoq":
             rising_display = rising_display[rising_display["Brand"].isin(["Rinvoq", "Both"])]
@@ -3011,7 +3011,7 @@ with tabs[3]:
     comp_col1, comp_col2 = st.columns(2)
     
     with comp_col1:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Top Search Queries</span><span title="The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.write("### Top Search Queries", help="The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.")
         comp_top_queries = comp_queries.sort_values("Index", ascending=False).head(8)
         if not comp_top_queries.empty:
             for _, row in comp_top_queries.iterrows():
@@ -3023,7 +3023,7 @@ with tabs[3]:
             st.caption("No data available")
     
     with comp_col2:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked &quot;Breakout&quot; had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.write("### Rising Queries", help="Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.")
         comp_rising_queries = comp_rising.head(8)
         if not comp_rising_queries.empty:
             for _, row in comp_rising_queries.iterrows():
@@ -3462,7 +3462,7 @@ with tabs[2]:
     km_col1, km_col2 = st.columns(2)
     
     with km_col1:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Top Search Queries</span><span title="The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.write("### Top Search Queries", help="The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.")
         km_top_queries = km_queries.sort_values("Index", ascending=False).head(8)
         if not km_top_queries.empty:
             for _, row in km_top_queries.iterrows():
@@ -3474,7 +3474,7 @@ with tabs[2]:
             st.caption("No data available")
     
     with km_col2:
-        st.markdown('<span style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px; font-weight: 600;">Rising Queries</span><span title="Queries with the biggest increase in search frequency since the last time period. Results marked &quot;Breakout&quot; had a tremendous increase, probably because these queries are new and had few (if any) prior searches." style="cursor: help; font-size: 18px;">ℹ️</span></span>', unsafe_allow_html=True)
+        st.write("### Rising Queries", help="Queries with the biggest increase in search frequency since the last time period. Results marked \"Breakout\" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.")
         km_rising_queries = km_rising.head(8)
         if not km_rising_queries.empty:
             for _, row in km_rising_queries.iterrows():
