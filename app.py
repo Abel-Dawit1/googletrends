@@ -2344,6 +2344,16 @@ with tabs[0]:
     else:  # Skyrizi
         queries_df = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
     
+    # Google Trends Query Explanation
+    with st.expander("ℹ️ About these metrics", expanded=False):
+        st.markdown("""
+        **Users searching for your term also searched for these queries.**
+        
+        - **Top** — The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
+        
+        - **Rising** — Queries with the biggest increase in search frequency since the last time period. Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
+        """)
+    
     q1, q2 = st.columns(2)
     
     with q1:
@@ -2762,6 +2772,16 @@ with tabs[1]:
     
     st.markdown("---")
     
+    # Google Trends Query Explanation
+    with st.expander("ℹ️ About these metrics", expanded=False):
+        st.markdown("""
+        **Users searching for your term also searched for these queries.**
+        
+        - **Top** — The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
+        
+        - **Rising** — Queries with the biggest increase in search frequency since the last time period. Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
+        """)
+    
     # Top Search Queries and Rising Queries Table - Side by Side
     col1, col2 = st.columns(2)
     
@@ -2982,6 +3002,16 @@ with tabs[3]:
     # Top Search Queries and Rising Queries for Competitive Tab
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
+    
+    # Google Trends Query Explanation
+    with st.expander("ℹ️ About these metrics", expanded=False):
+        st.markdown("""
+        **Users searching for your term also searched for these queries.**
+        
+        - **Top** — The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
+        
+        - **Rising** — Queries with the biggest increase in search frequency since the last time period. Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
+        """)
     
     # Filter queries by brand only (no additional filters)
     comp_queries = DEMO_QUERIES.copy()
@@ -3433,6 +3463,16 @@ with tabs[2]:
     # Top Search Queries and Rising Queries for Key Moments
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
+    
+    # Google Trends Query Explanation
+    with st.expander("ℹ️ About these metrics", expanded=False):
+        st.markdown("""
+        **Users searching for your term also searched for these queries.**
+        
+        - **Top** — The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
+        
+        - **Rising** — Queries with the biggest increase in search frequency since the last time period. Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
+        """)
     
     # Filter queries by brand only (no additional filters)
     km_queries = DEMO_QUERIES.copy()
