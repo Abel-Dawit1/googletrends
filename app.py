@@ -998,9 +998,9 @@ SEASON_DATA = pd.DataFrame({
 })
 
 YOY_DATA = pd.DataFrame({
-    "Quarter": ["Q1'23","Q2'23","Q3'23","Q4'23","Q1'24","Q2'24","Q3'24","Q4'24"],
-    "Rinvoq": [12,18,22,19,28,31,35,38],
-    "Skyrizi": [20,24,28,32,35,40,42,45],
+    "Year": ["2022","2023","2024","2025"],
+    "Rinvoq": [12,28,33,38],
+    "Skyrizi": [20,35,40,45],
 })
 
 # Realistic demo moments data as fallback
@@ -2153,11 +2153,11 @@ with tabs[0]:
     with c2:
         fig_yoy = go.Figure()
         if brand_filter != "Skyrizi":
-            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Quarter"], y=YOY_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ,
-                hovertemplate="<b>Rinvoq</b><br>Quarter: %{x}<br>Growth: <b>%{y:.0f}%</b><extra></extra>"))
+            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Year"], y=YOY_DATA["Rinvoq"], name="Rinvoq", marker_color=RINVOQ,
+                hovertemplate="<b>Rinvoq</b><br>Year: %{x}<br>Growth: <b>%{y:.0f}%</b><extra></extra>"))
         if brand_filter != "Rinvoq":
-            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Quarter"], y=YOY_DATA["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
-                hovertemplate="<b>Skyrizi</b><br>Quarter: %{x}<br>Growth: <b>%{y:.0f}%</b><extra></extra>"))
+            fig_yoy.add_trace(go.Bar(x=YOY_DATA["Year"], y=YOY_DATA["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
+                hovertemplate="<b>Skyrizi</b><br>Year: %{x}<br>Growth: <b>%{y:.0f}%</b><extra></extra>"))
         fig_yoy.update_layout(title="Year-over-Year Growth (%)", height=300, barmode="group", template="plotly_white", margin=dict(t=40, b=20),
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_yoy, use_container_width=True)
