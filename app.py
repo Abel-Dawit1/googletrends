@@ -1628,6 +1628,50 @@ def _parse_top_queries_csv(file_path, brand):
     out_df["Brand"] = brand
     return out_df[["Query", "Brand", "Index", "Growth"]]
 
+def _parse_rising_queries_csv(file_path, brand):
+    """Parse RISING queries from a CSV file and return standardized columns."""
+    try:
+        df = pd.read_csv(
+            file_path,
+            skiprows=2,
+            header=None,
+            usecols=[0, 1],
+            names=["Query", "Value"],
+            engine="python",
+        )
+    except Exception:
+        return None
+
+    if df is None or df.empty:
+        return None
+
+    df["Query"] = df["Query"].astype(str).str.strip()
+    df["Value"] = df["Value"].astype(str).str.strip()
+
+    # Find the RISING section
+    rising_markers = df["Query"].str.upper() == "RISING"
+    if not rising_markers.any():
+        return None
+
+    rising_idx = rising_markers[rising_markers].index[0]
+    
+    # Extract rows after RISING marker
+    section_df = df.loc[df.index > rising_idx, ["Query", "Value"]].copy()
+    
+    # Remove empty rows
+    section_df = section_df[section_df["Query"].astype(str).str.strip() != ""]
+    
+    if section_df.empty:
+        return None
+
+    # Set Index to 100 for all rising queries (or use the Value column if it contains numeric data)
+    out_df = section_df[["Query"]].copy()
+    out_df["Index"] = 100  # Rising queries all have same priority
+    out_df["Growth"] = "Breakout"
+    out_df["Brand"] = brand
+    
+    return out_df[["Query", "Brand", "Index", "Growth"]]
+
 @st.cache_data(ttl=7200)
 def load_csv_top_queries_data(timeframe, data_signature=None):
     """Load top queries from CSV files for both brands by timeframe.
@@ -1697,6 +1741,53 @@ def get_top_queries_data_signature():
         except Exception:
             signature.append((path.name, 0, 0))
     return tuple(signature)
+
+@st.cache_data(ttl=7200)
+def load_csv_rising_queries_data(timeframe, data_signature=None):
+    """Load rising queries from CSV files for both brands by timeframe."""
+    timeframe_map = {
+        "now 7-d": "7 days",
+        "today 1-m": "30 days",
+        "today 3-m": "90 days",
+        "today 12-m": "1 year",
+        "today 5-y": "5 year",
+    }
+
+    time_label = timeframe_map.get(timeframe)
+    if not time_label:
+        return None
+
+    data_dir = Path("data")
+    if not data_dir.exists():
+        return None
+
+    query_frames = []
+    for brand in ["Rinvoq", "Skyrizi"]:
+        all_candidates = [
+            p for p in data_dir.iterdir()
+            if p.is_file()
+            and brand.lower() in p.name.lower()
+            and time_label.lower() in p.name.lower()
+            and "geomap" not in p.name.lower()
+        ]
+
+        # Prefer explicitly named top query exports first, then other candidates
+        top_query_candidates = sorted([p for p in all_candidates if "top quer" in p.name.lower()])
+        other_candidates = sorted([p for p in all_candidates if "top quer" not in p.name.lower()])
+        candidates = top_query_candidates + other_candidates
+
+        for file_path in candidates:
+            parsed = _parse_rising_queries_csv(file_path, brand)
+            if parsed is not None and not parsed.empty:
+                query_frames.append(parsed)
+                break
+
+    if not query_frames:
+        return None
+
+    combined = pd.concat(query_frames, ignore_index=True)
+    combined = combined.drop_duplicates(subset=["Query", "Brand"], keep="first")
+    return combined if not combined.empty else None
 
 def load_data(timeframe_key, brand_filter, indication="All"):
     """Load trend data with priority: Live API → CSV (as fallback) → Demo."""
@@ -1847,6 +1938,26 @@ if indication != "All":
 if brand_filter != "Both":
     # Filter by brand
     DEMO_QUERIES = DEMO_QUERIES[(DEMO_QUERIES["Brand"] == brand_filter) | (DEMO_QUERIES["Brand"] == "Both")]
+
+# Load rising queries from CSV
+csv_rising_queries = load_csv_rising_queries_data(
+    st.session_state.get("current_timeframe", "today 3-m"),
+    get_top_queries_data_signature(),
+)
+
+if csv_rising_queries is not None and not csv_rising_queries.empty:
+    DEMO_RISING_QUERIES = csv_rising_queries.copy()
+    DEMO_RISING_QUERIES["Type"] = "rising"
+    DEMO_RISING_QUERIES["Indication"] = "All"
+else:
+    DEMO_RISING_QUERIES = pd.DataFrame(columns=["Query", "Brand", "Index", "Growth", "Type", "Indication"])
+
+# Filter DEMO_RISING_QUERIES by brand and indication
+if indication != "All":
+    DEMO_RISING_QUERIES = DEMO_RISING_QUERIES[(DEMO_RISING_QUERIES["Indication"] == indication) | (DEMO_RISING_QUERIES["Indication"] == "All")]
+
+if brand_filter != "Both":
+    DEMO_RISING_QUERIES = DEMO_RISING_QUERIES[(DEMO_RISING_QUERIES["Brand"] == brand_filter) | (DEMO_RISING_QUERIES["Brand"] == "Both")]
 
 # ═══════════════════════════════════════════════════════════════════════════
 # DISPLAY DATA REFRESH DATE
@@ -2180,7 +2291,16 @@ with tabs[0]:
                         f"<span style='font-weight:700;color:{color}'>{row['Index']}</span></div>", unsafe_allow_html=True)
     with q2:
         st.subheader("Rising Queries")
-        st.info("🚀 Coming soon — Rising queries data will be available after CSV integration is completed.")
+        if not DEMO_RISING_QUERIES.empty:
+            rising_q = DEMO_RISING_QUERIES.head(8)
+            for _, row in rising_q.iterrows():
+                color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
+                growth_label = str(row["Growth"]) if row["Growth"] and row["Growth"] != "nan" else "Breakout"
+                st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6'>"
+                            f"<span style='flex:1;font-size:13px'>{row['Query']}</span>"
+                            f"<span style='font-weight:700;color:{color};font-size:11px'>{growth_label}</span></div>", unsafe_allow_html=True)
+        else:
+            st.info("🚀 No rising queries data available for this timeframe.")
     
     # AI Insight
     st.markdown("---")
