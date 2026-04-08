@@ -2232,32 +2232,9 @@ with tabs[0]:
         column_config=column_config
     )
     
-    # Queries - Filter by brand, indication, and type
+    # Queries - Filter by brand only
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
-    
-    # Add indication filter at the top
-    dma_current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
-    dma_current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
-    dma_ind_options = list(dma_current_ind_names.values())
-    if franchise != "All":
-        dma_ind_keys = dma_current_franchise_map.get(franchise, [])
-        dma_ind_options = [dma_current_ind_names.get(k, k) for k in dma_ind_keys]
-    
-    dma_indication = st.selectbox(
-        "Indication",
-        ["All"] + dma_ind_options,
-        label_visibility="visible",
-        key="dma_indication_filter"
-    )
-    
-    # Filter by query type
-    query_type_filter = st.selectbox(
-        "Filter by query type:",
-        ["All", "Branded keywords", "Condition terms", "Intent-related"],
-        key="query_type_filter",
-        help="Brand-focused, condition-focused, or patient intent queries"
-    )
     
     # Apply brand filter
     if brand_filter == "Both":
@@ -2266,18 +2243,6 @@ with tabs[0]:
         queries_df = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]
     else:  # Skyrizi
         queries_df = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
-    
-    # Apply indication filter
-    if dma_indication != "All":
-        queries_df = queries_df[(queries_df["Indication"] == dma_indication) | (queries_df["Indication"] == "All")]
-    
-    # Apply type filter to queries
-    if query_type_filter == "Branded keywords":
-        queries_df = queries_df[queries_df["Type"].isin(["branded"])]
-    elif query_type_filter == "Condition terms":
-        queries_df = queries_df[queries_df["Type"].isin(["condition", "generic"])]
-    elif query_type_filter == "Intent-related":
-        queries_df = queries_df[queries_df["Type"].isin(["safety", "competitive"])]
     
     q1, q2 = st.columns(2)
     
