@@ -1597,6 +1597,39 @@ def load_dupixent_csv_data(timeframe):
     except Exception as e:
         return None
 
+@st.cache_data(ttl=7200)
+def load_humira_csv_data(timeframe):
+    """Load Humira trend data from CSV files (uses different naming convention)."""
+    # Map pytrends timeframe to Humira CSV filename pattern
+    timeframe_map = {
+        "now 7-d": "7 days",
+        "today 1-m": "1 month",
+        "today 3-m": "90 days",
+        "today 12-m": "1 year",
+        "today 5-y": "5 years",
+    }
+    
+    time_label = timeframe_map.get(timeframe)
+    if not time_label:
+        return None
+    
+    try:
+        filename = f"data/Humira Search Intent {time_label}.csv"
+        if not os.path.exists(filename):
+            return None
+        
+        # Read CSV, skip the header rows
+        df = pd.read_csv(filename, skiprows=2)
+        df.columns = ['date', 'value']
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.sort_values('date')
+        df = df.set_index('date')
+        df.columns = ['Humira']
+        
+        return df
+    except Exception as e:
+        return None
+
 def load_csv_geomap_data(timeframe):
     """Load geomap (state-level) data from CSV files for both brands and combine them.
     
@@ -2944,6 +2977,11 @@ with tabs[3]:
     if dupixent_12m_df is not None:
         dfs.append(dupixent_12m_df)
     
+    # Also load Humira 12-month data
+    humira_12m_df = load_humira_csv_data("today 12-m")
+    if humira_12m_df is not None:
+        dfs.append(humira_12m_df)
+    
     if dfs:
         comp_12m_df = pd.concat(dfs, axis=1)
     
@@ -2953,11 +2991,13 @@ with tabs[3]:
         rin_current = int(comp_12m_df["Rinvoq"].iloc[-1]) if "Rinvoq" in comp_12m_df.columns else 82
         tremfya_current = int(comp_12m_df["Tremfya"].iloc[-1]) if "Tremfya" in comp_12m_df.columns else 65
         dupixent_current = int(comp_12m_df["Dupixent"].iloc[-1]) if "Dupixent" in comp_12m_df.columns else 60
+        humira_current = int(comp_12m_df["Humira"].iloc[-1]) if "Humira" in comp_12m_df.columns else 70
     else:
         sky_current = 88
         rin_current = 82
         tremfya_current = 65
         dupixent_current = 60
+        humira_current = 70
     
     # KPIs - Use real data for portfolio brands and selected competitors, demo data for others
     np.random.seed(99)
@@ -2965,9 +3005,10 @@ with tabs[3]:
         {"Brand": "Skyrizi", "Index": sky_current, "Color": SKYRIZI},
         {"Brand": "Rinvoq", "Index": rin_current, "Color": RINVOQ},
         {"Brand": "Tremfya", "Index": tremfya_current, "Color": COMP_COLORS["Tremfya"]},
-        {"Brand": "Dupixent", "Index": dupixent_current, "Color": COMP_COLORS["Dupixent"]}
+        {"Brand": "Dupixent", "Index": dupixent_current, "Color": COMP_COLORS["Dupixent"]},
+        {"Brand": "Humira", "Index": humira_current, "Color": COMP_COLORS["Humira"]}
     ]
-    all_brands += [{"Brand": c, "Index": np.random.randint(30, 75), "Color": COMP_COLORS[c]} for c in COMPETITORS if c not in ["Tremfya", "Dupixent"]]
+    all_brands += [{"Brand": c, "Index": np.random.randint(30, 75), "Color": COMP_COLORS[c]} for c in COMPETITORS if c not in ["Tremfya", "Dupixent", "Humira"]]
     brand_df = pd.DataFrame(all_brands).sort_values("Index", ascending=False).reset_index(drop=True)
     
     ck1, ck2, ck3, ck4 = st.columns(4)
@@ -3037,6 +3078,11 @@ with tabs[3]:
     dupixent_df = load_dupixent_csv_data(current_timeframe)
     if dupixent_df is not None:
         dfs.append(dupixent_df)
+    
+    # Also load Humira data
+    humira_df = load_humira_csv_data(current_timeframe)
+    if humira_df is not None:
+        dfs.append(humira_df)
     
     if dfs:
         comp_trend_df = pd.concat(dfs, axis=1)
@@ -3156,6 +3202,22 @@ with tabs[3]:
                 trend_data = trend_series.resample('W').mean().values.tolist()
             
             color = COMP_COLORS.get("Dupixent", "#999")
+        elif brand == "Humira" and comp_trend_df is not None and "Humira" in comp_trend_df.columns:
+            trend_series = comp_trend_df["Humira"]
+            
+            # Aggregate based on timeframe
+            if current_timeframe == "now 7-d":
+                trend_data = trend_series.values.tolist()
+            elif current_timeframe == "today 1-m":
+                trend_data = trend_series.values.tolist()
+            elif current_timeframe == "today 3-m":
+                trend_data = trend_series.resample('W').mean().values.tolist()
+            elif current_timeframe == "today 5-y":
+                trend_data = trend_series.resample('W').mean().values.tolist()
+            else:  # today 12-m - use weekly aggregation to match Overview tab
+                trend_data = trend_series.resample('W').mean().values.tolist()
+            
+            color = COMP_COLORS.get("Humira", "#999")
         else:
             # Demo data for competitors (until user provides real data)
             if current_timeframe == "now 7-d":
