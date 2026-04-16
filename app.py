@@ -3039,59 +3039,7 @@ with tabs[3]:
         humira_current = 70
         entyvio_current = 55
     
-    # Display KPIs for each brand's average search intent index
-    st.subheader("📊 Average Search Index by Brand")
-    
-    kpi_cols = st.columns(6)
-    brands_order = ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]
-    brand_colors_map = {
-        "Skyrizi": SKYRIZI,
-        "Rinvoq": RINVOQ,
-        "Humira": COMP_COLORS["Humira"],
-        "Tremfya": COMP_COLORS["Tremfya"],
-        "Dupixent": COMP_COLORS["Dupixent"],
-        "Entyvio": COMP_COLORS["Entyvio"]
-    }
-    
-    for i, brand in enumerate(brands_order):
-        with kpi_cols[i]:
-            avg_index = brand_averages.get(brand, 0)
-            color = brand_colors_map[brand]
-            st.metric(
-                brand,
-                avg_index,
-                f"avg index",
-                help=f"Average search interest index for {brand} across {timeframe_label} period"
-            )
-    
-    # Competitive Trend Over Time - Respects timeframe filter
-    st.markdown("---")
-    st.subheader("📈 Competitive Trend Over Time")
-    timeframe_label = {
-        "now 7-d": "7-day",
-        "today 1-m": "30-day",
-        "today 3-m": "3-month",
-        "today 12-m": "12-month",
-        "today 5-y": "5-year"
-    }.get(current_timeframe, "12-month")
-    st.caption(f"Competitor brands — trailing {timeframe_label} search index")
-    
-    # Brand selection filter for this chart
-    available_brands = ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]
-    selected_brands = []
-    
-    with st.expander("📊 Select brands to display", expanded=False):
-        cols = st.columns(2)
-        for i, brand in enumerate(available_brands):
-            with cols[i % 2]:
-                if st.checkbox(brand, value=True, key=f"comp_trend_{brand}"):
-                    selected_brands.append(brand)
-    
-    if not selected_brands:
-        st.warning("Please select at least one brand to display.")
-        selected_brands = available_brands  # Fallback to all if none selected
-    
-    # Load trend data from CSV for selected timeframe
+    # Load trend data from CSV for selected timeframe (needed for KPI calculation)
     comp_trend_df = None
     dfs = []
     for brand in ["Rinvoq", "Skyrizi"]:
@@ -3132,6 +3080,60 @@ with tabs[3]:
                 brand_averages[brand] = 0
     else:
         brand_averages = {brand: 0 for brand in ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]}
+    
+    # Define timeframe label for display
+    timeframe_label = {
+        "now 7-d": "7-day",
+        "today 1-m": "30-day",
+        "today 3-m": "3-month",
+        "today 12-m": "12-month",
+        "today 5-y": "5-year"
+    }.get(current_timeframe, "12-month")
+    
+    # Display KPIs for each brand's average search intent index
+    st.subheader("📊 Average Search Index by Brand")
+    
+    kpi_cols = st.columns(6)
+    brands_order = ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]
+    brand_colors_map = {
+        "Skyrizi": SKYRIZI,
+        "Rinvoq": RINVOQ,
+        "Humira": COMP_COLORS["Humira"],
+        "Tremfya": COMP_COLORS["Tremfya"],
+        "Dupixent": COMP_COLORS["Dupixent"],
+        "Entyvio": COMP_COLORS["Entyvio"]
+    }
+    
+    for i, brand in enumerate(brands_order):
+        with kpi_cols[i]:
+            avg_index = brand_averages.get(brand, 0)
+            color = brand_colors_map[brand]
+            st.metric(
+                brand,
+                avg_index,
+                f"avg index",
+                help=f"Average search interest index for {brand} across {timeframe_label} period"
+            )
+    
+    # Competitive Trend Over Time - Respects timeframe filter
+    st.markdown("---")
+    st.subheader("📈 Competitive Trend Over Time")
+    st.caption(f"Competitor brands — trailing {timeframe_label} search index")
+    
+    # Brand selection filter for this chart
+    available_brands = ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]
+    selected_brands = []
+    
+    with st.expander("📊 Select brands to display", expanded=False):
+        cols = st.columns(2)
+        for i, brand in enumerate(available_brands):
+            with cols[i % 2]:
+                if st.checkbox(brand, value=True, key=f"comp_trend_{brand}"):
+                    selected_brands.append(brand)
+    
+    if not selected_brands:
+        st.warning("Please select at least one brand to display.")
+        selected_brands = available_brands  # Fallback to all if none selected
     
     # Generate actual date labels based on timeframe and available data
     periods = []
