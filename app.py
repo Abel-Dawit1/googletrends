@@ -1538,7 +1538,7 @@ def load_tremfya_csv_data(timeframe):
     timeframe_map = {
         "now 7-d": "7 days",
         "today 1-m": "1 month",
-        "today 3-m": "1 month",  # Use 1 month as approximation for 3-month
+        "today 3-m": "90 days",
         "today 12-m": "1 year",
         "today 5-y": "5 years",
     }
@@ -1571,7 +1571,7 @@ def load_dupixent_csv_data(timeframe):
     timeframe_map = {
         "now 7-d": "7 days",
         "today 1-m": "1 month",
-        "today 3-m": "1 month",  # Use 1 month as approximation for 3-month
+        "today 3-m": "90 days",
         "today 12-m": "1 year",
         "today 5-y": "5 years",
     }
