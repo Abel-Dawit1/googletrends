@@ -2946,16 +2946,28 @@ with tabs[3]:
     if dfs:
         comp_trend_df = pd.concat(dfs, axis=1)
     
-    # Generate period labels based on timeframe
-    if current_timeframe == "now 7-d":
-        periods = [f"Day {i+1}" for i in range(7)]
-    elif current_timeframe == "today 1-m":
-        periods = [f"Day {i+1}" for i in range(30)]
-    elif current_timeframe == "today 3-m":
-        periods = [f"Week {i+1}" for i in range(13)]
-    elif current_timeframe == "today 5-y":
-        periods = [str(y) for y in range(2021, 2026)]
-    else:  # today 12-m
+    # Generate actual date labels based on timeframe and available data
+    periods = []
+    if comp_trend_df is not None and len(comp_trend_df) > 0:
+        index = comp_trend_df.index
+        if current_timeframe == "now 7-d":
+            periods = [d.strftime("%b %d") for d in index]
+        elif current_timeframe == "today 1-m":
+            periods = [d.strftime("%b %d") for d in index]
+        elif current_timeframe == "today 3-m":
+            # Weekly aggregation - get week start dates
+            weekly_dates = comp_trend_df.resample('W').mean().index
+            periods = [d.strftime("%b %d") for d in weekly_dates]
+        elif current_timeframe == "today 12-m":
+            # Monthly aggregation
+            monthly_dates = comp_trend_df.resample('ME').mean().index
+            periods = [d.strftime("%b %y") for d in monthly_dates]
+        elif current_timeframe == "today 5-y":
+            # Yearly aggregation
+            yearly_dates = comp_trend_df.resample('YE').mean().index
+            periods = [d.strftime("%Y") for d in yearly_dates]
+    else:
+        # Fallback to season months
         periods = SEASON_DATA["Month"].tolist()
     
     # Generate 12-month trend data for top 5 competitors
@@ -2970,20 +2982,16 @@ with tabs[3]:
             
             # Aggregate based on timeframe
             if current_timeframe == "now 7-d":
-                trend_data = trend_series.values.tolist() if len(trend_series) >= 7 else trend_series.values.tolist() + [trend_series.iloc[-1]] * (7 - len(trend_series))
+                trend_data = trend_series.values.tolist()
             elif current_timeframe == "today 1-m":
-                trend_data = trend_series.values.tolist() if len(trend_series) >= 30 else trend_series.values.tolist() + [trend_series.iloc[-1]] * (30 - len(trend_series))
+                trend_data = trend_series.values.tolist()
             elif current_timeframe == "today 3-m":
-                trend_data = trend_series.resample('W').mean().values.tolist() if len(trend_series) > 0 else []
+                trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
-                trend_data = trend_series.resample('YE').mean().values.tolist() if len(trend_series) > 0 else []
+                trend_data = trend_series.resample('YE').mean().values.tolist()
             else:  # today 12-m
-                trend_data = trend_series.resample('ME').mean().values.tolist() if len(trend_series) > 0 else []
+                trend_data = trend_series.resample('ME').mean().values.tolist()
             
-            # Pad to expected length
-            if len(trend_data) < len(periods):
-                trend_data = trend_data + [trend_data[-1] if trend_data else 50] * (len(periods) - len(trend_data))
-            trend_data = trend_data[:len(periods)]
             color = SKYRIZI
             
         elif brand == "Rinvoq" and comp_trend_df is not None and "Rinvoq" in comp_trend_df.columns:
@@ -2991,47 +2999,43 @@ with tabs[3]:
             
             # Aggregate based on timeframe
             if current_timeframe == "now 7-d":
-                trend_data = trend_series.values.tolist() if len(trend_series) >= 7 else trend_series.values.tolist() + [trend_series.iloc[-1]] * (7 - len(trend_series))
+                trend_data = trend_series.values.tolist()
             elif current_timeframe == "today 1-m":
-                trend_data = trend_series.values.tolist() if len(trend_series) >= 30 else trend_series.values.tolist() + [trend_series.iloc[-1]] * (30 - len(trend_series))
+                trend_data = trend_series.values.tolist()
             elif current_timeframe == "today 3-m":
-                trend_data = trend_series.resample('W').mean().values.tolist() if len(trend_series) > 0 else []
+                trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
-                trend_data = trend_series.resample('YE').mean().values.tolist() if len(trend_series) > 0 else []
+                trend_data = trend_series.resample('YE').mean().values.tolist()
             else:  # today 12-m
-                trend_data = trend_series.resample('ME').mean().values.tolist() if len(trend_series) > 0 else []
+                trend_data = trend_series.resample('ME').mean().values.tolist()
             
-            # Pad to expected length
-            if len(trend_data) < len(periods):
-                trend_data = trend_data + [trend_data[-1] if trend_data else 50] * (len(periods) - len(trend_data))
-            trend_data = trend_data[:len(periods)]
             color = RINVOQ
         else:
             # Demo data for competitors (until user provides real data)
             if current_timeframe == "now 7-d":
-                trend_data = [30 + np.random.randint(-5, 10) for i in range(7)]
+                trend_data = [50 + np.random.randint(-10, 10) for i in range(len(periods))]
             elif current_timeframe == "today 1-m":
-                trend_data = [30 + np.random.randint(-8, 12) for i in range(30)]
+                trend_data = [50 + np.random.randint(-10, 10) for i in range(len(periods))]
             elif current_timeframe == "today 3-m":
-                trend_data = [30 + np.random.randint(-10, 15) for i in range(13)]
+                trend_data = [50 + np.random.randint(-10, 15) for i in range(len(periods))]
             elif current_timeframe == "today 5-y":
-                trend_data = [30 + np.random.randint(-10, 15) for i in range(5)]
+                trend_data = [50 + np.random.randint(-10, 15) for i in range(len(periods))]
             else:  # today 12-m
-                trend_data = [30 + np.random.randint(-10, 15) + np.sin(i/4)*5 for i in range(12)]
+                trend_data = [50 + np.random.randint(-10, 15) + np.sin(i/4)*5 for i in range(len(periods))]
             color = COMP_COLORS.get(brand, "#999")
         
         fig_comp_trend.add_trace(go.Scatter(
             x=periods, y=trend_data, name=brand,
             line=dict(color=color, width=2.5),
             mode="lines",
-            hovertemplate=f"<b>{brand}</b><br>Period: %{{x}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
+            hovertemplate=f"<b>{brand}</b><br>Date: %{{x}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
         ))
     
     # Dynamic x-axis label based on timeframe
     xaxis_labels = {
-        "now 7-d": "Day",
-        "today 1-m": "Day",
-        "today 3-m": "Week",
+        "now 7-d": "Date",
+        "today 1-m": "Date",
+        "today 3-m": "Date",
         "today 12-m": "Month",
         "today 5-y": "Year"
     }
