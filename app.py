@@ -3104,12 +3104,14 @@ with tabs[3]:
     
     # Brand selection filter for this chart
     available_brands = ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]
-    selected_brands = st.multiselect(
-        "Select brands to display:",
-        available_brands,
-        default=available_brands,
-        key="comp_trend_brands"
-    )
+    selected_brands = []
+    
+    with st.expander("📊 Select brands to display", expanded=False):
+        cols = st.columns(2)
+        for i, brand in enumerate(available_brands):
+            with cols[i % 2]:
+                if st.checkbox(brand, value=True, key=f"comp_trend_{brand}"):
+                    selected_brands.append(brand)
     
     if not selected_brands:
         st.warning("Please select at least one brand to display.")
