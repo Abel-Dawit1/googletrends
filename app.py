@@ -3102,6 +3102,19 @@ with tabs[3]:
     }.get(current_timeframe, "12-month")
     st.caption(f"Competitor brands — trailing {timeframe_label} search index")
     
+    # Brand selection filter for this chart
+    available_brands = ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]
+    selected_brands = st.multiselect(
+        "Select brands to display:",
+        available_brands,
+        default=available_brands,
+        key="comp_trend_brands"
+    )
+    
+    if not selected_brands:
+        st.warning("Please select at least one brand to display.")
+        selected_brands = available_brands  # Fallback to all if none selected
+    
     # Load trend data from CSV for selected timeframe
     comp_trend_df = None
     dfs = []
@@ -3177,7 +3190,6 @@ with tabs[3]:
         periods = SEASON_DATA["Month"].tolist()
     
     # Display selected competitor brands on the chart
-    selected_brands = ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]
     
     fig_comp_trend = go.Figure()
     
