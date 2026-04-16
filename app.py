@@ -3039,56 +3039,30 @@ with tabs[3]:
         humira_current = 70
         entyvio_current = 55
     
-    # KPIs - Use real data for portfolio brands and selected competitors, demo data for others
-    np.random.seed(99)
-    all_brands = [
-        {"Brand": "Skyrizi", "Index": sky_current, "Color": SKYRIZI},
-        {"Brand": "Rinvoq", "Index": rin_current, "Color": RINVOQ},
-        {"Brand": "Humira", "Index": humira_current, "Color": COMP_COLORS["Humira"]},
-        {"Brand": "Tremfya", "Index": tremfya_current, "Color": COMP_COLORS["Tremfya"]},
-        {"Brand": "Dupixent", "Index": dupixent_current, "Color": COMP_COLORS["Dupixent"]},
-        {"Brand": "Entyvio", "Index": entyvio_current, "Color": COMP_COLORS["Entyvio"]}
-    ]
-    all_brands += [{"Brand": c, "Index": np.random.randint(30, 75), "Color": COMP_COLORS[c]} for c in COMPETITORS if c not in ["Tremfya", "Dupixent", "Humira", "Entyvio"]]
-    brand_df = pd.DataFrame(all_brands).sort_values("Index", ascending=False).reset_index(drop=True)
+    # Display KPIs for each brand's average search intent index
+    st.subheader("📊 Average Search Index by Brand")
     
-    ck1, ck2, ck3, ck4 = st.columns(4)
-    sky_rank = brand_df[brand_df["Brand"] == "Skyrizi"].index[0] + 1
-    rin_rank = brand_df[brand_df["Brand"] == "Rinvoq"].index[0] + 1
-    top_comp = brand_df[~brand_df["Brand"].isin(["Rinvoq", "Skyrizi"])].iloc[0]
-    ck1.metric(
-        "Skyrizi Rank", 
-        f"#{sky_rank}", 
-        f"of {len(brand_df)} brands",
-        help="Market ranking by search interest (lower = stronger position). Track monthly changes to monitor competitive gains/losses and emerging threats."
-    )
-    ck2.metric(
-        "Rinvoq Rank", 
-        f"#{rin_rank}", 
-        f"of {len(brand_df)} brands",
-        help="Market ranking by search interest (lower = stronger position). Track monthly changes to monitor competitive gains/losses and emerging threats."
-    )
-    ck3.metric(
-        "Top Competitor", 
-        top_comp["Brand"], 
-        f"Index {top_comp['Index']}",
-        help="Highest-ranked competitor outside portfolio. Monitor their campaigns, indications, and messaging to identify potential market vulnerabilities."
-    )
-    ck4.metric(
-        "Brands Tracked", 
-        len(brand_df), 
-        f"{len(COMPETITORS)} competitors",
-        help="Total brands in competitive set. Broader monitoring provides comprehensive market intelligence and earlier threat detection."
-    )
+    kpi_cols = st.columns(6)
+    brands_order = ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]
+    brand_colors_map = {
+        "Skyrizi": SKYRIZI,
+        "Rinvoq": RINVOQ,
+        "Humira": COMP_COLORS["Humira"],
+        "Tremfya": COMP_COLORS["Tremfya"],
+        "Dupixent": COMP_COLORS["Dupixent"],
+        "Entyvio": COMP_COLORS["Entyvio"]
+    }
     
-    render_insight_bubble("Monitor competitive index rankings monthly. Widening gaps indicate market consolidation and first-mover advantage in new indications.", "⚔️")
-    
-    fig_rank = px.bar(brand_df, x="Index", y="Brand", orientation="h", title="Competitive Index Ranking",
-                      color="Brand", color_discrete_map={b["Brand"]: b["Color"] for b in all_brands})
-    fig_rank.update_traces(hovertemplate="<b>%{y}</b><br>Index: <b>%{x:.0f}</b><extra></extra>")
-    fig_rank.update_layout(height=380, showlegend=False, margin=dict(t=40),
-                          hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
-    st.plotly_chart(fig_rank, use_container_width=True)
+    for i, brand in enumerate(brands_order):
+        with kpi_cols[i]:
+            avg_index = brand_averages.get(brand, 0)
+            color = brand_colors_map[brand]
+            st.metric(
+                brand,
+                avg_index,
+                f"avg index",
+                help=f"Average search interest index for {brand} across {timeframe_label} period"
+            )
     
     # Competitive Trend Over Time - Respects timeframe filter
     st.markdown("---")
@@ -3147,6 +3121,17 @@ with tabs[3]:
     
     if dfs:
         comp_trend_df = pd.concat(dfs, axis=1)
+    
+    # Calculate average search indices for each brand across the selected timeframe
+    brand_averages = {}
+    if comp_trend_df is not None:
+        for brand in ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]:
+            if brand in comp_trend_df.columns:
+                brand_averages[brand] = int(round(comp_trend_df[brand].mean()))
+            else:
+                brand_averages[brand] = 0
+    else:
+        brand_averages = {brand: 0 for brand in ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]}
     
     # Generate actual date labels based on timeframe and available data
     periods = []
