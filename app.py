@@ -2860,9 +2860,28 @@ with tabs[3]:
     
     st.subheader("Competitive Intelligence")
     
-    # KPIs
+    # Load real 12-month data for Skyrizi and Rinvoq
+    comp_12m_df = None
+    dfs = []
+    for brand in ["Rinvoq", "Skyrizi"]:
+        df = load_csv_trend_data(brand, "today 12-m")
+        if df is not None:
+            dfs.append(df)
+    
+    if dfs:
+        comp_12m_df = pd.concat(dfs, axis=1)
+    
+    # Calculate current indices for Skyrizi and Rinvoq from real data
+    if comp_12m_df is not None:
+        sky_current = int(comp_12m_df["Skyrizi"].iloc[-1]) if "Skyrizi" in comp_12m_df.columns else 88
+        rin_current = int(comp_12m_df["Rinvoq"].iloc[-1]) if "Rinvoq" in comp_12m_df.columns else 82
+    else:
+        sky_current = 88
+        rin_current = 82
+    
+    # KPIs - Use real data for portfolio brands, demo data for competitors
     np.random.seed(99)
-    all_brands = [{"Brand": "Skyrizi", "Index": 88, "Color": SKYRIZI}, {"Brand": "Rinvoq", "Index": 82, "Color": RINVOQ}]
+    all_brands = [{"Brand": "Skyrizi", "Index": sky_current, "Color": SKYRIZI}, {"Brand": "Rinvoq", "Index": rin_current, "Color": RINVOQ}]
     all_brands += [{"Brand": c, "Index": np.random.randint(30, 75), "Color": COMP_COLORS[c]} for c in COMPETITORS]
     brand_df = pd.DataFrame(all_brands).sort_values("Index", ascending=False).reset_index(drop=True)
     
@@ -2916,14 +2935,21 @@ with tabs[3]:
     fig_comp_trend = go.Figure()
     
     for brand in top_5_brands:
-        # Generate realistic 12-month trend data
-        if brand == "Skyrizi":
-            trend_data = [45 + i*2 + np.sin(i/3)*8 + np.random.randn()*2 for i in range(12)]
+        # Use real data for Rinvoq and Skyrizi
+        if brand == "Skyrizi" and comp_12m_df is not None and "Skyrizi" in comp_12m_df.columns:
+            trend_data = comp_12m_df["Skyrizi"].resample('ME').mean().reset_index(drop=True).tolist()
+            if len(trend_data) < 12:
+                trend_data = trend_data + [trend_data[-1]] * (12 - len(trend_data))
+            trend_data = trend_data[:12]
             color = SKYRIZI
-        elif brand == "Rinvoq":
-            trend_data = [40 + i*2.5 + np.cos(i/3)*7 + np.random.randn()*2 for i in range(12)]
+        elif brand == "Rinvoq" and comp_12m_df is not None and "Rinvoq" in comp_12m_df.columns:
+            trend_data = comp_12m_df["Rinvoq"].resample('ME').mean().reset_index(drop=True).tolist()
+            if len(trend_data) < 12:
+                trend_data = trend_data + [trend_data[-1]] * (12 - len(trend_data))
+            trend_data = trend_data[:12]
             color = RINVOQ
         else:
+            # Demo data for competitors (until user provides real data)
             trend_data = [30 + np.random.randint(-10, 15) + np.sin(i/4)*5 for i in range(12)]
             color = COMP_COLORS.get(brand, "#999")
         
@@ -2953,20 +2979,38 @@ with tabs[3]:
     
     c3, c4 = st.columns(2)
     with c3:
-        # Humira displacement
-        humira_data = pd.DataFrame({
-            "Month": SEASON_DATA["Month"],
-            "Humira": [max(20, 65 - i*3 + np.random.randint(-4, 4)) for i in range(12)],
-            "Rinvoq": [30 + i*3 + np.random.randint(-3, 3) for i in range(12)],
-            "Skyrizi": [35 + i*3 + np.random.randint(-3, 3) for i in range(12)],
-        })
+        # Humira displacement - use real data for portfolio brands
+        if comp_12m_df is not None:
+            # Extract monthly averages for real data
+            humira_data_real = pd.DataFrame({
+                "Month": SEASON_DATA["Month"],
+            })
+            if "Rinvoq" in comp_12m_df.columns:
+                humira_data_real["Rinvoq"] = comp_12m_df["Rinvoq"].resample('ME').mean().reset_index(drop=True).values[:12]
+            if "Skyrizi" in comp_12m_df.columns:
+                humira_data_real["Skyrizi"] = comp_12m_df["Skyrizi"].resample('ME').mean().reset_index(drop=True).values[:12]
+            
+            # Add demo Humira data (declining trend)
+            humira_data_real["Humira"] = [max(20, 65 - i*3 + np.random.randint(-4, 4)) for i in range(12)]
+            humira_data = humira_data_real
+        else:
+            # Fallback to full demo data
+            humira_data = pd.DataFrame({
+                "Month": SEASON_DATA["Month"],
+                "Humira": [max(20, 65 - i*3 + np.random.randint(-4, 4)) for i in range(12)],
+                "Rinvoq": [30 + i*3 + np.random.randint(-3, 3) for i in range(12)],
+                "Skyrizi": [35 + i*3 + np.random.randint(-3, 3) for i in range(12)],
+            })
+        
         fig_hum = go.Figure()
         fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Humira"], name="Humira", line=dict(color="#e67e22", dash="dash"),
             hovertemplate="<b>Humira</b> (Incumbent)<br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
-        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Rinvoq"], name="Rinvoq", line=dict(color=RINVOQ),
-            hovertemplate="<b>Rinvoq</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
-        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Skyrizi"], name="Skyrizi", line=dict(color=SKYRIZI),
-            hovertemplate="<b>Skyrizi</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
+        if "Rinvoq" in humira_data.columns:
+            fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Rinvoq"], name="Rinvoq", line=dict(color=RINVOQ),
+                hovertemplate="<b>Rinvoq</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
+        if "Skyrizi" in humira_data.columns:
+            fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Skyrizi"], name="Skyrizi", line=dict(color=SKYRIZI),
+                hovertemplate="<b>Skyrizi</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
         fig_hum.update_layout(title="Humira Displacement Trend", height=350, template="plotly_white",
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_hum, use_container_width=True)
