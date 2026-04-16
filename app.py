@@ -1054,26 +1054,32 @@ def generate_interest_over_time_data(trend_df, timeframe):
     
     df = trend_df.copy()
     
+    # Reset index to avoid ambiguity with index name conflicts
+    if df.index.name:
+        df = df.reset_index()
+    
     # Determine aggregation level based on timeframe
     if timeframe == "today 5-y":
         # Aggregate by year
-        df["year"] = df.index.year
-        aggregated = df.groupby("year").mean().reset_index()
+        # Assume first column is the datetime index (after reset)
+        date_col = df.columns[0] if df.columns[0] in ['date', 'Date'] else df.iloc[:, 0]
+        df["year"] = pd.to_datetime(df.iloc[:, 0]).dt.year
+        aggregated = df.groupby("year").mean(numeric_only=True).reset_index()
         aggregated["period"] = aggregated["year"].astype(str)
     elif timeframe in ["today 12-m", "today 3-m"]:
         # Aggregate by month
-        df["year_month"] = df.index.strftime("%b %y")
-        aggregated = df.groupby("year_month", sort=False).mean().reset_index()
+        df["year_month"] = pd.to_datetime(df.iloc[:, 0]).dt.strftime("%b %y")
+        aggregated = df.groupby("year_month", sort=False).mean(numeric_only=True).reset_index()
         aggregated["period"] = aggregated["year_month"]
     elif timeframe in ["today 1-m", "now 7-d"]:
         # Aggregate by day
-        df["date"] = df.index.strftime("%b %d")
-        aggregated = df.groupby("date", sort=False).mean().reset_index()
-        aggregated["period"] = aggregated["date"]
+        df["day_period"] = pd.to_datetime(df.iloc[:, 0]).dt.strftime("%b %d")
+        aggregated = df.groupby("day_period", sort=False).mean(numeric_only=True).reset_index()
+        aggregated["period"] = aggregated["day_period"]
     else:
         # Default to month
-        df["year_month"] = df.index.strftime("%b %y")
-        aggregated = df.groupby("year_month", sort=False).mean().reset_index()
+        df["year_month"] = pd.to_datetime(df.iloc[:, 0]).dt.strftime("%b %y")
+        aggregated = df.groupby("year_month", sort=False).mean(numeric_only=True).reset_index()
         aggregated["period"] = aggregated["year_month"]
     
     # Rename columns to match the original structure and round values
