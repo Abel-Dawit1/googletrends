@@ -28,7 +28,7 @@ COMP_COLORS = {
     "Tremfya": "#27ae60", 
     "Cosentyx": "#8e44ad", 
     "Bimzelx": "#e84393",
-    "Dupixent": "#00b894", 
+    "Dupixent": "#e74c3c", 
     "Ebglyss": "#fd79a8", 
     "Nemluvio": "#636e72",
     "Otezla": "#fdcb6e", 
