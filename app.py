@@ -3071,9 +3071,15 @@ with tabs[3]:
                 week_end = d + pd.Timedelta(days=6)
                 week_ranges.append(f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d, %Y')}")
         elif current_timeframe == "today 5-y":
-            # Yearly aggregation
-            yearly_dates = comp_trend_df.resample('YE').mean().index
-            periods = [d.strftime("%Y") for d in yearly_dates]
+            # Weekly aggregation - get week start dates and ranges
+            weekly_data = comp_trend_df.resample('W').mean()
+            weekly_dates = weekly_data.index
+            periods = [d.strftime("%b %d") for d in weekly_dates]
+            # Generate week range text for hover
+            for d in weekly_dates:
+                week_start = d
+                week_end = d + pd.Timedelta(days=6)
+                week_ranges.append(f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d, %Y')}")
     else:
         # Fallback to season months if no data
         periods = SEASON_DATA["Month"].tolist()
@@ -3096,7 +3102,7 @@ with tabs[3]:
             elif current_timeframe == "today 3-m":
                 trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
-                trend_data = trend_series.resample('YE').mean().values.tolist()
+                trend_data = trend_series.resample('W').mean().values.tolist()
             else:  # today 12-m - use weekly aggregation to match Overview tab
                 trend_data = trend_series.resample('W').mean().values.tolist()
             
@@ -3113,7 +3119,7 @@ with tabs[3]:
             elif current_timeframe == "today 3-m":
                 trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
-                trend_data = trend_series.resample('YE').mean().values.tolist()
+                trend_data = trend_series.resample('W').mean().values.tolist()
             else:  # today 12-m - use weekly aggregation to match Overview tab
                 trend_data = trend_series.resample('W').mean().values.tolist()
             
@@ -3129,7 +3135,7 @@ with tabs[3]:
             elif current_timeframe == "today 3-m":
                 trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
-                trend_data = trend_series.resample('YE').mean().values.tolist()
+                trend_data = trend_series.resample('W').mean().values.tolist()
             else:  # today 12-m - use weekly aggregation to match Overview tab
                 trend_data = trend_series.resample('W').mean().values.tolist()
             
@@ -3145,7 +3151,7 @@ with tabs[3]:
             elif current_timeframe == "today 3-m":
                 trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
-                trend_data = trend_series.resample('YE').mean().values.tolist()
+                trend_data = trend_series.resample('W').mean().values.tolist()
             else:  # today 12-m - use weekly aggregation to match Overview tab
                 trend_data = trend_series.resample('W').mean().values.tolist()
             
@@ -3164,8 +3170,8 @@ with tabs[3]:
                 trend_data = [50 + np.random.randint(-10, 15) + np.sin(i/4)*5 for i in range(len(periods))]
             color = COMP_COLORS.get(brand, "#999")
         
-        # Use week range for 3-month and 12-month (matching Overview tab behavior)
-        if current_timeframe in ["today 3-m", "today 12-m"] and week_ranges:
+        # Use week range for 3-month, 12-month, and 5-year (matching Overview tab behavior)
+        if current_timeframe in ["today 3-m", "today 12-m", "today 5-y"] and week_ranges:
             hover_template = f"<b>{brand}</b><br>Week: %{{text}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
             fig_comp_trend.add_trace(go.Scatter(
                 x=periods, y=trend_data, name=brand,
@@ -3188,7 +3194,7 @@ with tabs[3]:
         "today 1-m": "Date",
         "today 3-m": "Week",
         "today 12-m": "Week",
-        "today 5-y": "Year"
+        "today 5-y": "Week"
     }
     xaxis_label = xaxis_labels.get(current_timeframe, "Week")
     
