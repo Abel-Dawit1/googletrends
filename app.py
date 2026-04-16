@@ -2997,6 +2997,7 @@ with tabs[3]:
     
     # Generate actual date labels based on timeframe and available data
     periods = []
+    week_ranges = []  # For hover text on weekly data
     if comp_trend_df is not None and len(comp_trend_df) > 0:
         index = comp_trend_df.index
         if current_timeframe == "now 7-d":
@@ -3004,13 +3005,25 @@ with tabs[3]:
         elif current_timeframe == "today 1-m":
             periods = [d.strftime("%b %d") for d in index]
         elif current_timeframe == "today 3-m":
-            # Weekly aggregation - get week start dates
-            weekly_dates = comp_trend_df.resample('W').mean().index
+            # Weekly aggregation - get week start dates and ranges
+            weekly_data = comp_trend_df.resample('W').mean()
+            weekly_dates = weekly_data.index
             periods = [d.strftime("%b %d") for d in weekly_dates]
+            # Generate week range text for hover
+            for d in weekly_dates:
+                week_start = d
+                week_end = d + pd.Timedelta(days=6)
+                week_ranges.append(f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d, %Y')}")
         elif current_timeframe == "today 12-m":
-            # Monthly aggregation
-            monthly_dates = comp_trend_df.resample('ME').mean().index
-            periods = [d.strftime("%b %y") for d in monthly_dates]
+            # Weekly aggregation (to match Overview tab) - get week start dates and ranges
+            weekly_data = comp_trend_df.resample('W').mean()
+            weekly_dates = weekly_data.index
+            periods = [d.strftime("%b %d") for d in weekly_dates]
+            # Generate week range text for hover
+            for d in weekly_dates:
+                week_start = d
+                week_end = d + pd.Timedelta(days=6)
+                week_ranges.append(f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d, %Y')}")
         elif current_timeframe == "today 5-y":
             # Yearly aggregation
             yearly_dates = comp_trend_df.resample('YE').mean().index
@@ -3038,8 +3051,8 @@ with tabs[3]:
                 trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
                 trend_data = trend_series.resample('YE').mean().values.tolist()
-            else:  # today 12-m
-                trend_data = trend_series.resample('ME').mean().values.tolist()
+            else:  # today 12-m - use weekly aggregation to match Overview tab
+                trend_data = trend_series.resample('W').mean().values.tolist()
             
             color = SKYRIZI
             
@@ -3055,8 +3068,8 @@ with tabs[3]:
                 trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
                 trend_data = trend_series.resample('YE').mean().values.tolist()
-            else:  # today 12-m
-                trend_data = trend_series.resample('ME').mean().values.tolist()
+            else:  # today 12-m - use weekly aggregation to match Overview tab
+                trend_data = trend_series.resample('W').mean().values.tolist()
             
             color = RINVOQ
         elif brand == "Tremfya" and comp_trend_df is not None and "Tremfya" in comp_trend_df.columns:
@@ -3071,8 +3084,8 @@ with tabs[3]:
                 trend_data = trend_series.resample('W').mean().values.tolist()
             elif current_timeframe == "today 5-y":
                 trend_data = trend_series.resample('YE').mean().values.tolist()
-            else:  # today 12-m
-                trend_data = trend_series.resample('ME').mean().values.tolist()
+            else:  # today 12-m - use weekly aggregation to match Overview tab
+                trend_data = trend_series.resample('W').mean().values.tolist()
             
             color = COMP_COLORS.get("Tremfya", "#999")
         else:
@@ -3089,22 +3102,33 @@ with tabs[3]:
                 trend_data = [50 + np.random.randint(-10, 15) + np.sin(i/4)*5 for i in range(len(periods))]
             color = COMP_COLORS.get(brand, "#999")
         
-        fig_comp_trend.add_trace(go.Scatter(
-            x=periods, y=trend_data, name=brand,
-            line=dict(color=color, width=2.5),
-            mode="lines",
-            hovertemplate=f"<b>{brand}</b><br>Date: %{{x}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
-        ))
+        # Use week range for 3-month and 12-month (matching Overview tab behavior)
+        if current_timeframe in ["today 3-m", "today 12-m"] and week_ranges:
+            hover_template = f"<b>{brand}</b><br>Week: %{{text}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
+            fig_comp_trend.add_trace(go.Scatter(
+                x=periods, y=trend_data, name=brand,
+                text=week_ranges,
+                line=dict(color=color, width=2.5),
+                mode="lines",
+                hovertemplate=hover_template
+            ))
+        else:
+            fig_comp_trend.add_trace(go.Scatter(
+                x=periods, y=trend_data, name=brand,
+                line=dict(color=color, width=2.5),
+                mode="lines",
+                hovertemplate=f"<b>{brand}</b><br>Date: %{{x}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
+            ))
     
-    # Dynamic x-axis label based on timeframe
+    # Dynamic x-axis label based on timeframe (match Overview tab)
     xaxis_labels = {
         "now 7-d": "Date",
         "today 1-m": "Date",
-        "today 3-m": "Date",
-        "today 12-m": "Month",
+        "today 3-m": "Week",
+        "today 12-m": "Week",
         "today 5-y": "Year"
     }
-    xaxis_label = xaxis_labels.get(current_timeframe, "Month")
+    xaxis_label = xaxis_labels.get(current_timeframe, "Week")
     
     fig_comp_trend.update_layout(
         title="",
