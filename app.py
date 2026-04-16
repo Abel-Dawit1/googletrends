@@ -2935,7 +2935,7 @@ with tabs[3]:
     }.get(current_timeframe, "12-month")
     st.caption(f"Top 5 competitors — trailing {timeframe_label} search index")
     
-    # Load trend data for selected timeframe
+    # Load trend data from CSV for selected timeframe
     comp_trend_df = None
     dfs = []
     for brand in ["Rinvoq", "Skyrizi"]:
@@ -2967,16 +2967,16 @@ with tabs[3]:
             yearly_dates = comp_trend_df.resample('YE').mean().index
             periods = [d.strftime("%Y") for d in yearly_dates]
     else:
-        # Fallback to season months
+        # Fallback to season months if no data
         periods = SEASON_DATA["Month"].tolist()
     
-    # Generate 12-month trend data for top 5 competitors
+    # Generate trend data for top 5 competitors
     top_5_brands = brand_df.head(5)["Brand"].tolist()
     
     fig_comp_trend = go.Figure()
     
     for brand in top_5_brands:
-        # Use real data for Rinvoq and Skyrizi from current timeframe
+        # Use real data for Rinvoq and Skyrizi from CSV
         if brand == "Skyrizi" and comp_trend_df is not None and "Skyrizi" in comp_trend_df.columns:
             trend_series = comp_trend_df["Skyrizi"]
             
