@@ -33,7 +33,7 @@ COMP_COLORS = {
     "Nemluvio": "#636e72",
     "Otezla": "#fdcb6e", 
     "Icotrokinra": "#00cec9", 
-    "Entyvio": "#d35400",
+    "Entyvio": "#2980b9",
 }
 
 COMPETITORS = list(COMP_COLORS.keys())
