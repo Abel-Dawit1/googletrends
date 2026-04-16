@@ -3353,54 +3353,6 @@ with tabs[3]:
     st.markdown("---")
     render_insight_bubble("Rinvoq and Skyrizi combined control 70%+ search mindshare. Monitor these competitor trends quarterly—gaps widening in Syrizis favor across growth momentum.", "⚔️")
     
-    c3, c4 = st.columns(2)
-    with c3:
-        # Humira displacement - use real data for portfolio brands
-        if comp_12m_df is not None:
-            # Extract monthly averages for real data
-            humira_data_real = pd.DataFrame({
-                "Month": SEASON_DATA["Month"],
-            })
-            if "Rinvoq" in comp_12m_df.columns:
-                humira_data_real["Rinvoq"] = comp_12m_df["Rinvoq"].resample('ME').mean().reset_index(drop=True).values[:12]
-            if "Skyrizi" in comp_12m_df.columns:
-                humira_data_real["Skyrizi"] = comp_12m_df["Skyrizi"].resample('ME').mean().reset_index(drop=True).values[:12]
-            
-            # Add demo Humira data (declining trend)
-            humira_data_real["Humira"] = [max(20, 65 - i*3 + np.random.randint(-4, 4)) for i in range(12)]
-            humira_data = humira_data_real
-        else:
-            # Fallback to full demo data
-            humira_data = pd.DataFrame({
-                "Month": SEASON_DATA["Month"],
-                "Humira": [max(20, 65 - i*3 + np.random.randint(-4, 4)) for i in range(12)],
-                "Rinvoq": [30 + i*3 + np.random.randint(-3, 3) for i in range(12)],
-                "Skyrizi": [35 + i*3 + np.random.randint(-3, 3) for i in range(12)],
-            })
-        
-        fig_hum = go.Figure()
-        fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Humira"], name="Humira", line=dict(color="#e67e22", dash="dash"),
-            hovertemplate="<b>Humira</b> (Incumbent)<br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
-        if "Rinvoq" in humira_data.columns:
-            fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Rinvoq"], name="Rinvoq", line=dict(color=RINVOQ),
-                hovertemplate="<b>Rinvoq</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
-        if "Skyrizi" in humira_data.columns:
-            fig_hum.add_trace(go.Scatter(x=humira_data["Month"], y=humira_data["Skyrizi"], name="Skyrizi", line=dict(color=SKYRIZI),
-                hovertemplate="<b>Skyrizi</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
-        fig_hum.update_layout(title="Humira Displacement Trend", height=350, template="plotly_white",
-            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
-        st.plotly_chart(fig_hum, use_container_width=True)
-    with c4:
-        # Radar
-        fig_radar = go.Figure()
-        cats = ["RA", "Psoriasis", "PsA", "AS", "AD", "CD", "UC", "GCA"]
-        fig_radar.add_trace(go.Scatterpolar(r=[90,45,75,72,68,55,52,65], theta=cats, fill="toself", name="Rinvoq", line_color=RINVOQ))
-        fig_radar.add_trace(go.Scatterpolar(r=[15,30,20,10,85,5,5,5], theta=cats, fill="toself", name="Dupixent", line_color="#00b894"))
-        fig_radar.update_layout(title="Rinvoq vs Dupixent — Indication Overlap", height=350, polar=dict(radialaxis=dict(range=[0, 100])))
-        st.plotly_chart(fig_radar, use_container_width=True)
-    
-    st.info("⚔️ **Competitive Insight:** Humira's biosimilar erosion is accelerating — its search index has declined ~45% over 12 months, creating a capture window for both brands. Recommend increasing defensive bidding on competitor comparison queries and allocating Humira displacement budget to top rheumatology DMAs.")
-    
     # Top Search Queries and Rising Queries for Competitive Tab
     st.markdown("---")
     st.subheader("📊 Search Query Insights")
