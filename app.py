@@ -2356,7 +2356,25 @@ with tabs[0]:
         hoverlabel=dict(bgcolor="white", font_size=13, font_family="sans-serif", namelength=-1)
     )
     st.plotly_chart(fig_trend, use_container_width=True)
-    render_insight_bubble("Monitor significant peaks and valleys—they signal competitive shifts or indication-specific demand surges that can inform campaign timing and budget allocation.", "📈")
+    
+    # Calculate peaks and valleys for dynamic insight
+    peak_valley_insight = "Monitor significant peaks and valleys—they signal competitive shifts or indication-specific demand surges that can inform campaign timing and budget allocation."
+    if trend_df is not None and len(trend_df) > 0:
+        try:
+            if brand_filter != "Skyrizi" and "Rinvoq" in trend_df.columns:
+                rin_max = trend_df["Rinvoq"].max()
+                rin_min = trend_df["Rinvoq"].min()
+                rin_volatility = rin_max - rin_min
+                peak_valley_insight = f"Rinvoq shows {rin_volatility:.0f}-point volatility ({rin_min:.0f}–{rin_max:.0f}). Peaks indicate market surges for strategic media spend; troughs signal competitive pressure windows."
+            elif brand_filter != "Rinvoq" and "Skyrizi" in trend_df.columns:
+                sky_max = trend_df["Skyrizi"].max()
+                sky_min = trend_df["Skyrizi"].min()
+                sky_volatility = sky_max - sky_min
+                peak_valley_insight = f"Skyrizi shows {sky_volatility:.0f}-point volatility ({sky_min:.0f}–{sky_max:.0f}). Peak periods align with high-intent demand cycles—align campaigns to these windows."
+        except:
+            pass
+    
+    render_insight_bubble(peak_valley_insight, "📈")
     
     # Seasonality + YoY
     c1, c2 = st.columns(2)
@@ -2394,7 +2412,27 @@ with tabs[0]:
     # Info note about seasonality calculation
     st.caption("ℹ️ Seasonality averages across all years for 5-year view, or shows recent period for shorter timeframes")
     
-    render_insight_bubble("Average search interest trends reveal market demand patterns and seasonal peaks—allocate budget to periods showing sustained +30% above baseline for maximum campaign effectiveness.", "📊")
+    # Calculate YoY performance for dynamic insight
+    yoy_insight = "Average search interest trends reveal market demand patterns and seasonal peaks—allocate budget to periods showing sustained +30% above baseline for maximum campaign effectiveness."
+    if trend_df is not None and len(trend_df) > 1:
+        try:
+            first_half = trend_df.iloc[:len(trend_df)//2]
+            second_half = trend_df.iloc[len(trend_df)//2:]
+            
+            if brand_filter != "Skyrizi" and "Rinvoq" in trend_df.columns:
+                rin_first = first_half["Rinvoq"].mean()
+                rin_second = second_half["Rinvoq"].mean()
+                rin_growth = ((rin_second - rin_first) / rin_first * 100) if rin_first > 0 else 0
+                yoy_insight = f"Rinvoq trending {rin_growth:+.1f}% period-over-period ({rin_first:.0f}→{rin_second:.0f} index). Sustain momentum with targeted spend during high-intent windows."
+            elif brand_filter != "Rinvoq" and "Skyrizi" in trend_df.columns:
+                sky_first = first_half["Skyrizi"].mean()
+                sky_second = second_half["Skyrizi"].mean()
+                sky_growth = ((sky_second - sky_first) / sky_first * 100) if sky_first > 0 else 0
+                yoy_insight = f"Skyrizi accelerating {sky_growth:+.1f}% ({sky_first:.0f}→{sky_second:.0f} index). Capitalize on upward momentum with increased media investment."
+        except:
+            pass
+    
+    render_insight_bubble(yoy_insight, "📊")
     
     # Indication Pies - Show only selected brand(s)
     if brand_filter == "Both":
@@ -2877,7 +2915,33 @@ with tabs[1]:
         st.error(f"Map display error: {str(e)}")
         st.info("Try refreshing the page or switching tabs.")
     
-    render_insight_bubble("States with 10+ points above national average represent priority markets for commercial investment. Focus sales and marketing resources in top-performing DMAs.", "🎯")
+    # Calculate data-driven DMA insight
+    dma_insight = "States with 10+ points above national average represent priority markets for commercial investment. Focus sales and marketing resources in top-performing DMAs."
+    if dma_data is not None and len(dma_data) > 0:
+        try:
+            if brand_filter == "Both":
+                avg_score = (dma_data["Rinvoq"].mean() + dma_data["Skyrizi"].mean()) / 2
+                top_market = dma_data.iloc[(dma_data["Rinvoq"] + dma_data["Skyrizi"]).idxmax()]
+            elif brand_filter == "Rinvoq":
+                avg_score = dma_data["Rinvoq"].mean()
+                top_market = dma_data.loc[dma_data["Rinvoq"].idxmax()]
+            else:  # Skyrizi
+                avg_score = dma_data["Skyrizi"].mean()
+                top_market = dma_data.loc[dma_data["Skyrizi"].idxmax()]
+            
+            top_performers = dma_data[
+                ((dma_data["Rinvoq"] > avg_score + 10) | (dma_data["Skyrizi"] > avg_score + 10))
+                if brand_filter == "Both" 
+                else (dma_data[brand_filter] > avg_score + 10)
+            ]
+            num_priority = len(top_performers)
+            
+            if num_priority > 0:
+                dma_insight = f"Top performer: {top_market.get('Market', 'N/A')}. {num_priority} markets exceed national average by 10+ points—prioritize media spend and partnerships in these high-intent regions."
+        except:
+            pass
+    
+    render_insight_bubble(dma_insight, "🎯")
     
     st.markdown("---")
     
@@ -3338,7 +3402,41 @@ with tabs[3]:
     st.plotly_chart(fig_comp_trend, use_container_width=True)
     
     st.markdown("---")
-    render_insight_bubble("Rinvoq and Skyrizi combined control 70%+ search mindshare. Monitor these competitor trends quarterly—gaps widening in Syrizis favor across growth momentum.", "⚔️")
+    
+    # Calculate data-driven competitive insights
+    if comp_trend_df is not None and len(comp_trend_df) > 0:
+        # Calculate market averages and recent momentum
+        market_averages = {}
+        recent_data = comp_trend_df.tail(13)
+        recent_growth = {}
+        
+        for brand in ["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]:
+            if brand in comp_trend_df.columns:
+                market_averages[brand] = comp_trend_df[brand].mean()
+                if len(recent_data) > 1:
+                    first_val = recent_data[brand].iloc[0]
+                    last_val = recent_data[brand].iloc[-1]
+                    recent_growth[brand] = ((last_val - first_val) / first_val * 100) if first_val > 0 else 0
+        
+        # Find top performers
+        if market_averages:
+            sorted_brands = sorted(market_averages.items(), key=lambda x: x[1], reverse=True)
+            leader = sorted_brands[0][0]
+            leader_share = (market_averages[leader] / sum(market_averages.values())) * 100
+            
+            # Find strongest recent momentum
+            strongest_growth = max(recent_growth.items(), key=lambda x: x[1]) if recent_growth else ("N/A", 0)
+            
+            # Build dynamic insight based on actual data
+            portfolio_combined = market_averages.get("Skyrizi", 0) + market_averages.get("Rinvoq", 0)
+            portfolio_share = (portfolio_combined / sum(market_averages.values()) * 100) if market_averages else 0
+            
+            insight_text = f"Rinvoq leads at {market_averages.get('Rinvoq', 0):.0f} index, with portfolio share ~{portfolio_share:.0f}%. {strongest_growth[0]} surging {strongest_growth[1]:+.0f}% (last 13 weeks)—watch emerging competitive threats and capitalize on portfolio momentum."
+            render_insight_bubble(insight_text, "⚔️")
+        else:
+            render_insight_bubble("Monitor competitive search trends to identify market leadership shifts and growth opportunities.", "⚔️")
+    else:
+        render_insight_bubble("Load data to see competitive market insights and strategic opportunities.", "⚔️")
     
     # Top Search Queries and Rising Queries for Competitive Tab
     st.markdown("---")
