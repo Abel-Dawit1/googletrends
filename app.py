@@ -2923,48 +2923,125 @@ with tabs[3]:
                           hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
     st.plotly_chart(fig_rank, use_container_width=True)
     
-    # Competitive Trend Over Time - Top 5 Competitors
+    # Competitive Trend Over Time - Respects timeframe filter
     st.markdown("---")
     st.subheader("📈 Competitive Trend Over Time")
-    st.caption("Top 5 competitors — trailing 12-month search index")
+    timeframe_label = {
+        "now 7-d": "7-day",
+        "today 1-m": "30-day",
+        "today 3-m": "3-month",
+        "today 12-m": "12-month",
+        "today 5-y": "5-year"
+    }.get(current_timeframe, "12-month")
+    st.caption(f"Top 5 competitors — trailing {timeframe_label} search index")
+    
+    # Load trend data for selected timeframe
+    comp_trend_df = None
+    dfs = []
+    for brand in ["Rinvoq", "Skyrizi"]:
+        df = load_csv_trend_data(brand, current_timeframe)
+        if df is not None:
+            dfs.append(df)
+    
+    if dfs:
+        comp_trend_df = pd.concat(dfs, axis=1)
+    
+    # Generate period labels based on timeframe
+    if current_timeframe == "now 7-d":
+        periods = [f"Day {i+1}" for i in range(7)]
+    elif current_timeframe == "today 1-m":
+        periods = [f"Day {i+1}" for i in range(30)]
+    elif current_timeframe == "today 3-m":
+        periods = [f"Week {i+1}" for i in range(13)]
+    elif current_timeframe == "today 5-y":
+        periods = [str(y) for y in range(2021, 2026)]
+    else:  # today 12-m
+        periods = SEASON_DATA["Month"].tolist()
     
     # Generate 12-month trend data for top 5 competitors
     top_5_brands = brand_df.head(5)["Brand"].tolist()
-    months = SEASON_DATA["Month"].tolist()
     
     fig_comp_trend = go.Figure()
     
     for brand in top_5_brands:
-        # Use real data for Rinvoq and Skyrizi
-        if brand == "Skyrizi" and comp_12m_df is not None and "Skyrizi" in comp_12m_df.columns:
-            trend_data = comp_12m_df["Skyrizi"].resample('ME').mean().reset_index(drop=True).tolist()
-            if len(trend_data) < 12:
-                trend_data = trend_data + [trend_data[-1]] * (12 - len(trend_data))
-            trend_data = trend_data[:12]
+        # Use real data for Rinvoq and Skyrizi from current timeframe
+        if brand == "Skyrizi" and comp_trend_df is not None and "Skyrizi" in comp_trend_df.columns:
+            trend_series = comp_trend_df["Skyrizi"]
+            
+            # Aggregate based on timeframe
+            if current_timeframe == "now 7-d":
+                trend_data = trend_series.values.tolist() if len(trend_series) >= 7 else trend_series.values.tolist() + [trend_series.iloc[-1]] * (7 - len(trend_series))
+            elif current_timeframe == "today 1-m":
+                trend_data = trend_series.values.tolist() if len(trend_series) >= 30 else trend_series.values.tolist() + [trend_series.iloc[-1]] * (30 - len(trend_series))
+            elif current_timeframe == "today 3-m":
+                trend_data = trend_series.resample('W').mean().values.tolist() if len(trend_series) > 0 else []
+            elif current_timeframe == "today 5-y":
+                trend_data = trend_series.resample('YE').mean().values.tolist() if len(trend_series) > 0 else []
+            else:  # today 12-m
+                trend_data = trend_series.resample('ME').mean().values.tolist() if len(trend_series) > 0 else []
+            
+            # Pad to expected length
+            if len(trend_data) < len(periods):
+                trend_data = trend_data + [trend_data[-1] if trend_data else 50] * (len(periods) - len(trend_data))
+            trend_data = trend_data[:len(periods)]
             color = SKYRIZI
-        elif brand == "Rinvoq" and comp_12m_df is not None and "Rinvoq" in comp_12m_df.columns:
-            trend_data = comp_12m_df["Rinvoq"].resample('ME').mean().reset_index(drop=True).tolist()
-            if len(trend_data) < 12:
-                trend_data = trend_data + [trend_data[-1]] * (12 - len(trend_data))
-            trend_data = trend_data[:12]
+            
+        elif brand == "Rinvoq" and comp_trend_df is not None and "Rinvoq" in comp_trend_df.columns:
+            trend_series = comp_trend_df["Rinvoq"]
+            
+            # Aggregate based on timeframe
+            if current_timeframe == "now 7-d":
+                trend_data = trend_series.values.tolist() if len(trend_series) >= 7 else trend_series.values.tolist() + [trend_series.iloc[-1]] * (7 - len(trend_series))
+            elif current_timeframe == "today 1-m":
+                trend_data = trend_series.values.tolist() if len(trend_series) >= 30 else trend_series.values.tolist() + [trend_series.iloc[-1]] * (30 - len(trend_series))
+            elif current_timeframe == "today 3-m":
+                trend_data = trend_series.resample('W').mean().values.tolist() if len(trend_series) > 0 else []
+            elif current_timeframe == "today 5-y":
+                trend_data = trend_series.resample('YE').mean().values.tolist() if len(trend_series) > 0 else []
+            else:  # today 12-m
+                trend_data = trend_series.resample('ME').mean().values.tolist() if len(trend_series) > 0 else []
+            
+            # Pad to expected length
+            if len(trend_data) < len(periods):
+                trend_data = trend_data + [trend_data[-1] if trend_data else 50] * (len(periods) - len(trend_data))
+            trend_data = trend_data[:len(periods)]
             color = RINVOQ
         else:
             # Demo data for competitors (until user provides real data)
-            trend_data = [30 + np.random.randint(-10, 15) + np.sin(i/4)*5 for i in range(12)]
+            if current_timeframe == "now 7-d":
+                trend_data = [30 + np.random.randint(-5, 10) for i in range(7)]
+            elif current_timeframe == "today 1-m":
+                trend_data = [30 + np.random.randint(-8, 12) for i in range(30)]
+            elif current_timeframe == "today 3-m":
+                trend_data = [30 + np.random.randint(-10, 15) for i in range(13)]
+            elif current_timeframe == "today 5-y":
+                trend_data = [30 + np.random.randint(-10, 15) for i in range(5)]
+            else:  # today 12-m
+                trend_data = [30 + np.random.randint(-10, 15) + np.sin(i/4)*5 for i in range(12)]
             color = COMP_COLORS.get(brand, "#999")
         
         fig_comp_trend.add_trace(go.Scatter(
-            x=months, y=trend_data, name=brand,
+            x=periods, y=trend_data, name=brand,
             line=dict(color=color, width=2.5),
             mode="lines",
-            hovertemplate=f"<b>{brand}</b><br>Month: %{{x}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
+            hovertemplate=f"<b>{brand}</b><br>Period: %{{x}}<br>Index: <b>%{{y:.0f}}</b><extra></extra>"
         ))
+    
+    # Dynamic x-axis label based on timeframe
+    xaxis_labels = {
+        "now 7-d": "Day",
+        "today 1-m": "Day",
+        "today 3-m": "Week",
+        "today 12-m": "Month",
+        "today 5-y": "Year"
+    }
+    xaxis_label = xaxis_labels.get(current_timeframe, "Month")
     
     fig_comp_trend.update_layout(
         title="",
         height=350,
         template="plotly_white",
-        xaxis_title="Month",
+        xaxis_title=xaxis_label,
         yaxis_title="Search Interest Index",
         yaxis=dict(range=[0, 100]),
         hovermode="x unified",
