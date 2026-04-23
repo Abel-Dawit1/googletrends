@@ -2271,24 +2271,47 @@ with tabs[0]:
         
         # Calculate market metrics
         if comp_trend_df is not None:
-            total_market = comp_trend_df[["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]].sum(axis=1).mean()
             skyrizi_avg = comp_trend_df["Skyrizi"].mean()
             rinvoq_avg = comp_trend_df["Rinvoq"].mean()
+            humira_avg = comp_trend_df["Humira"].mean()
+            tremfya_avg = comp_trend_df["Tremfya"].mean()
+            dupixent_avg = comp_trend_df["Dupixent"].mean()
+            entyvio_avg = comp_trend_df["Entyvio"].mean()
+            
+            # Calculate total market (average combined index across all brands)
+            total_market = skyrizi_avg + rinvoq_avg + humira_avg + tremfya_avg + dupixent_avg + entyvio_avg
+            
+            # Calculate market shares
             skyrizi_share = (skyrizi_avg / total_market * 100) if total_market > 0 else 0
             rinvoq_share = (rinvoq_avg / total_market * 100) if total_market > 0 else 0
             portfolio_share = skyrizi_share + rinvoq_share
+            
+            # Find the top competitor
+            competitor_indices = {
+                "Humira": humira_avg,
+                "Tremfya": tremfya_avg,
+                "Dupixent": dupixent_avg,
+                "Entyvio": entyvio_avg
+            }
+            top_competitor = max(competitor_indices, key=competitor_indices.get)
+            top_competitor_index = competitor_indices[top_competitor]
+            top_competitor_share = (top_competitor_index / total_market * 100) if total_market > 0 else 0
         else:
-            total_market = skyrizi_avg = rinvoq_avg = skyrizi_share = rinvoq_share = portfolio_share = 0
+            skyrizi_avg = rinvoq_avg = humira_avg = tremfya_avg = dupixent_avg = entyvio_avg = 0
+            portfolio_share = skyrizi_share = rinvoq_share = 0
+            top_competitor = "Humira"
+            top_competitor_index = 0
+            top_competitor_share = 0
         
         metric_cols = st.columns(4)
         with metric_cols[0]:
-            st.metric("Portfolio Mindshare", f"{portfolio_share:.1f}%", help="Skyrizi + Rinvoq combined search share")
+            st.metric("📊 Portfolio Mindshare", f"{portfolio_share:.1f}%", help="Skyrizi + Rinvoq combined search share")
         with metric_cols[1]:
-            st.metric("Skyrizi Index", f"{int(skyrizi_avg)}", f"{skyrizi_share:.1f}% share", help="Average search index for Skyrizi")
+            st.metric("🎯 Skyrizi Index", f"{int(skyrizi_avg)}", f"{skyrizi_share:.1f}% share", help="Average search index for Skyrizi")
         with metric_cols[2]:
-            st.metric("Rinvoq Index", f"{int(rinvoq_avg)}", f"{rinvoq_share:.1f}% share", help="Average search index for Rinvoq")
+            st.metric("🎯 Rinvoq Index", f"{int(rinvoq_avg)}", f"{rinvoq_share:.1f}% share", help="Average search index for Rinvoq")
         with metric_cols[3]:
-            st.metric("Competitor Index", f"{int(total_market - skyrizi_avg - rinvoq_avg)}", "Combined 5 brands", help="Humira, Tremfya, Dupixent, Entyvio, others")
+            st.metric(f"⚔️ #{top_competitor}", f"{int(top_competitor_index)}", f"{top_competitor_share:.1f}% share", help=f"{top_competitor} is the strongest competitor by search volume")
     else:
         # Single brand view
         brand_code = "Skyrizi" if exec_brand_filter == "Skyrizi" else "Rinvoq"
