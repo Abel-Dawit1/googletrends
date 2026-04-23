@@ -2221,6 +2221,9 @@ tabs = st.tabs(["� Executive Summary", "📊 Overview", "🗺️ DMA Deep Dive
 with tabs[0]:
     st.header("📋 Executive Marketing Dashboard")
     
+    # Get current timeframe from session state (default to 3-month view)
+    current_timeframe = st.session_state.get("current_timeframe", "today 3-m")
+    
     # Timeframe mapping
     timeframe_map = {
         "now 7-d": "7 days",
