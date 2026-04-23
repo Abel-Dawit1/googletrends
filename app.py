@@ -2213,12 +2213,144 @@ except Exception as e:
     st.session_state["api_error"] = str(e)
     client = None
 
-tabs = st.tabs(["📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "⚙️ Configuration"])
+tabs = st.tabs(["� Executive Summary", "📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "⚙️ Configuration"])
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TAB 0: EXECUTIVE SUMMARY
+# ═══════════════════════════════════════════════════════════════════════════
+with tabs[0]:
+    st.header("📋 Executive Marketing Dashboard")
+    
+    # Timeframe mapping
+    timeframe_map = {
+        "now 7-d": "7 days",
+        "today 1-m": "30 days",
+        "today 3-m": "90 days",
+        "today 12-m": "1 year",
+        "today 5-y": "5 years",
+    }
+    
+    # Brand filter at top
+    col_filter = st.columns([3, 1])
+    with col_filter[1]:
+        exec_brand_filter = st.selectbox("Brand", ["Both", "Rinvoq", "Skyrizi"], key="exec_brand_filter")
+    
+    # Get executive summary data
+    overview_callouts, overview_rec = generate_overview_executive_summary(trend_df, DEMO_DMA, DEMO_QUERIES, client, exec_brand_filter, indication)
+    comp_callouts, comp_rec = generate_competitive_executive_summary(DEMO_DMA, client, exec_brand_filter, indication)
+    intent_callouts, intent_rec = generate_patient_intent_executive_summary(DEMO_QUERIES, client, exec_brand_filter, indication)
+    
+    # KEY METRICS SECTION
+    st.subheader("📊 Key Market Metrics")
+    
+    if exec_brand_filter == "Both":
+        # Load all brand data for market overview
+        comp_trend_df = None
+        dfs = []
+        for brand in ["Rinvoq", "Skyrizi"]:
+            df = load_csv_trend_data(brand, current_timeframe)
+            if df is not None:
+                dfs.append(df)
+        tremfya_df = load_tremfya_csv_data(current_timeframe)
+        if tremfya_df is not None:
+            dfs.append(tremfya_df)
+        dupixent_df = load_dupixent_csv_data(current_timeframe)
+        if dupixent_df is not None:
+            dfs.append(dupixent_df)
+        humira_df = load_humira_csv_data(current_timeframe)
+        if humira_df is not None:
+            dfs.append(humira_df)
+        entyvio_df = load_entyvio_csv_data(current_timeframe)
+        if entyvio_df is not None:
+            dfs.append(entyvio_df)
+        if dfs:
+            comp_trend_df = pd.concat(dfs, axis=1)
+        
+        # Calculate market metrics
+        if comp_trend_df is not None:
+            total_market = comp_trend_df[["Skyrizi", "Rinvoq", "Humira", "Tremfya", "Dupixent", "Entyvio"]].sum(axis=1).mean()
+            skyrizi_avg = comp_trend_df["Skyrizi"].mean()
+            rinvoq_avg = comp_trend_df["Rinvoq"].mean()
+            skyrizi_share = (skyrizi_avg / total_market * 100) if total_market > 0 else 0
+            rinvoq_share = (rinvoq_avg / total_market * 100) if total_market > 0 else 0
+            portfolio_share = skyrizi_share + rinvoq_share
+        else:
+            total_market = skyrizi_avg = rinvoq_avg = skyrizi_share = rinvoq_share = portfolio_share = 0
+        
+        metric_cols = st.columns(4)
+        with metric_cols[0]:
+            st.metric("Portfolio Mindshare", f"{portfolio_share:.1f}%", help="Skyrizi + Rinvoq combined search share")
+        with metric_cols[1]:
+            st.metric("Skyrizi Index", f"{int(skyrizi_avg)}", f"{skyrizi_share:.1f}% share", help="Average search index for Skyrizi")
+        with metric_cols[2]:
+            st.metric("Rinvoq Index", f"{int(rinvoq_avg)}", f"{rinvoq_share:.1f}% share", help="Average search index for Rinvoq")
+        with metric_cols[3]:
+            st.metric("Competitor Index", f"{int(total_market - skyrizi_avg - rinvoq_avg)}", "Combined 5 brands", help="Humira, Tremfya, Dupixent, Entyvio, others")
+    else:
+        # Single brand view
+        brand_code = "Skyrizi" if exec_brand_filter == "Skyrizi" else "Rinvoq"
+        df = load_csv_trend_data(brand_code, current_timeframe)
+        if df is not None:
+            brand_avg = df[brand_code].mean()
+            brand_peak = df[brand_code].max()
+            metric_cols = st.columns(3)
+            with metric_cols[0]:
+                st.metric(f"{exec_brand_filter} Avg Index", f"{int(brand_avg)}", f"Peak: {int(brand_peak)}")
+            with metric_cols[1]:
+                st.metric("Timeframe", timeframe_map.get(current_timeframe, "12-month"))
+            with metric_cols[2]:
+                st.metric("Data Points", f"{len(df)}")
+    
+    # MARKET INSIGHTS SECTION
+    st.markdown("---")
+    st.subheader("🎯 Market Positioning")
+    insight_cols = st.columns([1, 1])
+    
+    with insight_cols[0]:
+        st.markdown("**Competitive Landscape**")
+        for callout in comp_callouts[:2]:
+            st.markdown(f"• {callout}")
+        if comp_rec:
+            st.markdown(f"<div style='background-color: #f0f0f0; padding: 12px; border-radius: 4px; font-size: 13px; margin-top: 8px'><strong>Action:</strong> {comp_rec}</div>", unsafe_allow_html=True)
+    
+    with insight_cols[1]:
+        st.markdown("**Patient Search Intent**")
+        for callout in intent_callouts[:2]:
+            st.markdown(f"• {callout}")
+        if intent_rec:
+            st.markdown(f"<div style='background-color: #f0f0f0; padding: 12px; border-radius: 4px; font-size: 13px; margin-top: 8px'><strong>Action:</strong> {intent_rec}</div>", unsafe_allow_html=True)
+    
+    # TRENDS & RECOMMENDATIONS SECTION
+    st.markdown("---")
+    st.subheader("📈 Trends & Key Takeaways")
+    
+    trend_cols = st.columns(1)
+    with trend_cols[0]:
+        st.markdown("**Market Overview**")
+        for callout in overview_callouts:
+            st.markdown(f"• {callout}")
+        if overview_rec:
+            st.markdown(f"<div style='background-color: #e8f4f8; padding: 12px; border-radius: 4px; font-size: 13px; margin-top: 8px; border-left: 4px solid #0284c7'><strong>🎬 Recommended Action:</strong> {overview_rec}</div>", unsafe_allow_html=True)
+    
+    # NAVIGATION GUIDE
+    st.markdown("---")
+    st.markdown("""
+    ### 📍 Where to Go Next
+    
+    | Tab | Focus | Use Case |
+    |-----|-------|----------|
+    | **📊 Overview** | Search trends & geographic leaders | Understand baseline demand and regional performance |
+    | **🗺️ DMA Deep Dive** | Top markets & competitive depth | Identify geographic expansion opportunities |
+    | **⚡ Key Moments** | Reddit discussions & patient voices | Understand real patient concerns & messaging gaps |
+    | **⚔️ Competitive** | Competitor positioning & market share | Track competitive threats & market dynamics |
+    | **🔬 Patient Intent** | Search query analysis & decision stage | Understand what patients are researching |
+    | **📅 Campaign** | Moment-based & seasonal trends | Plan campaign timing & moment marketing |
+    """)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 1: OVERVIEW
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[0]:
+with tabs[1]:
     # Executive Summary
     overview_callouts, overview_recommendation = generate_overview_executive_summary(trend_df, DEMO_DMA, DEMO_QUERIES, client, brand_filter, indication)
     render_executive_summary("Search Trends & Market Opportunity", overview_callouts, NAVY, overview_recommendation)
@@ -2592,7 +2724,7 @@ with tabs[0]:
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 2: DMA DEEP DIVE
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[1]:
+with tabs[2]:
     # Executive Summary
     dma_callouts, dma_recommendation = generate_dma_executive_summary(DEMO_DMA, DEMO_STATES, DEMO_QUERIES, client, brand_filter, indication)
     render_executive_summary("Geographic Market Dynamics", dma_callouts, NAVY, dma_recommendation)
@@ -3068,7 +3200,7 @@ with tabs[1]:
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 4: COMPETITIVE
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[3]:
+with tabs[4]:
     # Executive Summary
     comp_callouts, comp_recommendation = generate_competitive_executive_summary(DEMO_DMA, client, brand_filter, indication)
     render_executive_summary("Competitive Market Position", comp_callouts, NAVY, comp_recommendation)
@@ -3511,7 +3643,7 @@ with tabs[3]:
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 5: PATIENT INTENT
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[4]:
+with tabs[5]:
     # Executive Summary
     intent_callouts, intent_recommendation = generate_patient_intent_executive_summary(DEMO_QUERIES, client, brand_filter, indication)
     render_executive_summary("Patient Search Behavior & Intent", intent_callouts, NAVY, intent_recommendation)
@@ -3659,7 +3791,7 @@ with tabs[4]:
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 6: CAMPAIGN PLANNING
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[5]:
+with tabs[6]:
     # Executive Summary
     campaign_callouts, campaign_recommendation = generate_campaign_executive_summary(trend_df, client, brand_filter, indication)
     render_executive_summary("Campaign Strategy & Moment Optimization", campaign_callouts, NAVY, campaign_recommendation)
@@ -3739,7 +3871,7 @@ with tabs[5]:
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 3: KEY MOMENTS
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[2]:
+with tabs[3]:
     # Executive Summary
     reddit_posts = reddit_posts_data if 'reddit_posts_data' in dir() and reddit_posts_data else []
     moments_callouts, moments_recommendation = generate_key_moments_executive_summary(reddit_posts, {}, client)
@@ -4006,7 +4138,7 @@ with tabs[2]:
     st.dataframe(summary, use_container_width=True, hide_index=True)
 # TAB 7: CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════
-with tabs[6]:
+with tabs[7]:
     st.subheader("⚙️ Dashboard Configuration")
     st.markdown("Customize filter categories and data groupings. Changes are applied to your session only.")
     st.markdown("---")
