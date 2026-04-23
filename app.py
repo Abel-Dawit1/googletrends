@@ -2312,14 +2312,14 @@ with tabs[0]:
     with insight_cols[0]:
         st.markdown("**Competitive Landscape**")
         for callout in comp_callouts[:2]:
-            st.markdown(f"• {callout}")
+            st.markdown(f"• {callout}", unsafe_allow_html=True)
         if comp_rec:
             st.markdown(f"<div style='background-color: #f0f0f0; padding: 12px; border-radius: 4px; font-size: 13px; margin-top: 8px'><strong>Action:</strong> {comp_rec}</div>", unsafe_allow_html=True)
     
     with insight_cols[1]:
         st.markdown("**Patient Search Intent**")
         for callout in intent_callouts[:2]:
-            st.markdown(f"• {callout}")
+            st.markdown(f"• {callout}", unsafe_allow_html=True)
         if intent_rec:
             st.markdown(f"<div style='background-color: #f0f0f0; padding: 12px; border-radius: 4px; font-size: 13px; margin-top: 8px'><strong>Action:</strong> {intent_rec}</div>", unsafe_allow_html=True)
     
@@ -2331,7 +2331,7 @@ with tabs[0]:
     with trend_cols[0]:
         st.markdown("**Market Overview**")
         for callout in overview_callouts:
-            st.markdown(f"• {callout}")
+            st.markdown(f"• {callout}", unsafe_allow_html=True)
         if overview_rec:
             st.markdown(f"<div style='background-color: #e8f4f8; padding: 12px; border-radius: 4px; font-size: 13px; margin-top: 8px; border-left: 4px solid #0284c7'><strong>🎬 Recommended Action:</strong> {overview_rec}</div>", unsafe_allow_html=True)
     
