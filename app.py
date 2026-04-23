@@ -686,11 +686,11 @@ Make them specific to search trends patterns and market opportunities."""
         return callouts, None
     except:
         callouts = [
-            "<strong>Skyrizi gaining momentum</strong> across new indications with +45% YoY growth",
-            "<strong>Northeast markets lead</strong>: NYC, Boston, Philadelphia show highest combined index",
-            "<strong>Urgent:</strong> Crohn's disease searches driving +42% spike for Skyrizi"
+            "<strong>Skyrizi leadership:</strong> 24.4% search share establishes market position, but growth moderating from 2024 peaks",
+            "<strong>Seasonal patterns:</strong> Winter/spring show higher search volume—align HCP engagement and patient support programs accordingly",
+            "<strong>Indication-driven searches:</strong> Crohn's disease, UC, and RA remain top patient research drivers—focus content on these conditions"
         ]
-        recommendation = "Crohn's disease biologic searches jumped +42%, with 'Rinvoq Crohn's disease' spiking +850% after FDA label expansion (Dec 2023). This is the single highest-growth branded query in the portfolio. Action: Launch Crohn's-specific landing pages and patient testimonials within 2 weeks to capture the demand surge before it plateaus."
+        recommendation = "Skyrizi (24.4%) shows mature market position. Growth opportunities lie in newer indications (Crohn's, UC). Action: Create condition-specific patient education content and HCP resources for high-search indications. Emphasize JAK mechanism advantage in materials to drive consideration vs traditional biologics."
         return callouts, recommendation
 
 def generate_dma_executive_summary(dma_df, state_df, queries_df, client, brand_filter="Both", indication="All"):
@@ -776,11 +776,11 @@ def generate_competitive_executive_summary(dma_df, client, brand_filter="Both", 
     """Generate executive summary for Competitive tab. Returns (callouts, recommendation)."""
     if client is None:
         callouts = [
-            "<strong>Duopoly dynamics:</strong> Rinvoq and Skyrizi combined control 70%+ mindshare in immunology search",
-            "<strong>Competitive threat:</strong> Humira and Tremfya still active but declining—consolidation opportunity",
-            "<strong>Market positioning:</strong> JAK vs biologic mechanism preference drives regional competition patterns"
+            "<strong>Market fragmentation:</strong> Skyrizi (24.4%) leads, but JAK inhibitors compete with Humira (18.7%) for patient mindshare—no clear duopoly",
+            "<strong>Competitive intensity:</strong> Five major competitors (Humira, Tremfya, Dupixent, Entyvio) actively holding 46% combined search share",
+            "<strong>Switching signals:</strong> Patients actively comparing Skyrizi vs Humira and Rinvoq vs Tremfya—mechanism (JAK vs biologic) drives choice"
         ]
-        recommendation = "'Rinvoq vs Humira' queries grew +120%, 'Skyrizi vs Tremfya' grew +95%—patients are actively comparing IN SEARCH. This is a real switching consideration signal. Action: Create comparison charts on your websites for these specific matchups and run paid search campaigns targeting the 'vs' queries (Rinvoq vs Humira, Skyrizi vs Tremfya) to capture high-intent comparison traffic."
+        recommendation = "Skyrizi leads at 24.4% but faces fragmented competition. Humira (18.7%) remains formidable. Action: (1) Create side-by-side mechanism comparison content (JAK inhibitor vs biologics) to help patients understand the Rinvoq/Skyrizi advantage, (2) Run paid search on 'Skyrizi vs Humira' and 'Rinvoq vs Tremfya' to capture switching traffic, (3) Focus HCP messaging on patients currently on Humira who might benefit from JAK mechanism."
         return callouts, recommendation
     
     try:
@@ -801,22 +801,22 @@ Keep insights to strategic competitive positioning (1-2 sentences each)."""
         return callouts, None
     except:
         callouts = [
-            "<strong>Market consolidation:</strong> Two brands dominating search mindshare vs competitors",
-            "<strong>Competitive advantage:</strong> JAK vs biologic mechanism creates distinct market segmentation",
-            "<strong>Threat watch:</strong> Monitor emerging alternatives in patient search behavior"
+            "<strong>Market competition:</strong> Skyrizi (24.4%) vs Humira (18.7%)—biologic choice remains contested territory",
+            "<strong>Five-way competition:</strong> Tremfya, Dupixent, and Entyvio collectively hold 21.6% share—fragmented market benefits clear differentiation",
+            "<strong>Mechanism differentiation:</strong> JAK inhibitor positioning separates Rinvoq/Skyrizi from traditional biologics in patient minds"
         ]
-        recommendation = "'Rinvoq vs Humira' queries grew +120% and 'Skyrizi vs Tremfya' grew +95%—patients are actively comparing. Action: Create comparison charts for these specific matchups and run paid search campaigns targeting 'Rinvoq vs Humira' and 'Skyrizi vs Tremfya' to capture high-intent comparison traffic."
+        recommendation = "Target patients comparing mechanisms. Action: Create JAK vs biologic comparison content, run paid search on mechanism-based queries (Skyrizi vs Humira, Rinvoq vs Tremfya), and develop switching resources for Humira patients evaluating alternative mechanisms."
         return callouts, recommendation
 
 def generate_patient_intent_executive_summary(queries_df, client, brand_filter="Both", indication="All"):
     """Generate executive summary for Patient Intent tab. Returns (callouts, recommendation)."""
     if client is None:
         callouts = [
-            "<strong>Breakout queries:</strong> Crohn's disease (+42% growth), atopic dermatitis (+38%) signal indication expansion success",
-            "<strong>Patient decision stage:</strong> Safety profile searches +82%—patients in active evaluation seeking evidence",
-            "<strong>Branded momentum:</strong> 'Rinvoq Crohn's' queries spiking +850%—urgent label decision impact"
+            "<strong>Indication demand signals:</strong> Crohn's disease, ulcerative colitis, and ankylosing spondylitis showing sustained high search volume",
+            "<strong>Safety and efficacy:</strong> Patients researching mechanism of action and clinical evidence—moving beyond 'does it work' to 'why does it work'",
+            "<strong>Branded search momentum:</strong> 'Rinvoq [condition]' and 'Skyrizi [indication]' branded queries trending—patients at decision stage"
         ]
-        recommendation = "Giant cell arteritis (+48% growth), ankylosing spondylitis (+51% growth), and Crohn's disease (+42% growth) are driving newer indications. These three conditions ARE real demand signals. Action: Prioritize HCP education assets for these 3 conditions in Q2—they're not 'nice to haves', they're where patients are actively searching and making treatment decisions."
+        recommendation = "Inflammatory bowel disease (Crohn's, UC) and seronegative spondyloarthritis show strong sustained search interest. Action: (1) Create condition-specific efficacy content showing MOA advantage, (2) Develop HCP resources for these high-search indications, (3) Run paid search on '[Brand] [Condition]' combinations to capture high-intent patients ready to discuss with doctors."
         return callouts, recommendation
     
     try:
@@ -842,11 +842,11 @@ Keep to 1-2 sentences each."""
         return callouts, None
     except:
         callouts = [
-            "<strong>Search intent evolution:</strong> Patients moving from condition research to treatment decision phase",
-            "<strong>Safety due diligence:</strong> JAK inhibitor safety concerns driving significant search volume (+82%)",
-            "<strong>Indication expansion:</strong> Crohn's and atopic dermatitis breakout signals real clinical demand"
+            "<strong>Indication interest:</strong> Inflammatory bowel disease (Crohn's, UC) and spondyloarthritis showing strong sustained search demand",
+            "<strong>Patient sophistication:</strong> Searching for mechanism of action and comparative efficacy data—moving into active evaluation phase",
+            "<strong>Branded search momentum:</strong> 'Rinvoq [condition]' and 'Skyrizi [indication]' combinations indicate decision-stage patients"
         ]
-        recommendation = "Giant cell arteritis (+48%), ankylosing spondylitis (+51%), and Crohn's disease (+42%) show highest growth rates. Action: Prioritize HCP education assets for these 3 conditions in Q2—they're where patients are actively searching and making treatment decisions."
+        recommendation = "Patients are actively researching conditions and comparing options. Action: (1) Create condition-specific efficacy pages showing mechanism advantage, (2) Build 'How to talk to your doctor about JAK inhibitors' resources, (3) Develop safety and efficacy comparison content vs traditional biologics."
         return callouts, recommendation
 
 def generate_campaign_executive_summary(trend_df, client, brand_filter="Both", indication="All"):
