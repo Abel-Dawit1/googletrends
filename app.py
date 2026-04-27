@@ -2299,7 +2299,7 @@ with tabs[0]:
             st.metric("🎯 Rinvoq", f"{int(rinvoq_avg)}", f"{rinvoq_share:.1f}% share", help="Average search index for Rinvoq")
         
         # Show top 3 competitors
-        st.markdown("**Competitive Landscape - Top 3 Competitors**")
+        st.markdown("**Competitive Landscape**")
         competitor_indices = {
             "Humira": humira_avg,
             "Tremfya": tremfya_avg,
