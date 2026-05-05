@@ -3819,6 +3819,8 @@ with tabs[5]:
 # TAB 6: CAMPAIGN PLANNING
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[6]:
+    st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 40px 20px; text-align: center; margin-bottom: 20px;'><h5 style='color: #666;'>📋 Campaign Executive Summary</h5><p style='color: #999; font-size: 14px;'>Strategic insights and recommendations coming soon</p></div>", unsafe_allow_html=True)
+    
     st.subheader("Campaign Planning")
     
     # KPI Cards - Empty until data is ingested
