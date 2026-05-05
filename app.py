@@ -3825,79 +3825,45 @@ with tabs[6]:
     
     st.subheader("Campaign Planning")
     
-    # Alert - Demo data notice
-    st.warning("⚠️ **Demo Data** — This tab contains simulated campaign data for demonstration purposes. Real campaign metrics, calendar, and budget allocations will be populated as actual campaign data is ingested and integrated.", icon="⏳")
-    
-    st.markdown("---")
-    
     # KPI Cards - Empty until data is ingested
     pk1, pk2, pk3, pk4 = st.columns(4)
     pk1.metric(
         "Active Campaigns", 
         "—",
-        help="Concurrent marketing campaigns currently live. Tracks investment breadth across indications, channels, and brands. [Demo data]"
+        help="Concurrent marketing campaigns currently live. Tracks investment breadth across indications, channels, and brands."
     )
     pk2.metric(
         "Peak Timing", 
         "—",
-        help="Next major search interest peak for primary brand. [Demo data]"
+        help="Next major search interest peak for primary brand."
     )
     pk3.metric(
         "Budget Allocation", 
         "—",
-        help="Total budget planning and channel distribution. [Demo data]"
+        help="Total budget planning and channel distribution."
     )
     pk4.metric(
         "Search Alignment", 
         "—",
-        help="Campaign timing alignment with natural search seasonality. [Demo data]"
+        help="Campaign timing alignment with natural search seasonality."
     )
     
     st.markdown("---")
     st.markdown("**Annual Campaign Calendar**")
-    st.info("📅 Campaign calendar will populate once campaign schedule data is ingested.")
-    
-    # Empty calendar table structure
-    empty_calendar = pd.DataFrame(columns=["Month", "Brand", "Indication", "Activity"])
-    st.dataframe(empty_calendar, use_container_width=True, hide_index=True)
+    st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 60px 20px; text-align: center;'><h4 style='color: #666;'>📅 Coming Soon</h4><p style='color: #999; font-size: 14px;'>Campaign calendar will be populated with real data</p></div>", unsafe_allow_html=True)
     
     st.markdown("---")
     
     c1, c2 = st.columns(2)
     with c1:
-        fig_ch = go.Figure()
-        channels = ["Paid Search", "Social", "Display", "TV/CTV", "HCP Digital", "Email"]
-        if brand_filter in ["Both", "Rinvoq"]:
-            fig_ch.add_trace(go.Bar(y=channels, x=[35,20,15,18,28,12], name="Rinvoq", marker_color=RINVOQ, orientation="h",
-                hovertemplate="<b>Rinvoq</b><br>Channel: %{y}<br>Allocation: <b>%{x}%</b><extra></extra>"))
-        if brand_filter in ["Both", "Skyrizi"]:
-            fig_ch.add_trace(go.Bar(y=channels, x=[30,28,20,22,15,10], name="Skyrizi", marker_color=SKYRIZI, orientation="h",
-                hovertemplate="<b>Skyrizi</b><br>Channel: %{y}<br>Allocation: <b>%{x}%</b><extra></extra>"))
-        fig_ch.update_layout(title="Channel Budget Allocation (%) — [Demo Data Only]", height=350, barmode="group", template="plotly_white",
-            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
-        st.plotly_chart(fig_ch, use_container_width=True)
+        st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 120px 20px; text-align: center;'><h4 style='color: #666;'>📊 Coming Soon</h4><p style='color: #999; font-size: 14px;'>Channel Budget Allocation</p></div>", unsafe_allow_html=True)
+    
     with c2:
-        # Alignment chart
-        if brand_filter == "Both":
-            search_peaks = [(SEASON_DATA["Rinvoq"].iloc[i] + SEASON_DATA["Skyrizi"].iloc[i]) / 2 for i in range(12)]
-        elif brand_filter == "Rinvoq":
-            search_peaks = list(SEASON_DATA["Rinvoq"])
-        else:  # Skyrizi
-            search_peaks = list(SEASON_DATA["Skyrizi"])
-        
-        campaign_spend = [20,35,25,20,30,40,35,25,20,15,30,25]
-        fig_align = go.Figure()
-        fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=search_peaks, name="Search Interest", fill="tozeroy", line=dict(color=NAVY),
-            hovertemplate="<b>Search Interest</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
-        fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=campaign_spend, name="Campaign Spend", line=dict(color=GOLD, dash="dash"),
-            hovertemplate="<b>Campaign Spend</b><br>Month: %{x}<br>Allocation: <b>%{y}%</b><extra></extra>"))
-        fig_align.update_layout(title="Search vs Campaign Alignment — [Demo Data Only]", height=350, template="plotly_white",
-            hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
-        st.plotly_chart(fig_align, use_container_width=True)
+        st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 120px 20px; text-align: center;'><h4 style='color: #666;'>📈 Coming Soon</h4><p style='color: #999; font-size: 14px;'>Search vs Campaign Alignment</p></div>", unsafe_allow_html=True)
     
     st.markdown("---")
     st.markdown("**Campaign Strategy & Insights**")
-    st.info("📊 **Demo Content** — Campaign recommendations and insights will be generated once real campaign data is ingested and analyzed.")
+    st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 40px 20px; text-align: center;'><h5 style='color: #666;'>💡 Coming Soon</h5><p style='color: #999; font-size: 14px;'>Campaign recommendations and insights will be generated once real campaign data is ingested</p></div>", unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
