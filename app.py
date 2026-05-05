@@ -3819,10 +3819,6 @@ with tabs[5]:
 # TAB 6: CAMPAIGN PLANNING
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[6]:
-    # Executive Summary
-    campaign_callouts, campaign_recommendation = generate_campaign_executive_summary(trend_df, client, brand_filter, indication)
-    render_executive_summary("Campaign Strategy & Moment Optimization", campaign_callouts, NAVY, campaign_recommendation)
-    
     st.subheader("Campaign Planning")
     
     # KPI Cards - Empty until data is ingested
