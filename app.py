@@ -2213,7 +2213,7 @@ except Exception as e:
     st.session_state["api_error"] = str(e)
     client = None
 
-tabs = st.tabs(["� Executive Summary", "📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "⚙️ Configuration"])
+tabs = st.tabs(["⭐ Executive Summary", "📊 Overview", "🗺️ DMA Deep Dive", "⚡ Key Moments", "⚔️ Competitive", "🔬 Patient Intent", "📅 Campaign", "⚙️ Configuration"])
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 0: EXECUTIVE SUMMARY
