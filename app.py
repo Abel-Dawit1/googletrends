@@ -3825,27 +3825,32 @@ with tabs[6]:
     
     st.subheader("Campaign Planning")
     
+    # Alert - Demo data notice
+    st.warning("⚠️ **Demo Data** — This tab contains simulated campaign data for demonstration purposes. Real campaign metrics, calendar, and budget allocations will be populated as actual campaign data is ingested and integrated.", icon="⏳")
+    
+    st.markdown("---")
+    
     # KPI Cards - Empty until data is ingested
     pk1, pk2, pk3, pk4 = st.columns(4)
     pk1.metric(
         "Active Campaigns", 
         "—",
-        help="Concurrent marketing campaigns currently live. Tracks investment breadth across indications, channels, and brands."
+        help="Concurrent marketing campaigns currently live. Tracks investment breadth across indications, channels, and brands. [Demo data]"
     )
     pk2.metric(
         "Peak Timing", 
         "—",
-        help="Next major search interest peak for primary brand."
+        help="Next major search interest peak for primary brand. [Demo data]"
     )
     pk3.metric(
         "Budget Allocation", 
         "—",
-        help="Total budget planning and channel distribution."
+        help="Total budget planning and channel distribution. [Demo data]"
     )
     pk4.metric(
         "Search Alignment", 
         "—",
-        help="Campaign timing alignment with natural search seasonality."
+        help="Campaign timing alignment with natural search seasonality. [Demo data]"
     )
     
     st.markdown("---")
@@ -3868,7 +3873,7 @@ with tabs[6]:
         if brand_filter in ["Both", "Skyrizi"]:
             fig_ch.add_trace(go.Bar(y=channels, x=[30,28,20,22,15,10], name="Skyrizi", marker_color=SKYRIZI, orientation="h",
                 hovertemplate="<b>Skyrizi</b><br>Channel: %{y}<br>Allocation: <b>%{x}%</b><extra></extra>"))
-        fig_ch.update_layout(title="Channel Budget Allocation (%) — Demo Data", height=350, barmode="group", template="plotly_white",
+        fig_ch.update_layout(title="Channel Budget Allocation (%) — [Demo Data Only]", height=350, barmode="group", template="plotly_white",
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_ch, use_container_width=True)
     with c2:
@@ -3886,13 +3891,13 @@ with tabs[6]:
             hovertemplate="<b>Search Interest</b><br>Month: %{x}<br>Index: <b>%{y:.0f}</b><extra></extra>"))
         fig_align.add_trace(go.Scatter(x=SEASON_DATA["Month"], y=campaign_spend, name="Campaign Spend", line=dict(color=GOLD, dash="dash"),
             hovertemplate="<b>Campaign Spend</b><br>Month: %{x}<br>Allocation: <b>%{y}%</b><extra></extra>"))
-        fig_align.update_layout(title="Search vs Campaign Alignment — Demo Data", height=350, template="plotly_white",
+        fig_align.update_layout(title="Search vs Campaign Alignment — [Demo Data Only]", height=350, template="plotly_white",
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
         st.plotly_chart(fig_align, use_container_width=True)
     
     st.markdown("---")
     st.markdown("**Campaign Strategy & Insights**")
-    st.info("📊 Campaign recommendations and insights will be generated once campaign data is ingested and analyzed.")
+    st.info("📊 **Demo Content** — Campaign recommendations and insights will be generated once real campaign data is ingested and analyzed.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
