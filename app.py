@@ -2587,7 +2587,128 @@ with tabs[0]:
         else:
             st.caption("No data available")
     
-    # ═══ SECTION 8: AI-POWERED INSIGHTS ═══
+    # ═══ SECTION 8: KEY MOMENTS OVERVIEW ═══
+    st.markdown("---")
+    st.subheader("⚡ Key Moments Performance")
+    
+    # Calculate key moments metrics
+    moments_df = pd.DataFrame(MOMENTS_DATA) if MOMENTS_DATA else pd.DataFrame()
+    
+    if not moments_df.empty:
+        try:
+            # Extract lift values and convert to numeric
+            moments_df["Rinvoq_Lift_Num"] = moments_df["Rinvoq Lift"].str.replace("%", "").str.replace("+", "").astype(float)
+            moments_df["Skyrizi_Lift_Num"] = moments_df["Skyrizi Lift"].str.replace("%", "").str.replace("+", "").astype(float)
+            
+            # Calculate aggregate metrics
+            avg_rinvoq_lift = moments_df["Rinvoq_Lift_Num"].mean()
+            avg_skyrizi_lift = moments_df["Skyrizi_Lift_Num"].mean()
+            max_rinvoq_event = moments_df.loc[moments_df["Rinvoq_Lift_Num"].idxmax(), "Event"]
+            max_rinvoq_lift = moments_df["Rinvoq_Lift_Num"].max()
+            max_skyrizi_event = moments_df.loc[moments_df["Skyrizi_Lift_Num"].idxmax(), "Event"]
+            max_skyrizi_lift = moments_df["Skyrizi_Lift_Num"].max()
+            
+            # Display metrics based on brand filter
+            if brand_filter == "Both":
+                mk_cols = st.columns(4)
+                with mk_cols[0]:
+                    st.metric(
+                        "Avg Rinvoq Lift",
+                        f"+{avg_rinvoq_lift:.0f}%",
+                        f"Best: {max_rinvoq_event}",
+                        help="Average search lift across all tracked moments for Rinvoq"
+                    )
+                with mk_cols[1]:
+                    st.metric(
+                        "Peak Rinvoq Lift",
+                        f"+{max_rinvoq_lift:.0f}%",
+                        f"vs {avg_rinvoq_lift:.0f}% avg",
+                        help="Highest search lift achieved during a moment marketing event"
+                    )
+                with mk_cols[2]:
+                    st.metric(
+                        "Avg Skyrizi Lift",
+                        f"+{avg_skyrizi_lift:.0f}%",
+                        f"Best: {max_skyrizi_event}",
+                        help="Average search lift across all tracked moments for Skyrizi"
+                    )
+                with mk_cols[3]:
+                    st.metric(
+                        "Peak Skyrizi Lift",
+                        f"+{max_skyrizi_lift:.0f}%",
+                        f"vs {avg_skyrizi_lift:.0f}% avg",
+                        help="Highest search lift achieved during a moment marketing event"
+                    )
+            elif brand_filter == "Rinvoq":
+                mk_cols = st.columns(4)
+                with mk_cols[0]:
+                    st.metric(
+                        "Avg Lift",
+                        f"+{avg_rinvoq_lift:.0f}%",
+                        "Across moments",
+                        help="Average search lift for Rinvoq across all tracked moments"
+                    )
+                with mk_cols[1]:
+                    st.metric(
+                        "Peak Lift",
+                        f"+{max_rinvoq_lift:.0f}%",
+                        max_rinvoq_event,
+                        help=f"Highest lift during {max_rinvoq_event}"
+                    )
+                with mk_cols[2]:
+                    st.metric(
+                        "Moments Tracked",
+                        len(moments_df),
+                        "Cultural events",
+                        help="Total number of key moments with measurable impact"
+                    )
+                with mk_cols[3]:
+                    st.metric(
+                        "Avg Peak Index",
+                        int(moments_df["Peak"].astype(int).mean()),
+                        "Maximum search interest",
+                        help="Average peak search index value during moment windows"
+                    )
+            else:  # Skyrizi
+                mk_cols = st.columns(4)
+                with mk_cols[0]:
+                    st.metric(
+                        "Avg Lift",
+                        f"+{avg_skyrizi_lift:.0f}%",
+                        "Across moments",
+                        help="Average search lift for Skyrizi across all tracked moments"
+                    )
+                with mk_cols[1]:
+                    st.metric(
+                        "Peak Lift",
+                        f"+{max_skyrizi_lift:.0f}%",
+                        max_skyrizi_event,
+                        help=f"Highest lift during {max_skyrizi_event}"
+                    )
+                with mk_cols[2]:
+                    st.metric(
+                        "Moments Tracked",
+                        len(moments_df),
+                        "Cultural events",
+                        help="Total number of key moments with measurable impact"
+                    )
+                with mk_cols[3]:
+                    st.metric(
+                        "Avg Peak Index",
+                        int(moments_df["Peak"].astype(int).mean()),
+                        "Maximum search interest",
+                        help="Average peak search index value during moment windows"
+                    )
+            
+            # Insight about moment marketing performance
+            moment_insight = f"Moment marketing shows strong ROI potential. Average lifts of +{avg_rinvoq_lift:.0f}% (Rinvoq) and +{avg_skyrizi_lift:.0f}% (Skyrizi) demonstrate significant audience reach during high-attention cultural events. Explore the Key Moments tab for detailed campaign timing and strategic recommendations."
+            render_insight_bubble(moment_insight, "⚡")
+        except Exception as e:
+            st.caption("Moment data unavailable for this timeframe")
+    else:
+        st.info("📊 Switch to Key Moments tab to explore moment marketing performance and campaign impact analysis.")
+    
+    # ═══ SECTION 9: AI-POWERED INSIGHTS ═══
     st.markdown("---")
     st.subheader("✨ AI-Powered Analysis")
     col_insight, col_refresh = st.columns([0.95, 0.05])
