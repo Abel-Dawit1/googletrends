@@ -3671,148 +3671,38 @@ with tabs[4]:
 # TAB 5: PATIENT INTENT
 # ═══════════════════════════════════════════════════════════════════════════
 with tabs[5]:
-    # Executive Summary
-    intent_callouts, intent_recommendation = generate_patient_intent_executive_summary(DEMO_QUERIES, client, brand_filter, indication)
-    render_executive_summary("Patient Search Behavior & Intent", intent_callouts, NAVY, intent_recommendation)
+    st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 40px 20px; text-align: center; margin-bottom: 20px;'><h5 style='color: #666;'>📋 Patient Intent Executive Summary</h5><p style='color: #999; font-size: 14px;'>Strategic insights and recommendations coming soon</p></div>", unsafe_allow_html=True)
     
     st.subheader("Patient Intent Analysis")
     
-    # Add indication filter at the top
-    current_ind_names = st.session_state.get("custom_ind_names", IND_NAMES)
-    current_franchise_map = st.session_state.get("custom_franchise_map", FRANCHISE_MAP)
-    ind_options = list(current_ind_names.values())
-    if franchise != "All":
-        ind_keys = current_franchise_map.get(franchise, [])
-        ind_options = [current_ind_names.get(k, k) for k in ind_keys]
+    st.markdown("---")
     
-    intent_indication = st.selectbox(
-        "Indication",
-        ["All"] + ind_options,
-        label_visibility="visible",
-        key="intent_indication_filter"
-    )
+    # KPI Cards - Coming Soon
+    ik1, ik2, ik3, ik4 = st.columns(4)
+    ik1.metric("Awareness Queries", "—", help="Coming soon")
+    ik2.metric("HCP Intent", "—", help="Coming soon")
+    ik3.metric("Branded Queries", "—", help="Coming soon")
+    ik4.metric("Breakout Terms", "—", help="Coming soon")
     
     st.markdown("---")
     
-    # Filter queries by brand
-    if brand_filter == "Both":
-        intent_queries = DEMO_QUERIES
-    elif brand_filter == "Rinvoq":
-        intent_queries = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Rinvoq", "Both"])]
-    else:  # Skyrizi
-        intent_queries = DEMO_QUERIES[DEMO_QUERIES["Brand"].isin(["Skyrizi", "Both"])]
-    
-    # Apply indication filter
-    if intent_indication != "All":
-        intent_queries = intent_queries[(intent_queries["Indication"] == intent_indication) | (intent_queries["Indication"] == "All")]
-    
-    ik1, ik2, ik3, ik4 = st.columns(4)
-    ik1.metric(
-        "Awareness Queries", 
-        len(intent_queries[intent_queries["Type"] == "condition"]), 
-        "Condition-level",
-        help="Patient searches for condition symptoms, diagnosis, and general questions. High volume indicates strong market awareness of the indication."
-    )
-    ik2.metric(
-        "HCP Intent", 
-        len(intent_queries[intent_queries["Type"].isin(["generic", "safety"])]), 
-        "Clinical terms",
-        help="Healthcare provider searches or clinically-focused patient queries. Indicates need for professional education and evidence-based content."
-    )
-    ik3.metric(
-        "Branded Queries", 
-        len(intent_queries[intent_queries["Type"].isin(["branded", "competitive"])]), 
-        "Brand-specific",
-        help="Brand name searches and competitive comparisons. Higher volume indicates stronger brand recall, top-of-mind awareness, and consideration."
-    )
-    ik4.metric(
-        "Breakout Terms", 
-        len(intent_queries[intent_queries["Growth"] >= 500]), 
-        "Explosive growth",
-        help="Search terms with 500%+ surge. These represent emerging patient needs, new indication expansion, and untapped patient segments ripe for messaging."
-    )
-    
-    # Calculate data-driven insight for patient intent
-    intent_insight = "Patients show strong intent for safety and efficacy validation. Develop content addressing common patient concerns to improve conversion."
-    try:
-        safety_queries = intent_queries[intent_queries["Type"] == "safety"]
-        if len(safety_queries) > 0:
-            avg_safety_growth = safety_queries["Growth"].mean() if "Growth" in safety_queries.columns else 0
-            if avg_safety_growth > 50:
-                intent_insight = f"Safety concerns dominate patient queries (+{avg_safety_growth:.0f}% avg growth). Develop clinical evidence content addressing side effects and safety profiles to drive conversion."
-            else:
-                intent_insight = f"Safety and efficacy validation key patient intent signals. Ensure content library covers clinical evidence, side effect management, and treatment outcomes."
-    except:
-        pass
-    
-    render_insight_bubble(intent_insight, "🔍")
-    # Use live related queries if available
+    # Query display - Coming Soon
     q1, q2 = st.columns(2)
     with q1:
-        st.markdown("**All Condition Terms**")
-        display_q = intent_queries.sort_values("Index", ascending=False)
-        if related_rinvoq.get("top") is not None and brand_filter in ["Both", "Rinvoq"]:
-            live_top = related_rinvoq["top"].head(10)
-            live_top.columns = ["Query", "Index"]
-            live_top["Brand"] = "Rinvoq"
-            live_top["Growth"] = 0
-            live_top["Type"] = "condition"
-            display_q = pd.concat([live_top, display_q]).drop_duplicates(subset="Query").head(15)
-        
-        for _, row in display_q.iterrows():
-            color = RINVOQ if row["Brand"] == "Rinvoq" else SKYRIZI if row["Brand"] == "Skyrizi" else NAVY
-            st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6;font-size:12px'>"
-                        f"<span style='flex:1'>{row['Query']}</span>"
-                        f"<span style='font-size:10px;color:#8a9ab5'>{row['Type']}</span>"
-                        f"<span style='font-weight:700;color:{color};width:30px;text-align:right'>{int(row['Index'])}</span></div>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 60px 20px; text-align: center;'><h5 style='color: #666;'>🔍 Coming Soon</h5><p style='color: #999; font-size: 14px;'>All Condition Terms</p></div>", unsafe_allow_html=True)
     
     with q2:
-        st.markdown("**Rising & Breakout Queries**")
-        rising = intent_queries.sort_values("Growth", ascending=False)
-        if related_rinvoq.get("rising") is not None and brand_filter in ["Both", "Rinvoq"]:
-            live_rising = related_rinvoq["rising"].head(5)
-            live_rising.columns = ["Query", "Growth"]
-            live_rising["Brand"] = "Rinvoq"
-            live_rising["Index"] = 50
-            live_rising["Type"] = "rising"
-            rising = pd.concat([live_rising, rising]).drop_duplicates(subset="Query").head(15)
-        
-        for _, row in rising.iterrows():
-            is_brk = row["Growth"] >= 500
-            badge_color = "#c0392b" if is_brk else SUCCESS
-            badge_bg = "#fdecea" if is_brk else "#eaf7f1"
-            brk = " <span style='background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px;font-size:9px;font-weight:700'>Breakout</span>" if is_brk else ""
-            st.markdown(f"<div style='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f6;font-size:12px'>"
-                        f"<span style='flex:1'>{row['Query']}</span>"
-                        f"<span style='background:{badge_bg};color:{badge_color};border-radius:4px;padding:2px 6px;font-size:10px;font-weight:700'>+{int(row['Growth'])}%</span>{brk}</div>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 60px 20px; text-align: center;'><h5 style='color: #666;'>📈 Coming Soon</h5><p style='color: #999; font-size: 14px;'>Rising & Breakout Queries</p></div>", unsafe_allow_html=True)
     
-    # Intent trend
-    fig_intent = go.Figure()
-    intent_colors = {"RA": RINVOQ, "Psoriasis": SKYRIZI, "AS": "#e67e22", "AD": "#00b894", "GCA": "#636e72"}
-    for ind, color in intent_colors.items():
-        fig_intent.add_trace(go.Scatter(
-            x=SEASON_DATA["Month"], y=[40 + np.random.randint(0, 40) + int(np.sin(i/2) * 15) for i in range(12)],
-            name=ind, line=dict(color=color, width=2), mode="lines",
-            hovertemplate="<b>%{fullData.name}</b><br>Month: %{x}<br>Interest: <b>%{y:.0f}</b><extra></extra>"
-        ))
-    fig_intent.update_layout(title="Intent Trend by Indication (12 Months)", height=350, template="plotly_white",
-        hoverlabel=dict(bgcolor="white", font_size=12, font_family="sans-serif"))
-    st.plotly_chart(fig_intent, use_container_width=True)
+    st.markdown("---")
     
-    # Calculate data-driven funnel insight
-    funnel_insight = "Patient-oriented queries dominate search volume, indicating strong awareness-stage interest. Recommend optimizing content across the full patient journey."
-    try:
-        condition_queries = intent_queries[intent_queries["Type"] == "condition"]
-        hcp_queries = intent_queries[intent_queries["Type"].isin(["generic", "safety"])]
-        if len(condition_queries) > 0 and len(hcp_queries) > 0:
-            condition_pct = len(condition_queries) / len(intent_queries) * 100
-            hcp_pct = len(hcp_queries) / len(intent_queries) * 100
-            if condition_pct > hcp_pct * 2:
-                funnel_insight = f"Awareness-stage queries account for {condition_pct:.0f}% of volume vs {hcp_pct:.0f}% clinical/HCP intent. Strengthen clinical education content to bridge the awareness-to-consideration gap."
-    except:
-        pass
+    # Intent Trend Chart - Coming Soon
+    st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 100px 20px; text-align: center;'><h4 style='color: #666;'>📊 Coming Soon</h4><p style='color: #999; font-size: 14px;'>Intent Trend by Indication</p></div>", unsafe_allow_html=True)
     
-    st.info(f"🔬 **Patient Intent Insight:** {funnel_insight}")
+    st.markdown("---")
+    
+    # Patient Intent Insight - Coming Soon
+    st.markdown("<div style='background-color: #f0f0f0; border: 2px dashed #999; border-radius: 8px; padding: 40px 20px; text-align: center;'><h5 style='color: #666;'>💡 Coming Soon</h5><p style='color: #999; font-size: 14px;'>Patient intent insights and recommendations will be generated once data is available</p></div>", unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
