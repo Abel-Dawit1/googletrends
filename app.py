@@ -2442,10 +2442,10 @@ with tabs[0]:
         interest_data = generate_interest_over_time_data(trend_df, current_timeframe)
         
         fig_yoy = go.Figure()
-        if brand_filter != "Skyrizi":
+        if brand_filter != "Skyrizi" and "Rinvoq" in interest_data.columns:
             fig_yoy.add_trace(go.Bar(x=interest_data["period"], y=interest_data["Rinvoq"], name="Rinvoq", marker_color=RINVOQ,
                 hovertemplate="<b>Rinvoq</b><br>%{x}<br>Avg Interest: <b>%{y:.1f}</b><extra></extra>"))
-        if brand_filter != "Rinvoq":
+        if brand_filter != "Rinvoq" and "Skyrizi" in interest_data.columns:
             fig_yoy.add_trace(go.Bar(x=interest_data["period"], y=interest_data["Skyrizi"], name="Skyrizi", marker_color=SKYRIZI,
                 hovertemplate="<b>Skyrizi</b><br>%{x}<br>Avg Interest: <b>%{y:.1f}</b><extra></extra>"))
         fig_yoy.update_layout(title="Average Search Interest Over Time", height=350, barmode="group", yaxis=dict(range=[0, 100]), template="plotly_white", margin=dict(t=30, b=20),
