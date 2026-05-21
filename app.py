@@ -2357,6 +2357,9 @@ with tabs[0]:
     st.subheader("📈 Search Interest Over Time")
     current_timeframe = st.session_state.get("current_timeframe", "today 3-m")
     
+    # Prepare date info based on timeframe
+    trend_display_df = trend_df.copy()
+    
     # For 5-year and 12-month data, add week range for hover
     if current_timeframe in ["today 5-y", "today 12-m"]:
         trend_display_df['week_start'] = trend_display_df.index
