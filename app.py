@@ -3603,6 +3603,7 @@ with tabs[3]:
                 display_cols.append(brand)
         
         if len(display_cols) > 1:  # At least Week + 1 brand
+            # Create base table with week and selected brands
             weekly_table = weekly_data[display_cols].copy()
             
             # Round numeric values to 1 decimal place
@@ -3610,9 +3611,17 @@ with tabs[3]:
                 if col in weekly_table.columns:
                     weekly_table[col] = weekly_table[col].round(1)
             
+            # Sort by week descending and reset index
+            weekly_table = weekly_table.sort_values('Week', ascending=False).reset_index(drop=True)
+            
+            # Pivot table: brands as rows, weeks as columns
+            pivot_table = weekly_table.set_index('Week').T
+            pivot_table.index.name = 'Brand'
+            pivot_table = pivot_table.reset_index()
+            
             # Display as dataframe with nice formatting
             st.dataframe(
-                weekly_table.sort_values('Week', ascending=False).reset_index(drop=True),
+                pivot_table,
                 use_container_width=True,
                 hide_index=True
             )
