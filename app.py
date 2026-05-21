@@ -3586,6 +3586,41 @@ with tabs[3]:
     )
     st.plotly_chart(fig_comp_trend, use_container_width=True)
     
+    # Weekly Breakdown Table
+    st.markdown("---")
+    st.subheader("📊 Weekly Trend Breakdown")
+    
+    if comp_trend_df is not None and len(comp_trend_df) > 0:
+        # Aggregate data by week
+        weekly_data = comp_trend_df.resample('W').mean().reset_index()
+        weekly_data.columns = ['Date'] + list(weekly_data.columns[1:])
+        weekly_data['Week'] = weekly_data['Date'].apply(lambda x: f"{x.strftime('%b %d')} - {(x + pd.Timedelta(days=6)).strftime('%b %d, %Y')}")
+        
+        # Filter columns to only show selected brands
+        display_cols = ['Week']
+        for brand in selected_brands:
+            if brand in weekly_data.columns:
+                display_cols.append(brand)
+        
+        if len(display_cols) > 1:  # At least Week + 1 brand
+            weekly_table = weekly_data[display_cols].copy()
+            
+            # Round numeric values to 1 decimal place
+            for col in display_cols[1:]:
+                if col in weekly_table.columns:
+                    weekly_table[col] = weekly_table[col].round(1)
+            
+            # Display as dataframe with nice formatting
+            st.dataframe(
+                weekly_table.sort_values('Week', ascending=False).reset_index(drop=True),
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.caption("No weekly data available for selected brands")
+    else:
+        st.caption("No data available for weekly breakdown")
+    
     st.markdown("---")
     
     # Calculate data-driven competitive insights
